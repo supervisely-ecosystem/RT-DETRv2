@@ -53,4 +53,5 @@ selected_project_info = None
 selected_project_meta = None
 train_mode = None
 selected_classes = None
+splits = None
 # endregion
