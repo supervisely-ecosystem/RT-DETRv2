@@ -1,6 +1,8 @@
+import supervisely as sly
 from supervisely.app.widgets import Button, Card, Container, ProjectThumbnail, SelectProject
 
 import supervisely_integration.train.globals as g
+import supervisely_integration.train.ui.model as model
 
 select_project = SelectProject(g.project_id, g.wotkspace_id, compact=True)
 select_project_button = Button("Select project")
@@ -23,16 +25,30 @@ card = Card(
 @select_project_button.click
 def project_selected():
     g.selected_project_info = g.api.project.get_info_by_id(select_project.get_selected_id())
+
+    sly.logger.info(
+        f"Selected project: {g.selected_project_info.name} with ID: {g.selected_project_info.id}"
+    )
+
     project_thumbnail.set(g.selected_project_info)
     project_thumbnail.show()
     change_project_button.show()
     card.lock()
 
+    model.card.unlock()
+    model.card.uncollapse()
+
 
 @change_project_button.click
 def change_project():
     g.selected_project_info = None
+
+    sly.logger.info("Project selection reset.")
+
     project_thumbnail.set(None)
     project_thumbnail.hide()
     change_project_button.hide()
     card.unlock()
+
+    model.card.lock()
+    model.card.collapse()
