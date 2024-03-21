@@ -4,6 +4,7 @@ import supervisely as sly
 from supervisely.app.widgets import Button, Card, Container, ReloadableArea, TrainValSplits
 
 import supervisely_integration.train.globals as g
+import supervisely_integration.train.ui.parameters as parameters
 
 trainval_container = Container()
 trainval_area = ReloadableArea(trainval_container)
@@ -43,6 +44,9 @@ def splits_selected():
     card.collapse()
     change_button.show()
 
+    parameters.card.unlock()
+    parameters.card.uncollapse()
+
 
 @change_button.click
 def change_splits():
@@ -53,3 +57,6 @@ def change_splits():
     card.unlock()
     card.collapse()
     change_button.hide()
+
+    parameters.card.lock()
+    parameters.card.collapse()
