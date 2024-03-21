@@ -14,6 +14,7 @@ from supervisely.app.widgets import (
 )
 
 import supervisely_integration.train.globals as g
+import supervisely_integration.train.ui.classes as classes
 
 TrainMode = namedtuple("TrainMode", ["pretrained", "custom", "finetune"])
 
@@ -81,6 +82,10 @@ def model_selected():
     card.collapse()
     change_model_button.show()
 
+    classes.fill_classes_selector()
+    classes.card.unlock()
+    classes.card.uncollapse()
+
 
 @change_model_button.click
 def change_model():
@@ -88,3 +93,7 @@ def change_model():
     card.unlock()
     card.collapse()
     change_model_button.hide()
+
+    classes.fill_classes_selector(clear=True)
+    classes.card.lock()
+    classes.card.collapse()

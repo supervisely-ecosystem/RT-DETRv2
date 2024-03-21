@@ -30,6 +30,12 @@ def project_selected():
         f"Selected project: {g.selected_project_info.name} with ID: {g.selected_project_info.id}"
     )
 
+    g.selected_project_meta = sly.ProjectMeta.from_json(
+        g.api.project.get_meta(g.selected_project_info.id)
+    )
+
+    sly.logger.info("Project meta recevied.")
+
     project_thumbnail.set(g.selected_project_info)
     project_thumbnail.show()
     change_project_button.show()
@@ -42,6 +48,7 @@ def project_selected():
 @change_project_button.click
 def change_project():
     g.selected_project_info = None
+    g.selected_project_meta = None
 
     sly.logger.info("Project selection reset.")
 
