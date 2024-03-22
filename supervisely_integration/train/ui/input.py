@@ -1,3 +1,5 @@
+import os
+
 import supervisely as sly
 from supervisely.app.widgets import Button, Card, Container, ProjectThumbnail, SelectProject
 
@@ -25,16 +27,16 @@ card = Card(
 @select_project_button.click
 def project_selected():
     g.selected_project_info = g.api.project.get_info_by_id(select_project.get_selected_id())
-
     sly.logger.info(
         f"Selected project: {g.selected_project_info.name} with ID: {g.selected_project_info.id}"
     )
 
-    g.selected_project_meta = sly.ProjectMeta.from_json(
-        g.api.project.get_meta(g.selected_project_info.id)
-    )
+    g.project_dir = os.path.join(g.DOWNLOAD_DIR, g.selected_project_info.name)
+    sly.Project.download(g.api, g.selected_project_info.id, g.project_dir)
 
-    sly.logger.info("Project meta recevied.")
+    sly.logger.info(f"Project downloaded to {g.project_dir}.")
+
+    g.project = sly.Project(g.project_dir, sly.OpenMode.READ)
 
     project_thumbnail.set(g.selected_project_info)
     project_thumbnail.show()
@@ -48,7 +50,8 @@ def project_selected():
 @change_project_button.click
 def change_project():
     g.selected_project_info = None
-    g.selected_project_meta = None
+    g.project_dir = None
+    g.project = None
 
     sly.logger.info("Project selection reset.")
 

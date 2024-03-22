@@ -170,3 +170,4 @@ rtdetr_pytorch/dataset/*
 /sly_dataset
 /models
 /output
+temp/

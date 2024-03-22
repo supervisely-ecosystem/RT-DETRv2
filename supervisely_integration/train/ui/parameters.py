@@ -6,7 +6,7 @@ general_tab = Container()
 checkpoints_tab = Container()
 optimization_tab = Container()
 
-parameters_editor = Editor(language_mode="yaml")
+parameters_editor = Editor(language_mode="yaml", height_lines=100)
 advanced_tab = Container([parameters_editor])
 
 run_button = Button("Run training")

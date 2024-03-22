@@ -15,6 +15,7 @@ from supervisely.app.widgets import (
 
 import supervisely_integration.train.globals as g
 import supervisely_integration.train.ui.classes as classes
+import supervisely_integration.train.ui.parameters as parameters
 
 TrainMode = namedtuple("TrainMode", ["pretrained", "custom", "finetune"])
 
