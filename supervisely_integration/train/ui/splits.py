@@ -57,6 +57,9 @@ def change_splits():
     g.splits = None
     g.converted_project = None
 
+    g.train_dataset_path = None
+    g.val_dataset_path = None
+
     sly.logger.debug("Splits reset.")
 
     card.unlock()
@@ -76,6 +79,9 @@ def create_trainval():
     sly.fs.mkdir(converted_project_dir)
     train_dataset_path = os.path.join(converted_project_dir, "train")
     val_dataset_path = os.path.join(converted_project_dir, "val")
+
+    g.train_dataset_path = train_dataset_path
+    g.val_dataset_path = val_dataset_path
 
     project_meta_path = os.path.join(converted_project_dir, "meta.json")
     sly.json.dump_json_file(g.project.meta.to_json(), project_meta_path)

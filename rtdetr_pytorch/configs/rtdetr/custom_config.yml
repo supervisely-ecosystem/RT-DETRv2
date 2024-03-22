@@ -1,0 +1,19 @@
+__include__:
+- rtdetr_r18vd_6x_coco.yml
+num_classes: 2
+remap_mscoco_category: false
+sly_metadata:
+  classes:
+  - kiwi
+  - lemon
+  model: rtdetr_r18vd_coco
+  project_id: 29053
+  project_name: lemons-meta
+train_dataloader:
+  dataset:
+    ann_file: /Users/iwatkot/Documents/Supervisely/RT-DETR/supervisely_integration/train/temp/converted/lemons-meta/train/coco_anno.json
+    img_folder: /Users/iwatkot/Documents/Supervisely/RT-DETR/supervisely_integration/train/temp/converted/lemons-meta/train/img
+val_dataloader:
+  dataset:
+    ann_file: /Users/iwatkot/Documents/Supervisely/RT-DETR/supervisely_integration/train/temp/converted/lemons-meta/val/coco_anno.json
+    img_folder: /Users/iwatkot/Documents/Supervisely/RT-DETR/supervisely_integration/train/temp/converted/lemons-meta/val/img

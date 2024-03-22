@@ -26,7 +26,8 @@ card = Card(
 
 @select_project_button.click
 def project_selected():
-    g.selected_project_info = g.api.project.get_info_by_id(select_project.get_selected_id())
+    g.selected_project_id = select_project.get_selected_id()
+    g.selected_project_info = g.api.project.get_info_by_id(g.selected_project_id)
     sly.logger.info(
         f"Selected project: {g.selected_project_info.name} with ID: {g.selected_project_info.id}"
     )
@@ -49,6 +50,7 @@ def project_selected():
 
 @change_project_button.click
 def change_project():
+    g.selected_project_id = None
     g.selected_project_info = None
     g.project_dir = None
     g.project = None
