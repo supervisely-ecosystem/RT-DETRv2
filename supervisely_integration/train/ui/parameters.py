@@ -6,18 +6,107 @@ from typing import List
 import supervisely as sly
 import yaml
 from pycocotools.coco import COCO
-from supervisely.app.widgets import Button, Card, Container, Editor, RadioTabs
+from supervisely.app.widgets import (
+    Button,
+    Card,
+    Checkbox,
+    Container,
+    Editor,
+    Field,
+    InputNumber,
+    RadioTabs,
+)
 
 import rtdetr_pytorch.train as train_cli
 import supervisely_integration.train.globals as g
 import supervisely_integration.train.ui.output as output
 
-general_tab = Container()
-checkpoints_tab = Container()
-optimization_tab = Container()
+# region advanced widgets
+advanced_mode_checkbox = Checkbox("Advanced mode")
+advanced_mode_field = Field(
+    advanced_mode_checkbox,
+    title="Advanced mode",
+    description="Enable advanced mode to specify custom training parameters manually.",
+)
+# endregion
 
-parameters_editor = Editor(language_mode="yaml", height_lines=100)
-advanced_tab = Container([parameters_editor])
+# region general widgets
+number_of_epochs_input = InputNumber(value=20, min=1)
+number_of_epochs_field = Field(
+    number_of_epochs_input,
+    title="Number of epochs",
+    description="The number of epochs to train the model for",
+)
+input_size_input = InputNumber(value=1000)
+input_size_field = Field(
+    input_size_input,
+    title="Input size",
+    description="Images will be scaled to this size before training while keeping the aspect ratio.",
+)
+
+train_batch_size_input = InputNumber(value=2, min=1)
+train_batch_size_field = Field(
+    train_batch_size_input,
+    title="Train batch size",
+    description="The number of images in a batch during training",
+)
+
+val_batch_size_input = InputNumber(value=2, min=1)
+val_batch_size_field = Field(
+    val_batch_size_input,
+    title="Validation batch size",
+    description="The number of images in a batch during validation",
+)
+
+validation_interval_input = InputNumber(value=1, min=1)
+validation_interval_field = Field(
+    validation_interval_input,
+    title="Validation interval",
+    description="The number of epochs between each validation run",
+)
+
+general_tab = Container(
+    [
+        number_of_epochs_field,
+        input_size_field,
+        train_batch_size_field,
+        val_batch_size_field,
+        validation_interval_field,
+    ]
+)
+# endregion
+
+# region checkpoints widgets
+checkpoints_interval_input = InputNumber(value=1, min=1)
+checkpoints_interval_field = Field(
+    checkpoints_interval_input,
+    title="Checkpoints interval",
+    description="The number of epochs between each checkpoint save",
+)
+
+save_last_checkpoint_checkbox = Checkbox("Save last checkpoint")
+save_last_checkpoint_field = Field(
+    save_last_checkpoint_checkbox,
+    title="Save last checkpoint",
+    description="Save the last checkpoint after training is finished",
+)
+
+save_best_checkpoint_checkbox = Checkbox("Save best checkpoint")
+save_best_checkpoint_field = Field(
+    save_best_checkpoint_checkbox,
+    title="Save best checkpoint",
+    description="Save the checkpoint with the best validation loss",
+)
+
+checkpoints_tab = Container(
+    [checkpoints_interval_field, save_last_checkpoint_field, save_best_checkpoint_field]
+)
+
+# endregion
+optimization_tab = Container()
+learning_rate_scheduler_tab = Container()
+
+advanced_mode_editor = Editor(language_mode="yaml", height_lines=100)
 
 run_button = Button("Run training")
 stop_button = Button("Stop training", button_type="danger")
@@ -25,12 +114,12 @@ stop_button.hide()
 
 
 parameters_tabs = RadioTabs(
-    ["General", "Checkpoints", "Optimization", "Advanced"],
+    ["General", "Checkpoints", "Optimization", "Learning rate scheduler"],
     contents=[
         general_tab,
         checkpoints_tab,
         optimization_tab,
-        Container([general_tab, checkpoints_tab, optimization_tab, advanced_tab]),
+        Container([general_tab, checkpoints_tab, optimization_tab, learning_rate_scheduler_tab]),
     ],
 )
 
@@ -39,12 +128,22 @@ card = Card(
     description="Specify training hyperparameters using one of the methods.",
     collapsable=True,
     content=Container(
-        [parameters_tabs, run_button],
+        [advanced_mode_field, advanced_mode_editor, parameters_tabs, run_button],
     ),
     content_top_right=stop_button,
 )
-card.lock()
-card.collapse()
+# card.lock()
+# card.collapse()
+
+
+@advanced_mode_checkbox.value_changed
+def advanced_mode_changed(is_checked: bool):
+    if is_checked:
+        advanced_mode_editor.show()
+        parameters_tabs.hide()
+    else:
+        advanced_mode_editor.hide()
+        parameters_tabs.show()
 
 
 @run_button.click
@@ -69,7 +168,7 @@ def stop_training():
 
 
 def prepare_config():
-    custom_config_text = parameters_editor.get_value()
+    custom_config_text = advanced_mode_editor.get_value()
     model_name = g.train_mode.pretrained[0]
     arch = model_name.split("_coco")[0]
     config_name = f"{arch}_6x_coco"
