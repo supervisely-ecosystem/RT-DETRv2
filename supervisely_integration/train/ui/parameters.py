@@ -28,6 +28,8 @@ advanced_mode_field = Field(
     title="Advanced mode",
     description="Enable advanced mode to specify custom training parameters manually.",
 )
+advanced_mode_editor = Editor(language_mode="yaml", height_lines=100)
+advanced_mode_editor.hide()
 # endregion
 
 # region general widgets
@@ -85,28 +87,19 @@ checkpoints_interval_field = Field(
 )
 
 save_last_checkpoint_checkbox = Checkbox("Save last checkpoint")
-save_last_checkpoint_field = Field(
-    save_last_checkpoint_checkbox,
-    title="Save last checkpoint",
-    description="Save the last checkpoint after training is finished",
-)
-
 save_best_checkpoint_checkbox = Checkbox("Save best checkpoint")
-save_best_checkpoint_field = Field(
-    save_best_checkpoint_checkbox,
-    title="Save best checkpoint",
-    description="Save the checkpoint with the best validation loss",
+
+save_checkpoint_field = Field(
+    Container([save_last_checkpoint_checkbox, save_best_checkpoint_checkbox]),
+    title="Save checkpoints",
+    description="Choose which checkpoints to save",
 )
 
-checkpoints_tab = Container(
-    [checkpoints_interval_field, save_last_checkpoint_field, save_best_checkpoint_field]
-)
+checkpoints_tab = Container([checkpoints_interval_field, save_checkpoint_field])
 
 # endregion
 optimization_tab = Container()
 learning_rate_scheduler_tab = Container()
-
-advanced_mode_editor = Editor(language_mode="yaml", height_lines=100)
 
 run_button = Button("Run training")
 stop_button = Button("Stop training", button_type="danger")
