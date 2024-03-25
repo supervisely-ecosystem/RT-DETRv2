@@ -1,5 +1,3 @@
-import os
-
 import supervisely as sly
 from supervisely.app.widgets import Button, Card, Container, ProjectThumbnail, SelectProject
 
@@ -31,13 +29,11 @@ def project_selected():
     sly.logger.info(
         f"Selected project: {g.selected_project_info.name} with ID: {g.selected_project_info.id}"
     )
+    g.selected_project_meta = sly.ProjectMeta.from_json(
+        g.api.project.get_meta(g.selected_project_id)
+    )
 
-    g.project_dir = os.path.join(g.DOWNLOAD_DIR, g.selected_project_info.name)
-    sly.Project.download(g.api, g.selected_project_info.id, g.project_dir)
-
-    sly.logger.info(f"Project downloaded to {g.project_dir}.")
-
-    g.project = sly.Project(g.project_dir, sly.OpenMode.READ)
+    sly.logger.info("Project meta saved into globals.")
 
     project_thumbnail.set(g.selected_project_info)
     project_thumbnail.show()

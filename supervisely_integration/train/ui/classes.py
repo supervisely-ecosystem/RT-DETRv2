@@ -28,7 +28,7 @@ card.collapse()
 
 def fill_classes_selector(clear: Optional[bool] = False):
     if not clear:
-        train_classes_selector.set(g.project.meta.obj_classes)
+        train_classes_selector.set(g.selected_project_meta.obj_classes)
         train_classes_selector.select_all()
         train_classes_selector.show()
     else:
@@ -50,7 +50,7 @@ def classes_selected():
     card.collapse()
     change_classes_button.show()
 
-    splits.init_splits(g.project)
+    splits.init_splits(g.selected_project_id)
     splits.card.unlock()
     splits.card.uncollapse()
 

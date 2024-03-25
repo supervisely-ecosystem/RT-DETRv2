@@ -1,19 +1,18 @@
 __include__:
 - rtdetr_r18vd_6x_coco.yml
-num_classes: 2
+num_classes: 1
 remap_mscoco_category: false
 sly_metadata:
   classes:
-  - kiwi
-  - lemon
+  - cucumber
   model: rtdetr_r18vd_coco
-  project_id: 29053
-  project_name: lemons-meta
+  project_id: 36697
+  project_name: cucumber-training
 train_dataloader:
   dataset:
-    ann_file: /Users/iwatkot/Documents/Supervisely/RT-DETR/supervisely_integration/train/temp/converted/lemons-meta/train/coco_anno.json
-    img_folder: /Users/iwatkot/Documents/Supervisely/RT-DETR/supervisely_integration/train/temp/converted/lemons-meta/train/img
+    ann_file: /Users/iwatkot/Documents/Supervisely/RT-DETR/supervisely_integration/train/temp/converted/cucumber-training/train/coco_anno.json
+    img_folder: /Users/iwatkot/Documents/Supervisely/RT-DETR/supervisely_integration/train/temp/converted/cucumber-training/train/img
 val_dataloader:
   dataset:
-    ann_file: /Users/iwatkot/Documents/Supervisely/RT-DETR/supervisely_integration/train/temp/converted/lemons-meta/val/coco_anno.json
-    img_folder: /Users/iwatkot/Documents/Supervisely/RT-DETR/supervisely_integration/train/temp/converted/lemons-meta/val/img
+    ann_file: /Users/iwatkot/Documents/Supervisely/RT-DETR/supervisely_integration/train/temp/converted/cucumber-training/val/coco_anno.json
+    img_folder: /Users/iwatkot/Documents/Supervisely/RT-DETR/supervisely_integration/train/temp/converted/cucumber-training/val/img

@@ -79,6 +79,7 @@ api = sly.Api.from_env()
 # region state
 selected_project_id = None
 selected_project_info = None
+selected_project_meta = None
 project_dir = None
 project = None
 converted_project = None
