@@ -1,7 +1,7 @@
 import os
 import shutil
 from datetime import datetime
-from typing import List
+from typing import Any, Dict, List
 
 import supervisely as sly
 import yaml
@@ -226,8 +226,8 @@ card = Card(
     ),
     content_top_right=stop_button,
 )
-# card.lock()
-# card.collapse()
+card.lock()
+card.collapse()
 
 
 @advanced_mode_checkbox.value_changed
@@ -280,9 +280,10 @@ def scheduler_changed(scheduler: str):
     scheduler_parameters_area.reload()
     g.widgets = None
 
-    widgets = {
-        "by_epoch": Checkbox("By epoch", True),
-    }
+    if not scheduler != "Without scheduler":
+        widgets = {
+            "by_epoch": Checkbox("By epoch", True),
+        }
 
     if scheduler == "StepLR":
         widgets["step"] = InputNumber(value=1)
@@ -348,11 +349,8 @@ def run_training():
     # download_project()
     # create_trainval()
 
-    read_parameters()
-
-    return  # ! debug
-
-    prepare_config()
+    training_parameters = read_parameters()
+    prepare_config(training_parameters)
     cfg = train()
     save_config(cfg)
     out_path = upload_model(cfg.output_dir)
@@ -443,29 +441,32 @@ def read_scheduler_parameters():
 
     parameters = {
         "scheduler": scheduler,
+        "enable_warmup": enable_warmup_checkbox.is_checked(),
+        "warmup_iterations": warmup_iterations_input.get_value(),
     }
 
     sly.logger.debug(f"Scheduler parameters: {parameters}")
 
-    for key, widget in g.widgets.items():
-        if isinstance(widget, (InputNumber, Input)):
-            parameters[key] = widget.get_value()
-        elif isinstance(widget, Checkbox):
-            parameters[key] = widget.is_checked()
+    if g.widgets is not None:
+        for key, widget in g.widgets.items():
+            if isinstance(widget, (InputNumber, Input)):
+                parameters[key] = widget.get_value()
+            elif isinstance(widget, Checkbox):
+                parameters[key] = widget.is_checked()
 
     sly.logger.info(f"Final scheduler parameters: {parameters}")
 
     return parameters
 
 
-def prepare_config():
-    custom_config_text = advanced_mode_editor.get_value()
+def prepare_config(custom_config: Dict[str, Any]):
+    # custom_config_text = advanced_mode_editor.get_value()
     model_name = g.train_mode.pretrained[0]
     arch = model_name.split("_coco")[0]
     config_name = f"{arch}_6x_coco"
     sly.logger.info(f"Model name: {model_name}, arch: {arch}, config_name: {config_name}")
 
-    custom_config = yaml.safe_load(custom_config_text) or {}
+    custom_config = custom_config or {}
     custom_config["__include__"] = [f"{config_name}.yml"]
     custom_config["remap_mscoco_category"] = False
     custom_config["num_classes"] = len(g.selected_classes)
