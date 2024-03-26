@@ -259,6 +259,14 @@ def optimizer_changed(optimizer: str):
         momentum_field.show()
 
 
+@enable_warmup_checkbox.value_changed
+def warmup_changed(is_checked: bool):
+    if is_checked:
+        warmup_container.show()
+    else:
+        warmup_container.hide()
+
+
 @scheduler_select.value_changed
 def scheduler_changed(scheduler: str):
     # StepLR: by_epoch_checkbox, LR scheduler step (input number), gamma (input number)
@@ -289,12 +297,39 @@ def scheduler_changed(scheduler: str):
         widgets["patience"] = InputNumber(value=10)
     elif scheduler == "CosineAnnealingLR":
         widgets["T_max"] = InputNumber(value=10)
-        widgets["min_lr"] = Checkbox("Min LR", True)
+        min_lr_checkbox = Checkbox("Min LR", True)
+
+        @min_lr_checkbox.value_changed
+        def min_lr_changed(is_checked: bool):
+            if is_checked:
+                widgets["min_lr_value"].enable()
+                widgets["min_lr_ratio"].disable()
+            else:
+                widgets["min_lr_value"].disable()
+                widgets["min_lr_ratio"].enable()
+
+        widgets["min_lr"] = min_lr_checkbox
         widgets["min_lr_value"] = InputNumber(value=0.001)
         widgets["min_lr_ratio"] = InputNumber(value=0.1)
+        widgets["min_lr_ratio"].disable()
+
     elif scheduler == "CosineRestartLR":
         widgets["periods"] = Input("10,20,30")
         widgets["restarts"] = Input("2,3,4")
+
+        min_lr_checkbox = Checkbox("Min LR", True)
+
+        @min_lr_checkbox.value_changed
+        def min_lr_changed(is_checked: bool):
+            if is_checked:
+                widgets["min_lr_value"].enable()
+                widgets["min_lr_ratio"].disable()
+            else:
+                widgets["min_lr_value"].disable()
+                widgets["min_lr_ratio"].enable()
+
+        widgets["min_lr"] = min_lr_checkbox
+
         widgets["min_lr"] = Checkbox("Min LR", True)
         widgets["min_lr_value"] = InputNumber(value=0.001)
         widgets["min_lr_ratio"] = InputNumber(value=0.1)
@@ -310,10 +345,12 @@ def run_training():
     output.card.unlock()
     output.card.uncollapse()
 
-    download_project()
-    create_trainval()
+    # download_project()
+    # create_trainval()
 
     read_parameters()
+
+    return  # ! debug
 
     prepare_config()
     cfg = train()
@@ -329,7 +366,96 @@ def stop_training():
 
 
 def read_parameters():
-    pass
+    sly.logger.debug("Reading training parameters...")
+    if advanced_mode_checkbox.is_checked():
+        sly.logger.info("Advanced mode enabled, using custom config from the editor.")
+        custom_config = advanced_mode_editor.get_value()
+        return custom_config  # ??
+
+    sly.logger.info("Advanced mode disabled, reading parameters from the widgets.")
+
+    general_params = {
+        "num_epochs": number_of_epochs_input.value,
+        "input_size": input_size_input.value,
+        "train_batch_size": train_batch_size_input.value,
+        "val_batch_size": val_batch_size_input.value,
+        "validation_interval": validation_interval_input.value,
+    }
+
+    sly.logger.info(f"General parameters: {general_params}")
+
+    checkpoints_params = {
+        "checkpoints_interval": checkpoints_interval_input.value,
+        "save_last_checkpoint": save_last_checkpoint_checkbox.is_checked(),
+        "save_best_checkpoint": save_best_checkpoint_checkbox.is_checked(),
+    }
+
+    sly.logger.info(f"Checkpoints parameters: {checkpoints_params}")
+
+    optimizer_params = read_optimizer_parameters()
+    scheduler_params = read_scheduler_parameters()
+
+    parameters = {
+        **general_params,
+        **checkpoints_params,
+        **optimizer_params,
+        **scheduler_params,
+    }
+
+    sly.logger.info(f"Final parameters: {parameters}")
+
+    return parameters
+
+
+def read_optimizer_parameters():
+    sly.logger.debug("Reading optimizer parameters...")
+    optimizer = optimizer_select.get_value()
+
+    parameters = {
+        "optimizer": optimizer,
+        "learning_rate": learning_rate_input.get_value(),
+        "weight_decay": wight_decay_input.get_value(),
+        "clip_gradient_norm": clip_gradient_norm_checkbox.is_checked(),
+        "clip_gradient_norm_value": clip_gradient_norm_input.get_value(),
+    }
+
+    sly.logger.debug(f"Select optimizer: {optimizer}, basic parameters: {parameters}")
+
+    if optimizer == "Adam":
+        parameters.update(
+            {
+                "beta1": beta1_input.get_value(),
+                "beta2": beta2_input.get_value(),
+                "amsgrad": amsgrad_checkbox.is_checked(),
+            }
+        )
+    elif optimizer == "SGD":
+        parameters.update({"momentum": momentum_input.get_value()})
+
+    sly.logger.info(f"Final optimizer parameters: {parameters}")
+    return parameters
+
+
+def read_scheduler_parameters():
+    sly.logger.debug("Reading scheduler parameters...")
+    scheduler = scheduler_select.get_value()
+    sly.logger.info(f"Scheduler: {scheduler}")
+
+    parameters = {
+        "scheduler": scheduler,
+    }
+
+    sly.logger.debug(f"Scheduler parameters: {parameters}")
+
+    for key, widget in g.widgets.items():
+        if isinstance(widget, (InputNumber, Input)):
+            parameters[key] = widget.get_value()
+        elif isinstance(widget, Checkbox):
+            parameters[key] = widget.is_checked()
+
+    sly.logger.info(f"Final scheduler parameters: {parameters}")
+
+    return parameters
 
 
 def prepare_config():
