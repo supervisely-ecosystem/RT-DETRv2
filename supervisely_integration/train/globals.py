@@ -15,6 +15,7 @@ rtdetr_pytorch_path = os.path.join(cwd, "rtdetr_pytorch")
 sys.path.insert(0, rtdetr_pytorch_path)
 sly.logger.debug("Added rtdetr_pytorch to the system path")
 CONFIG_PATHS_DIR = os.path.join(rtdetr_pytorch_path, "configs", "rtdetr")
+default_config_path = os.path.join(CONFIG_PATHS_DIR, "placeholder.yml")
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 sly.logger.debug(f"Current directory: {CURRENT_DIR}")
 TEMP_DIR = os.path.join(CURRENT_DIR, "temp")
@@ -67,6 +68,9 @@ CHECKPOINTS = {
     "rtdetr_r50vd_coco_objects365": "https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r50vd_2x_coco_objects365_from_paddle.pth",
     "rtdetr_r101vd_coco_objects365": "https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r101vd_2x_coco_objects365_from_paddle.pth",
 }
+
+OPTIMIZERS = ["Adam", "AdamW", "SGD"]
+
 # endregion
 # region envvars
 team_id = sly.env.team_id()

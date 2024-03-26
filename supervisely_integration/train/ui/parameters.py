@@ -15,6 +15,7 @@ from supervisely.app.widgets import (
     Field,
     InputNumber,
     RadioTabs,
+    Select,
 )
 
 import rtdetr_pytorch.train as train_cli
@@ -28,7 +29,10 @@ advanced_mode_field = Field(
     title="Advanced mode",
     description="Enable advanced mode to specify custom training parameters manually.",
 )
-advanced_mode_editor = Editor(language_mode="yaml", height_lines=100)
+with open(g.default_config_path, "r") as f:
+    default_config = f.read()
+    sly.logger.debug(f"Loaded default config from {g.default_config_path}")
+advanced_mode_editor = Editor(default_config, language_mode="yaml", height_lines=100)
 advanced_mode_editor.hide()
 # endregion
 
@@ -98,7 +102,71 @@ save_checkpoint_field = Field(
 checkpoints_tab = Container([checkpoints_interval_field, save_checkpoint_field])
 
 # endregion
-optimization_tab = Container()
+
+# region optimizer widgets
+optimizer_select = Select([Select.Item(opt) for opt in g.OPTIMIZERS])
+optimizer_field = Field(
+    optimizer_select,
+    title="Select optimizer",
+    description="Choose the optimizer to use for training",
+)
+learning_rate_input = InputNumber(value=0.0001)
+learning_rate_field = Field(
+    learning_rate_input,
+    title="Learning rate",
+    description="The learning rate to use for the optimizer",
+)
+wight_decay_input = InputNumber(value=0.0001)
+wight_decay_field = Field(
+    wight_decay_input,
+    title="Weight decay",
+    description="The amount of L2 regularization to apply to the weights",
+)
+momentum_input = InputNumber(value=0.9)
+momentum_field = Field(
+    momentum_input,
+    title="Momentum",
+    description="The amount of momentum to apply to the weights",
+)
+momentum_field.hide()
+beta1_input = InputNumber(value=0.9)
+beta1_field = Field(
+    beta1_input,
+    title="Beta 1",
+    description="The exponential decay rate for the first moment estimates",
+)
+beta2_input = InputNumber(value=0.999)
+beta2_field = Field(
+    beta2_input,
+    title="Beta 2",
+    description="The exponential decay rate for the second moment estimates",
+)
+
+amsgrad_checkbox = Checkbox("AMSGrad")
+
+clip_gradient_norm_checkbox = Checkbox("Clip gradient norm")
+clip_gradient_norm_input = InputNumber(value=0.1)
+clip_gradient_norm_field = Field(
+    Container([clip_gradient_norm_checkbox, clip_gradient_norm_input]),
+    title="Clip gradient norm",
+    description="Select the highest gradient norm to clip the gradients",
+)
+
+
+optimization_tab = Container(
+    [
+        optimizer_field,
+        learning_rate_field,
+        wight_decay_field,
+        momentum_field,
+        beta1_field,
+        beta2_field,
+        amsgrad_checkbox,
+        clip_gradient_norm_field,
+    ]
+)
+
+# endregion
 learning_rate_scheduler_tab = Container()
 
 run_button = Button("Run training")
@@ -139,6 +207,25 @@ def advanced_mode_changed(is_checked: bool):
         parameters_tabs.show()
 
 
+@optimizer_select.value_changed
+def optimizer_changed(optimizer: str):
+    if optimizer == "Adam":
+        beta1_field.show()
+        beta2_field.show()
+        amsgrad_checkbox.show()
+        momentum_field.hide()
+    elif optimizer == "AdamW":
+        beta1_field.hide()
+        beta2_field.hide()
+        amsgrad_checkbox.hide()
+        momentum_field.hide()
+    elif optimizer == "SGD":
+        beta1_field.hide()
+        beta2_field.hide()
+        amsgrad_checkbox.hide()
+        momentum_field.show()
+
+
 @run_button.click
 def run_training():
     output.card.unlock()
@@ -146,6 +233,8 @@ def run_training():
 
     download_project()
     create_trainval()
+
+    read_parameters()
 
     prepare_config()
     cfg = train()
@@ -157,6 +246,10 @@ def run_training():
 @stop_button.click
 def stop_training():
     # TODO: Implement the stop process
+    pass
+
+
+def read_parameters():
     pass
 
 
