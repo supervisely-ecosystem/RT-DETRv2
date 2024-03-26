@@ -70,6 +70,15 @@ CHECKPOINTS = {
 }
 
 OPTIMIZERS = ["Adam", "AdamW", "SGD"]
+SCHEDULERS = [
+    "Without scheduler",
+    "StepLR",
+    "MultiStepLR",
+    "ExponentialLR",
+    "ReduceLROnPlateauLR",
+    "CosineAnnealingLR",
+    "CosineRestartLR",
+]
 
 # endregion
 # region envvars
@@ -93,4 +102,5 @@ custom_config_path = None
 train_mode = None
 selected_classes = None
 splits = None
+widgets = None
 # endregion

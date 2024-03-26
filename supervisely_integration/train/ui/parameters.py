@@ -13,8 +13,10 @@ from supervisely.app.widgets import (
     Container,
     Editor,
     Field,
+    Input,
     InputNumber,
     RadioTabs,
+    ReloadableArea,
     Select,
 )
 
@@ -167,7 +169,38 @@ optimization_tab = Container(
 )
 
 # endregion
-learning_rate_scheduler_tab = Container()
+
+# region scheduler widgets
+scheduler_select = Select([Select.Item(sch) for sch in g.SCHEDULERS])
+
+scheduler_widgets_container = Container()
+scheduler_parameters_area = ReloadableArea(scheduler_widgets_container)
+
+enable_warmup_checkbox = Checkbox("Enable warmup", True)
+warmup_iterations_input = InputNumber(value=2)
+warmup_iterations_field = Field(
+    warmup_iterations_input,
+    title="Warmup iterations",
+    description="The number of iterations to warm up the learning rate",
+)
+warmup_ratio_input = InputNumber(value=0.001)
+warmup_ratio_field = Field(
+    warmup_ratio_input,
+    title="Warmup ratio",
+    description="The ratio of the initial learning rate to use for warmup",
+)
+warmup_container = Container([warmup_iterations_field, warmup_ratio_field])
+
+learning_rate_scheduler_tab = Container(
+    [
+        scheduler_select,
+        scheduler_parameters_area,
+        enable_warmup_checkbox,
+        warmup_container,
+    ]
+)
+
+# endregion
 
 run_button = Button("Run training")
 stop_button = Button("Stop training", button_type="danger")
@@ -180,7 +213,7 @@ parameters_tabs = RadioTabs(
         general_tab,
         checkpoints_tab,
         optimization_tab,
-        Container([general_tab, checkpoints_tab, optimization_tab, learning_rate_scheduler_tab]),
+        learning_rate_scheduler_tab,
     ],
 )
 
@@ -224,6 +257,52 @@ def optimizer_changed(optimizer: str):
         beta2_field.hide()
         amsgrad_checkbox.hide()
         momentum_field.show()
+
+
+@scheduler_select.value_changed
+def scheduler_changed(scheduler: str):
+    # StepLR: by_epoch_checkbox, LR scheduler step (input number), gamma (input number)
+    # MultiStepLR: by_epoch_checkbox, LR scheduler steps (input), gamma (input number)
+    # ExponentialLR: by_epoch_checkbox, gamma (input number)
+    # ReduceLROnPlateauLR: by_epoch_checkbox, factor (input number), patience (input number)
+    # CosineAnnealingLR: by_epoch_checkbox, T_max (input number), min lr checkbox, min lr (input number), min lr ratio (input number)
+    # CosineRestartLR: by_epoch_checkbox, periods (input), restarts (input), min lr checkbox, min lr (input number), min lr ratio (input number)
+
+    scheduler_widgets_container._widgets.clear()
+    scheduler_parameters_area.reload()
+    g.widgets = None
+
+    widgets = {
+        "by_epoch": Checkbox("By epoch", True),
+    }
+
+    if scheduler == "StepLR":
+        widgets["step"] = InputNumber(value=1)
+        widgets["gamma"] = InputNumber(value=0.1)
+    elif scheduler == "MultiStepLR":
+        widgets["steps"] = Input("1,2,3")
+        widgets["gamma"] = InputNumber(value=0.1)
+    elif scheduler == "ExponentialLR":
+        widgets["gamma"] = InputNumber(value=0.1)
+    elif scheduler == "ReduceLROnPlateau":
+        widgets["factor"] = InputNumber(value=0.1)
+        widgets["patience"] = InputNumber(value=10)
+    elif scheduler == "CosineAnnealingLR":
+        widgets["T_max"] = InputNumber(value=10)
+        widgets["min_lr"] = Checkbox("Min LR", True)
+        widgets["min_lr_value"] = InputNumber(value=0.001)
+        widgets["min_lr_ratio"] = InputNumber(value=0.1)
+    elif scheduler == "CosineRestartLR":
+        widgets["periods"] = Input("10,20,30")
+        widgets["restarts"] = Input("2,3,4")
+        widgets["min_lr"] = Checkbox("Min LR", True)
+        widgets["min_lr_value"] = InputNumber(value=0.001)
+        widgets["min_lr_ratio"] = InputNumber(value=0.1)
+
+    g.widgets = widgets
+
+    scheduler_widgets_container._widgets.extend([widget for widget in widgets.values()])
+    scheduler_parameters_area.reload()
 
 
 @run_button.click
