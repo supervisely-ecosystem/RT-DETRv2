@@ -6,6 +6,8 @@ Train:
 + lr_schedulers? can we plot them? which ones are implemented?
 + augmentations? add imgaug? можно сделать выбор rt-detr / imgaug
 + прочие параметры: ema, ema_decay, etc.
+- add grad_norm to LOGS and graphs
+- handle imgaug in config
 - Resume training from Team Files checkpoint
 - Stop / pause training
 - Consistency in imgsz: Input Size, Resize, 

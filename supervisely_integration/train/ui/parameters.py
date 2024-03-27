@@ -18,11 +18,13 @@ from supervisely.app.widgets import (
     RadioTabs,
     ReloadableArea,
     Select,
+    BindedInputNumber,
 )
 
 import rtdetr_pytorch.train as train_cli
 import supervisely_integration.train.globals as g
 import supervisely_integration.train.ui.output as output
+import supervisely_integration.train.utils as utils
 
 # region advanced widgets
 advanced_mode_checkbox = Checkbox("Advanced mode")
@@ -45,21 +47,21 @@ number_of_epochs_field = Field(
     title="Number of epochs",
     description="The number of epochs to train the model for",
 )
-input_size_input = InputNumber(value=1000)
+input_size_input = BindedInputNumber(640, 640)
 input_size_field = Field(
     input_size_input,
     title="Input size",
-    description="Images will be scaled to this size before training while keeping the aspect ratio.",
+    description="Images will be resized to this size.",
 )
 
-train_batch_size_input = InputNumber(value=2, min=1)
+train_batch_size_input = InputNumber(value=4, min=1)
 train_batch_size_field = Field(
     train_batch_size_input,
     title="Train batch size",
     description="The number of images in a batch during training",
 )
 
-val_batch_size_input = InputNumber(value=2, min=1)
+val_batch_size_input = InputNumber(value=8, min=1)
 val_batch_size_field = Field(
     val_batch_size_input,
     title="Validation batch size",
@@ -73,6 +75,13 @@ validation_interval_field = Field(
     description="The number of epochs between each validation run",
 )
 
+checkpoints_interval_input = InputNumber(value=1, min=1)
+checkpoints_interval_field = Field(
+    checkpoints_interval_input,
+    title="Checkpoint interval",
+    description="The number of epochs between each checkpoint save",
+)
+
 general_tab = Container(
     [
         number_of_epochs_field,
@@ -80,28 +89,29 @@ general_tab = Container(
         train_batch_size_field,
         val_batch_size_field,
         validation_interval_field,
+        checkpoints_interval_field,
     ]
 )
 # endregion
 
 # region checkpoints widgets
-checkpoints_interval_input = InputNumber(value=1, min=1)
-checkpoints_interval_field = Field(
-    checkpoints_interval_input,
-    title="Checkpoints interval",
-    description="The number of epochs between each checkpoint save",
-)
+# checkpoints_interval_input = InputNumber(value=1, min=1)
+# checkpoints_interval_field = Field(
+#     checkpoints_interval_input,
+#     title="Checkpoints interval",
+#     description="The number of epochs between each checkpoint save",
+# )
 
-save_last_checkpoint_checkbox = Checkbox("Save last checkpoint")
-save_best_checkpoint_checkbox = Checkbox("Save best checkpoint")
+# save_last_checkpoint_checkbox = Checkbox("Save last checkpoint")
+# save_best_checkpoint_checkbox = Checkbox("Save best checkpoint")
 
-save_checkpoint_field = Field(
-    Container([save_last_checkpoint_checkbox, save_best_checkpoint_checkbox]),
-    title="Save checkpoints",
-    description="Choose which checkpoints to save",
-)
+# save_checkpoint_field = Field(
+#     Container([save_last_checkpoint_checkbox, save_best_checkpoint_checkbox]),
+#     title="Save checkpoints",
+#     description="Choose which checkpoints to save",
+# )
 
-checkpoints_tab = Container([checkpoints_interval_field, save_checkpoint_field])
+# checkpoints_tab = Container([checkpoints_interval_field, save_checkpoint_field])
 
 # endregion
 
@@ -112,7 +122,7 @@ optimizer_field = Field(
     title="Select optimizer",
     description="Choose the optimizer to use for training",
 )
-learning_rate_input = InputNumber(value=0.0001)
+learning_rate_input = InputNumber(value=0.0002)
 learning_rate_field = Field(
     learning_rate_input,
     title="Learning rate",
@@ -144,8 +154,6 @@ beta2_field = Field(
     description="The exponential decay rate for the second moment estimates",
 )
 
-amsgrad_checkbox = Checkbox("AMSGrad")
-
 clip_gradient_norm_checkbox = Checkbox("Clip gradient norm")
 clip_gradient_norm_input = InputNumber(value=0.1)
 clip_gradient_norm_field = Field(
@@ -163,7 +171,6 @@ optimization_tab = Container(
         momentum_field,
         beta1_field,
         beta2_field,
-        amsgrad_checkbox,
         clip_gradient_norm_field,
     ]
 )
@@ -208,10 +215,10 @@ stop_button.hide()
 
 
 parameters_tabs = RadioTabs(
-    ["General", "Checkpoints", "Optimization", "Learning rate scheduler"],
+    ["General", "Optimizer", "Learning rate scheduler"],
     contents=[
         general_tab,
-        checkpoints_tab,
+        # checkpoints_tab,
         optimization_tab,
         learning_rate_scheduler_tab,
     ],
@@ -244,17 +251,14 @@ def optimizer_changed(optimizer: str):
     if optimizer == "Adam":
         beta1_field.show()
         beta2_field.show()
-        amsgrad_checkbox.show()
         momentum_field.hide()
     elif optimizer == "AdamW":
         beta1_field.hide()
         beta2_field.hide()
-        amsgrad_checkbox.hide()
         momentum_field.hide()
     elif optimizer == "SGD":
         beta1_field.hide()
         beta2_field.hide()
-        amsgrad_checkbox.hide()
         momentum_field.show()
 
 
@@ -299,11 +303,13 @@ def scheduler_changed(scheduler: str):
         widgets["step"] = step
         widgets["step_field"] = step_field
     elif scheduler == "MultiStepLR":
-        steps = Input("1,2,3")
+        # Decays the learning rate of each parameter group by gamma once the
+        # number of epoch reaches one of the milestones
+        steps = Input("15,18")
         steps_field = Field(
             steps,
-            title="Steps",
-            description="Periods of learning rate decay",
+            title="Milestones",
+            description="List of epoch indices. Must be increasing.",
         )
         gamma = InputNumber(value=0.1)
         gamma_field = Field(
@@ -342,6 +348,9 @@ def scheduler_changed(scheduler: str):
         widgets["patience"] = patience
         widgets["patience_field"] = patience_field
     elif scheduler == "CosineAnnealingLR":
+        # Set the learning rate of each parameter group using a cosine annealing
+        # schedule, where :math:`\eta_{max}` is set to the initial lr and
+        # :math:`T_{cur}` is the number of epochs since the last restart in SGDR:
         t_max = InputNumber(value=10)
         t_max_field = Field(
             t_max,
@@ -352,26 +361,26 @@ def scheduler_changed(scheduler: str):
         widgets["t_max"] = t_max
         widgets["t_max_field"] = t_max_field
 
-        min_lr_checkbox = Checkbox("Min LR", True)
+        # min_lr_checkbox = Checkbox("Min LR", True)
 
-        @min_lr_checkbox.value_changed
-        def min_lr_changed(is_checked: bool):
-            if is_checked:
-                widgets["min_lr_value"].enable()
-                widgets["min_lr_ratio"].disable()
-            else:
-                widgets["min_lr_value"].disable()
-                widgets["min_lr_ratio"].enable()
+        # @min_lr_checkbox.value_changed
+        # def min_lr_changed(is_checked: bool):
+        #     if is_checked:
+        #         widgets["min_lr_value"].enable()
+        #         widgets["min_lr_ratio"].disable()
+        #     else:
+        #         widgets["min_lr_value"].disable()
+        #         widgets["min_lr_ratio"].enable()
 
-        min_lr_field = Field(
-            min_lr_checkbox,
-            title="Min LR",
-            description="Use minimum learning rate",
-        )
-        widgets["min_lr"] = min_lr_checkbox
-        widgets["min_lr_field"] = min_lr_field
+        # min_lr_field = Field(
+        #     min_lr_checkbox,
+        #     title="Min LR",
+        #     description="Use minimum learning rate",
+        # )
+        # widgets["min_lr"] = min_lr_checkbox
+        # widgets["min_lr_field"] = min_lr_field
 
-        min_lr_value = InputNumber(value=0.001)
+        min_lr_value = InputNumber(value=0.)
         min_lr_value_field = Field(
             min_lr_value,
             title="Min LR value",
@@ -380,16 +389,16 @@ def scheduler_changed(scheduler: str):
         widgets["min_lr_value"] = min_lr_value
         widgets["min_lr_value_field"] = min_lr_value_field
 
-        min_lr_ratio = InputNumber(value=0.1)
-        min_lr_ratio_field = Field(
-            min_lr_ratio,
-            title="Min LR ratio",
-            description="Minimum learning rate ratio",
-        )
-        widgets["min_lr_ratio"] = min_lr_ratio
-        widgets["min_lr_ratio_field"] = min_lr_ratio_field
+        # min_lr_ratio = InputNumber(value=0.1)
+        # min_lr_ratio_field = Field(
+        #     min_lr_ratio,
+        #     title="Min LR ratio",
+        #     description="Minimum learning rate ratio",
+        # )
+        # widgets["min_lr_ratio"] = min_lr_ratio
+        # widgets["min_lr_ratio_field"] = min_lr_ratio_field
 
-        widgets["min_lr_ratio"].disable()
+        # widgets["min_lr_ratio"].disable()
 
     elif scheduler == "CosineRestartLR":
         periods = Input("10,20,30")
@@ -449,6 +458,29 @@ def scheduler_changed(scheduler: str):
 
         widgets["min_lr_ratio"].disable()
 
+    elif scheduler == "OneCycleLR":
+        # Sets the learning rate of each parameter group according to the
+        # 1cycle learning rate policy. The 1cycle policy anneals the learning
+        # rate from an initial learning rate to some maximum learning rate and then
+        # from that maximum learning rate to some minimum learning rate much lower
+        # than the initial learning rate.
+        max_lr = InputNumber(value=0.005)
+        max_lr_field = Field(
+            max_lr,
+            title="Max LR",
+            description="Maximum learning rate",
+        )
+        pct_start = InputNumber(value=0.3)
+        pct_start_field = Field(
+            pct_start,
+            title="Pct start",
+            description="The percentage of the cycle spent increasing the learning rate",
+        )
+        widgets["max_lr"] = max_lr
+        widgets["max_lr_field"] = max_lr_field
+        widgets["pct_start"] = pct_start
+        widgets["pct_start_field"] = pct_start_field
+
     g.widgets = widgets
 
     scheduler_widgets_container._widgets.extend(
@@ -464,8 +496,8 @@ def run_training():
     download_project()
     create_trainval()
 
-    training_parameters = read_parameters()
-    prepare_config(training_parameters)
+    custom_config = read_parameters()
+    prepare_config(custom_config)
     cfg = train()
     save_config(cfg)
     out_path = upload_model(cfg.output_dir)
@@ -483,45 +515,95 @@ def read_parameters():
     if advanced_mode_checkbox.is_checked():
         sly.logger.info("Advanced mode enabled, using custom config from the editor.")
         custom_config = advanced_mode_editor.get_value()
-        return custom_config  # ??
+    else:
+        sly.logger.info("Advanced mode disabled, reading parameters from the widgets.")
+        with open(g.default_config_path, "r") as f:
+            custom_config = f.read()
+        custom_config = yaml.safe_load(custom_config)
 
-    sly.logger.info("Advanced mode disabled, reading parameters from the widgets.")
+        clip_max_norm = clip_gradient_norm_input.get_value() if clip_gradient_norm_checkbox.is_checked() else -1
+        general_params = {
+            "epoches": number_of_epochs_input.value,
+            "val_step": validation_interval_input.value,
+            "checkpoint_step": checkpoints_interval_input.value,
+            "clip_max_norm": clip_max_norm,
+        }
+        optimizer_params = read_optimizer_parameters()
+        scheduler_params = read_scheduler_parameters()
 
-    general_params = {
-        "num_epochs": number_of_epochs_input.value,
-        "input_size": input_size_input.value,
-        "train_batch_size": train_batch_size_input.value,
-        "val_batch_size": val_batch_size_input.value,
-        "validation_interval": validation_interval_input.value,
-    }
+        sly.logger.debug(f"General parameters: {general_params}")
+        sly.logger.debug(f"Optimizer parameters: {optimizer_params}")
+        sly.logger.debug(f"Scheduler parameters: {scheduler_params}")
 
-    sly.logger.info(f"General parameters: {general_params}")
+        custom_config.update(general_params)
+        custom_config["optimizer"]["type"] = optimizer_params["optimizer"]
+        custom_config["optimizer"]["lr"] = optimizer_params["learning_rate"]
+        custom_config["optimizer"]["weight_decay"] = optimizer_params["weight_decay"]
+        if optimizer_params.get("momentum"):
+            custom_config["optimizer"]["momentum"] = optimizer_params["momentum"]
+        else:
+            custom_config["optimizer"]["betas"] = [optimizer_params["beta1"], optimizer_params["beta2"]]
 
-    checkpoints_params = {
-        "checkpoints_interval": checkpoints_interval_input.value,
-        "save_last_checkpoint": save_last_checkpoint_checkbox.is_checked(),
-        "save_best_checkpoint": save_best_checkpoint_checkbox.is_checked(),
-    }
+        # Set input_size
+        w,h = input_size_input.get_value()
+        for op in custom_config["train_dataloader"]["dataset"]["transforms"]["ops"]:
+            if op["type"] == "Resize":
+                op["size"] = [w, h]
+        for op in custom_config["val_dataloader"]["dataset"]["transforms"]["ops"]:
+            if op["type"] == "Resize":
+                op["size"] = [w, h]
+        if "HybridEncoder" in custom_config:
+            custom_config["HybridEncoder"]["eval_spatial_size"] = [w, h]
+        else:
+            custom_config["HybridEncoder"] = {"eval_spatial_size": [w, h]}
+        if "RTDETRTransformer" in custom_config:
+            custom_config["RTDETRTransformer"]["eval_spatial_size"] = [w, h]
+        else:
+            custom_config["RTDETRTransformer"] = {"eval_spatial_size": [w, h]}
 
-    sly.logger.info(f"Checkpoints parameters: {checkpoints_params}")
+        custom_config["train_dataloader"]["batch_size"] = train_batch_size_input.value
+        custom_config["val_dataloader"]["batch_size"] = val_batch_size_input.value
+        custom_config["train_dataloader"]["num_workers"] = utils.get_num_workers(train_batch_size_input.value)
+        custom_config["val_dataloader"]["num_workers"] = utils.get_num_workers(val_batch_size_input.value)
+        
+        # LR scheduler
+        # TODO: warmup
+        custom_config["lr_scheduler"] = scheduler_params["scheduler"]
+        if scheduler_params["scheduler"] == "MultiStepLR":
+            custom_config["lr_scheduler"] = {
+                "type": "MultiStepLR",
+                "milestones": scheduler_params["steps"],
+                "gamma": scheduler_params["gamma"],
+            }
+        elif scheduler_params["scheduler"] == "CosineAnnealingLR":
+            custom_config["lr_scheduler"] = {
+                "type": "CosineAnnealingLR",
+                "T_max": scheduler_params["t_max"],
+                "eta_min": scheduler_params["min_lr_value"],
+            }
+        elif scheduler_params["scheduler"] == "OneCycleLR":
+            total_steps = general_params["epoches"] * (len(g.converted_project.datasets.get("train")) // train_batch_size_input.value)
+            custom_config["lr_scheduler"] = {
+                "type": "OneCycleLR",
+                "max_lr": scheduler_params["max_lr"],
+                "total_steps": total_steps,
+                "pct_start": scheduler_params["pct_start"],
+            }
+        
+        # TODO: set imgaug
+        if False:
+            ops = custom_config["train_dataloader"]["dataset"]["transforms"]["ops"]
+            for i, op in enumerate(ops):
+                if op["type"] == "Resize":
+                    resize_idx = i
+                    break
+            imgaug_op = {"type": "ImgAug", "config_path": "imgaug.json"}
+            custom_config["train_dataloader"]["dataset"]["transforms"]["ops"] = [imgaug_op] + ops[resize_idx:]
 
-    optimizer_params = read_optimizer_parameters()
-    scheduler_params = read_scheduler_parameters()
-
-    parameters = {
-        **general_params,
-        **checkpoints_params,
-        **optimizer_params,
-        **scheduler_params,
-    }
-
-    sly.logger.info(f"Final parameters: {parameters}")
-
-    return parameters
+    return custom_config
 
 
 def read_optimizer_parameters():
-    sly.logger.debug("Reading optimizer parameters...")
     optimizer = optimizer_select.get_value()
 
     parameters = {
@@ -532,27 +614,21 @@ def read_optimizer_parameters():
         "clip_gradient_norm_value": clip_gradient_norm_input.get_value(),
     }
 
-    sly.logger.debug(f"Select optimizer: {optimizer}, basic parameters: {parameters}")
-
-    if optimizer == "Adam":
+    if optimizer in ["Adam", "AdamW"]:
         parameters.update(
             {
                 "beta1": beta1_input.get_value(),
                 "beta2": beta2_input.get_value(),
-                "amsgrad": amsgrad_checkbox.is_checked(),
             }
         )
     elif optimizer == "SGD":
         parameters.update({"momentum": momentum_input.get_value()})
 
-    sly.logger.info(f"Final optimizer parameters: {parameters}")
     return parameters
 
 
 def read_scheduler_parameters():
-    sly.logger.debug("Reading scheduler parameters...")
     scheduler = scheduler_select.get_value()
-    sly.logger.info(f"Scheduler: {scheduler}")
 
     parameters = {
         "scheduler": scheduler,
@@ -560,16 +636,12 @@ def read_scheduler_parameters():
         "warmup_iterations": warmup_iterations_input.get_value(),
     }
 
-    sly.logger.debug(f"Scheduler parameters: {parameters}")
-
     if g.widgets is not None:
         for key, widget in g.widgets.items():
             if isinstance(widget, (InputNumber, Input)):
                 parameters[key] = widget.get_value()
             elif isinstance(widget, Checkbox):
                 parameters[key] = widget.is_checked()
-
-    sly.logger.info(f"Final scheduler parameters: {parameters}")
 
     return parameters
 
@@ -580,24 +652,13 @@ def prepare_config(custom_config: Dict[str, Any]):
     config_name = f"{arch}_6x_coco"
     sly.logger.info(f"Model name: {model_name}, arch: {arch}, config_name: {config_name}")
 
-    # custom_config = custom_config or {} # ! DEBUG
-    custom_config = {}  # ! DEBUG
     custom_config["__include__"] = [f"{config_name}.yml"]
     custom_config["remap_mscoco_category"] = False
     custom_config["num_classes"] = len(g.selected_classes)
-
-    custom_config["train_dataloader"] = {
-        "dataset": {
-            "img_folder": f"{g.train_dataset_path}/img",
-            "ann_file": f"{g.train_dataset_path}/coco_anno.json",
-        }
-    }
-    custom_config["val_dataloader"] = {
-        "dataset": {
-            "img_folder": f"{g.val_dataset_path}/img",
-            "ann_file": f"{g.val_dataset_path}/coco_anno.json",
-        }
-    }
+    custom_config["train_dataloader"]["dataset"]["img_folder"] = f"{g.train_dataset_path}/img"
+    custom_config["train_dataloader"]["dataset"]["ann_file"] = f"{g.train_dataset_path}/coco_anno.json"
+    custom_config["val_dataloader"]["dataset"]["img_folder"] = f"{g.val_dataset_path}/img"
+    custom_config["val_dataloader"]["dataset"]["ann_file"] = f"{g.val_dataset_path}/coco_anno.json"
     selected_classes = [obj_class.name for obj_class in g.selected_classes]
     custom_config["sly_metadata"] = {
         "classes": selected_classes,
@@ -606,7 +667,7 @@ def prepare_config(custom_config: Dict[str, Any]):
         "model": model_name,
     }
 
-    g.custom_config_path = os.path.join(g.CONFIG_PATHS_DIR, "custom_config.yml")
+    g.custom_config_path = os.path.join(g.CONFIG_PATHS_DIR, "custom.yml")
     with open(g.custom_config_path, "w") as f:
         yaml.dump(custom_config, f)
 
