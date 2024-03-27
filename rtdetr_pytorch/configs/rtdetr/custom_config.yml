@@ -1,11 +1,9 @@
 __include__:
 - rtdetr_r18vd_6x_coco.yml
-num_classes: 3
+num_classes: 1
 remap_mscoco_category: false
 sly_metadata:
   classes:
-  - test2
-  - "Motorpendelst\xFCtze"
   - cucumber
   model: rtdetr_r18vd_coco
   project_id: 36697

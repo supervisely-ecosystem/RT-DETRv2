@@ -227,7 +227,6 @@ card = Card(
     content_top_right=stop_button,
 )
 card.lock()
-card.collapse()
 
 
 @advanced_mode_checkbox.value_changed
@@ -461,7 +460,6 @@ def scheduler_changed(scheduler: str):
 @run_button.click
 def run_training():
     output.card.unlock()
-    output.card.uncollapse()
 
     download_project()
     create_trainval()

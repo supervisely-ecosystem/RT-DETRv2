@@ -4,6 +4,8 @@ import sys
 import supervisely as sly
 from dotenv import load_dotenv
 
+from rtdetr_pytorch.model_list import _models
+
 if sly.is_development:
     load_dotenv(os.path.expanduser("~/supervisely.env"))
     load_dotenv("local.env")
@@ -31,44 +33,14 @@ sly.logger.debug(f"Output dir: {OUTPUT_DIR}")
 MODEL_MODES = ["Pretrained models", "Custom weights"]
 TABLE_COLUMNS = [
     "Name",
-    "Method",
     "Dataset",
-    "Inference time",
-    "Training epochs",
-    "Training memory",
-    "Box AP",
+    "AP_Val",
+    "Params(M)",
+    "FRPS(T4)",
 ]
 PRETRAINED_MODELS = [
-    [
-        "rtdetr_r18vd_coco",
-        "METHOD1",
-        "DATASET1",
-        "INFERENCETIME1",
-        "TRAININGEPOCHS1",
-        "TRAININGMEMORY1",
-        "BOXAP1",
-    ],
-    [
-        "rtdetr_r34vd_coco",
-        "METHOD2",
-        "DATASET2",
-        "INFERENCETIME2",
-        "TRAININGEPOCHS2",
-        "TRAININGMEMORY2",
-        "BOXAP2",
-    ],
+    [value for key, value in model_info.items() if key != "meta"] for model_info in _models
 ]
-CHECKPOINTS = {
-    "rtdetr_r18vd_coco": "https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r18vd_dec3_6x_coco_from_paddle.pth",
-    "rtdetr_r34vd_coco": "https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r34vd_dec4_6x_coco_from_paddle.pth",
-    "rtdetr_r50vd_m_coco": "https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r50vd_m_6x_coco_from_paddle.pth",
-    "rtdetr_r50vd_coco": "https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r50vd_6x_coco_from_paddle.pth",
-    "rtdetr_r101vd_coco": "https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r101vd_6x_coco_from_paddle.pth",
-    "rtdetr_r18vd_coco_objects365": "https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r18vd_5x_coco_objects365_from_paddle.pth",
-    "rtdetr_r50vd_coco_objects365": "https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r50vd_2x_coco_objects365_from_paddle.pth",
-    "rtdetr_r101vd_coco_objects365": "https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r101vd_2x_coco_objects365_from_paddle.pth",
-}
-
 OPTIMIZERS = ["Adam", "AdamW", "SGD"]
 SCHEDULERS = [
     "Without scheduler",

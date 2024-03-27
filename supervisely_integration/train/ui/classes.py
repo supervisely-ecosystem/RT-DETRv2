@@ -23,7 +23,6 @@ card = Card(
     lock_message="Click on the Change classes button to select other classes",
 )
 card.lock()
-card.collapse()
 
 
 def fill_classes_selector(clear: Optional[bool] = False):
@@ -47,12 +46,10 @@ def classes_selected():
     sly.logger.info(f"Selected classes: {[cls.name for cls in selected_classes]}")
 
     card.lock()
-    card.collapse()
     change_classes_button.show()
 
     splits.init_splits(g.selected_project_id)
     splits.card.unlock()
-    splits.card.uncollapse()
 
 
 @change_classes_button.click
@@ -60,9 +57,7 @@ def change_classes():
     g.selected_classes = None
 
     card.unlock()
-    card.collapse()
     change_classes_button.hide()
 
     splits.init_splits()
     splits.card.lock()
-    splits.card.collapse()

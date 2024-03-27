@@ -59,7 +59,6 @@ card = Card(
     lock_message="Click on the Change model button to select another model",
 )
 card.lock()
-card.collapse()
 
 
 @select_model_button.click
@@ -79,21 +78,17 @@ def model_selected():
     g.train_mode = TrainMode(pretrained, custom, finetune)
 
     card.lock()
-    card.collapse()
     change_model_button.show()
 
     classes.fill_classes_selector()
     classes.card.unlock()
-    classes.card.uncollapse()
 
 
 @change_model_button.click
 def change_model():
     g.train_mode = None
     card.unlock()
-    card.collapse()
     change_model_button.hide()
 
     classes.fill_classes_selector(clear=True)
     classes.card.lock()
-    classes.card.collapse()
