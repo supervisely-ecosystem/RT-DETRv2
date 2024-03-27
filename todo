@@ -1,20 +1,21 @@
-Train  CLI
-+ Convert dataset Sly to COCO (mask/poly to bboxes)
-+ Why is it so slow?
-
-- Stop training
-- Train/val splits
+Train:
++ How to update charts (yield)? metric_logger?
++ How to modify checkpoint interval and val interval
++ Visualize predictions (LOGS)
++ metrics, how to add class-wise
++ lr_schedulers? can we plot them? which ones are implemented?
++ augmentations? add imgaug? можно сделать выбор rt-detr / imgaug
++ прочие параметры: ema, ema_decay, etc.
 - Resume training from Team Files checkpoint
+- Stop / pause training
+- Consistency in imgsz: Input Size, Resize, 
+        cfg.yaml_cfg["HybridEncoder"]["eval_spatial_size"] = size
+        cfg.yaml_cfg["RTDETRTransformer"]["eval_spatial_size"] = size
+
 
 Serve:
-+ Fill model list
-- Error: TagMeta is None
-- Test custom models
+- test imgsz support
+- use new GUI interface
 
-
-Бенчмарки (сранвить с yolo):
-- mAP на разных датасетах
-- FPS
-- Обучаемость (compute, time)
-- Data Efficiency
-- hyper-parameter sensitivity
+Others:
+- add ONNX support

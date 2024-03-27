@@ -22,13 +22,23 @@ class YAMLConfig(BaseConfig):
 
         self.yaml_cfg = cfg
 
-        self.log_step = cfg.get("log_step", 100)
-        self.checkpoint_step = cfg.get("checkpoint_step", 1)
-        self.epoches = cfg.get("epoches", -1)
-        self.resume = cfg.get("resume", "")
-        self.tuning = cfg.get("tuning", "")
-        self.sync_bn = cfg.get("sync_bn", False)
-        self.output_dir = cfg.get("output_dir", None)
+        self.log_step = cfg.get('log_step', 100)
+        self.checkpoint_step = cfg.get('checkpoint_step', 1)
+        self.val_step = cfg.get('val_step', 1)
+        self.save_optimizer = cfg.get('save_optimizer', False)
+        self.save_ema = cfg.get('save_ema', False)
+
+        self.epoches = cfg.get('epoches', -1)
+        self.resume = cfg.get('resume', '')
+        self.tuning = cfg.get('tuning', '')
+        self.sync_bn = cfg.get('sync_bn', False)
+        self.output_dir = cfg.get('output_dir', None)
+        
+        self.use_ema = cfg.get('use_ema', False)
+        self.use_amp = cfg.get('use_amp', False)
+        self.autocast = cfg.get('autocast', dict())
+        self.find_unused_parameters = cfg.get('find_unused_parameters', None)
+        self.clip_max_norm = cfg.get('clip_max_norm', 0.)
 
         self.use_ema = cfg.get("use_ema", False)
         self.use_amp = cfg.get("use_amp", False)

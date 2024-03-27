@@ -4,6 +4,7 @@ import torch
 from checkpoints import checkpoints
 from src.core import YAMLConfig
 from src.solver import DetSolver
+from src.misc.sly_logger import LOGS, Logs
 
 
 def train(model: str, finetune: bool, config_path: str):
@@ -29,3 +30,17 @@ def train(model: str, finetune: bool, config_path: str):
     solver.fit()
 
     return cfg
+
+
+def setup_callbacks():
+    def print_iter(logs: Logs):
+        print(logs.iter_idx)
+        print(logs.loss, logs.lrs, logs.cuda_memory)
+
+    def print_eval(logs: Logs):
+        # Charts: AP vs AR (maxDets=100), All APs, All ARs
+        print(logs.epoch)
+        print(logs.evaluation_metrics)
+
+    LOGS.iter_callback = print_iter
+    LOGS.eval_callback = print_eval

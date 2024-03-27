@@ -16,6 +16,8 @@ import torch.amp
 
 from src.data import CocoEvaluator
 from src.misc import (MetricLogger, SmoothedValue, reduce_dict)
+from src.misc.sly_logger import LOGS
+import utils
 
 
 def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
@@ -28,6 +30,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     # metric_logger.add_meter('class_error', SmoothedValue(window_size=1, fmt='{value:.2f}'))
     header = 'Epoch: [{}]'.format(epoch)
     print_freq = kwargs.get('print_freq', 10)
+    LOGS.epoch = epoch
     
     ema = kwargs.get('ema', None)
     scaler = kwargs.get('scaler', None)
@@ -82,9 +85,22 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         metric_logger.update(loss=loss_value, **loss_dict_reduced)
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])
 
+        # Update supervisely logs
+        LOGS.loss = loss_value.item()
+        lrs = {}
+        for i, param_group in enumerate(optimizer.param_groups):
+            lrs[f"lr{i}"] = param_group["lr"]
+        LOGS.lrs = lrs
+        if torch.cuda.is_available():
+            MB = 1024.0 * 1024.0
+            LOGS.cuda_memory = torch.cuda.max_memory_allocated() / MB
+        LOGS.log_train_iter()
+        LOGS.iter_idx += 1
+
+
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
-    print("Averaged stats:", metric_logger)
+    # print("Averaged stats:", metric_logger)
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
 
@@ -111,6 +127,7 @@ def evaluate(model: torch.nn.Module, criterion: torch.nn.Module, postprocessors,
     #         output_dir=os.path.join(output_dir, "panoptic_eval"),
     #     )
 
+    imgs, predictions = [], []
     for samples, targets in metric_logger.log_every(data_loader, 10, header):
         samples = samples.to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
@@ -154,6 +171,17 @@ def evaluate(model: torch.nn.Module, criterion: torch.nn.Module, postprocessors,
         #         res_pano[i]["file_name"] = file_name
         #     panoptic_evaluator.update(res_pano)
 
+        # Draw predictions
+        if len(imgs) < LOGS.n_preview_imgs:
+            for sample, result, orig_target_size in zip(samples, results, orig_target_sizes):
+                img, prediction = utils.prepare_result(sample, result, orig_target_size, base_ds)
+                imgs.append(img)
+                predictions.append(prediction)
+                if len(imgs) == LOGS.n_preview_imgs:
+                    break
+        if len(imgs) == LOGS.n_preview_imgs:
+            LOGS.log_preview(imgs, predictions)
+
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger)
@@ -176,6 +204,8 @@ def evaluate(model: torch.nn.Module, criterion: torch.nn.Module, postprocessors,
     if coco_evaluator is not None:
         if 'bbox' in iou_types:
             stats['coco_eval_bbox'] = coco_evaluator.coco_eval['bbox'].stats.tolist()
+            class_ap, class_ar = utils.collect_per_class_metrics(coco_evaluator, base_ds)
+            LOGS.log_evaluation(stats['coco_eval_bbox'], class_ap, class_ar)
         if 'segm' in iou_types:
             stats['coco_eval_masks'] = coco_evaluator.coco_eval['segm'].stats.tolist()
             

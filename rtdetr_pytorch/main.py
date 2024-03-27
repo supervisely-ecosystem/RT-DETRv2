@@ -6,6 +6,7 @@ import supervisely.app.widgets as widgets
 import yaml
 from convert_to_coco import get_coco_annotations
 from checkpoints import checkpoints
+import sly_imgaug
 
 
 # Globals
@@ -28,6 +29,9 @@ class UI:
         self.finetune = widgets.Checkbox("Finetune", True)
         self.train_dataset = widgets.SelectDataset(project_id=project_id, compact=True)
         self.val_dataset = widgets.SelectDataset(project_id=project_id, compact=True)
+        ds_id = api.dataset.get_list(project_id)[0].id
+        self.train_dataset.set_dataset_id(ds_id)
+        self.val_dataset.set_dataset_id(ds_id)
         self.selected_classes = widgets.ClassesTable(project_id=project_id)
         self.selected_classes.select_all()
         self.custom_config = widgets.Editor(placeholder_config, language_mode="yaml", height_lines=25)
@@ -100,18 +104,26 @@ def prepare_config():
     custom_config["__include__"] = [f"{config_name}.yml"]
     custom_config["remap_mscoco_category"] = False
     custom_config["num_classes"] = len(ui.selected_classes.get_selected_classes())
-    custom_config["train_dataloader"] = {
-        "dataset": {
-            "img_folder": f"{project_dir}/{train_dataset_name}/img",
-            "ann_file": f"{project_dir}/{train_dataset_name}/coco_anno.json"
+    if "train_dataloader" not in custom_config:
+        custom_config["train_dataloader"] = {
+            "dataset": {
+                "img_folder": f"{project_dir}/{train_dataset_name}/img",
+                "ann_file": f"{project_dir}/{train_dataset_name}/coco_anno.json"
+            }
         }
-    }
-    custom_config["val_dataloader"] = {
-        "dataset": {
-            "img_folder": f"{project_dir}/{val_dataset_name}/img",
-            "ann_file": f"{project_dir}/{val_dataset_name}/coco_anno.json"
+    else:
+        custom_config["train_dataloader"]["dataset"]["img_folder"] = f"{project_dir}/{train_dataset_name}/img"
+        custom_config["train_dataloader"]["dataset"]["ann_file"] = f"{project_dir}/{train_dataset_name}/coco_anno.json"
+    if "val_dataloader" not in custom_config:
+        custom_config["val_dataloader"] = {
+            "dataset": {
+                "img_folder": f"{project_dir}/{val_dataset_name}/img",
+                "ann_file": f"{project_dir}/{val_dataset_name}/coco_anno.json"
+            }
         }
-    }
+    else:
+        custom_config["val_dataloader"]["dataset"]["img_folder"] = f"{project_dir}/{val_dataset_name}/img"
+        custom_config["val_dataloader"]["dataset"]["ann_file"] = f"{project_dir}/{val_dataset_name}/coco_anno.json"
     selected_classes = ui.selected_classes.get_selected_classes()
     custom_config["sly_metadata"] = {
         "classes": selected_classes,
@@ -174,3 +186,16 @@ def success(out_path):
 
 ui = UI()
 app = sly.Application(ui.container)
+
+
+def _run():
+    prepare_data()
+    prepare_config()
+    cfg = train()
+    save_config(cfg)
+    out_path = upload_model(cfg.output_dir)
+    success(out_path)
+
+import train as train_cli
+train_cli.setup_callbacks()
+_run()

@@ -1,4 +1,8 @@
-epoches: 72
+epoches: 20
+val_step: 1
+checkpoint_step: 1
+save_optimizer: False
+save_ema: False
 
 
 train_dataloader: 
@@ -10,9 +14,8 @@ train_dataloader:
         - {type: RandomIoUCrop, p: 0.8}
         - {type: SanitizeBoundingBox, min_size: 1}
         - {type: RandomHorizontalFlip}
-        - {type: Resize, size: [640, 640], }
-        # - {type: Resize, size: 639, max_size: 640}
-        # - {type: PadToSize, spatial_size: 640}
+        # - {type: ImgAug, config_path: "imgaug.json"}
+        - {type: Resize, size: [640, 640]}
         - {type: ToImageTensor}
         - {type: ConvertDtype}
         - {type: SanitizeBoundingBox, min_size: 1}
@@ -52,11 +55,15 @@ optimizer:
   betas: [0.9, 0.999]
   weight_decay: 0.0001
 
-
 clip_max_norm: 0.1
 
-
 lr_scheduler:
-  type: MultiStepLR
+  type: MultiStepLR  # CosineAnnealingLR | OneCycleLR | LambdaLR
   milestones: [1000]
   gamma: 0.1
+
+use_ema: True 
+ema:
+  type: ModelEMA
+  decay: 0.9999
+  warmups: 2000
