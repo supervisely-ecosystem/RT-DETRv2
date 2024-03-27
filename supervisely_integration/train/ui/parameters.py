@@ -463,8 +463,8 @@ def run_training():
     output.card.unlock()
     output.card.uncollapse()
 
-    # download_project()
-    # create_trainval()
+    download_project()
+    create_trainval()
 
     training_parameters = read_parameters()
     prepare_config(training_parameters)
@@ -577,13 +577,13 @@ def read_scheduler_parameters():
 
 
 def prepare_config(custom_config: Dict[str, Any]):
-    # custom_config_text = advanced_mode_editor.get_value()
     model_name = g.train_mode.pretrained[0]
     arch = model_name.split("_coco")[0]
     config_name = f"{arch}_6x_coco"
     sly.logger.info(f"Model name: {model_name}, arch: {arch}, config_name: {config_name}")
 
-    custom_config = custom_config or {}
+    # custom_config = custom_config or {} # ! DEBUG
+    custom_config = {}  # ! DEBUG
     custom_config["__include__"] = [f"{config_name}.yml"]
     custom_config["remap_mscoco_category"] = False
     custom_config["num_classes"] = len(g.selected_classes)
