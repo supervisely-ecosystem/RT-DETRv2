@@ -226,8 +226,8 @@ card = Card(
     ),
     content_top_right=stop_button,
 )
-card.lock()
-card.collapse()
+# card.lock()
+# card.collapse()
 
 
 @advanced_mode_checkbox.value_changed
@@ -281,23 +281,78 @@ def scheduler_changed(scheduler: str):
     g.widgets = None
 
     if not scheduler != "Without scheduler":
+        by_epoch = Checkbox("By epoch", True)
+        by_epoch_field = Field(by_epoch, title="By epoch", description="Use epoch-based scheduler")
         widgets = {
-            "by_epoch": Checkbox("By epoch", True),
+            "by_epoch": by_epoch,
+            "by_epoch_field": by_epoch_field,
         }
+    else:
+        widgets = {}
 
     if scheduler == "StepLR":
-        widgets["step"] = InputNumber(value=1)
-        widgets["gamma"] = InputNumber(value=0.1)
+        step = InputNumber(value=1)
+        step_field = Field(
+            step,
+            title="Step",
+            description="Period of learning rate decay",
+        )
+        widgets["step"] = step
+        widgets["step_field"] = step_field
     elif scheduler == "MultiStepLR":
-        widgets["steps"] = Input("1,2,3")
-        widgets["gamma"] = InputNumber(value=0.1)
+        steps = Input("1,2,3")
+        steps_field = Field(
+            steps,
+            title="Steps",
+            description="Periods of learning rate decay",
+        )
+        gamma = InputNumber(value=0.1)
+        gamma_field = Field(
+            gamma,
+            title="Gamma",
+            description="Multiplicative factor of learning rate decay",
+        )
+        widgets["steps"] = steps
+        widgets["steps_field"] = steps_field
+        widgets["gamma"] = gamma
+        widgets["gamma_field"] = gamma_field
     elif scheduler == "ExponentialLR":
-        widgets["gamma"] = InputNumber(value=0.1)
-    elif scheduler == "ReduceLROnPlateau":
-        widgets["factor"] = InputNumber(value=0.1)
-        widgets["patience"] = InputNumber(value=10)
+        gamma = InputNumber(value=0.1)
+        gamma_field = Field(
+            gamma,
+            title="Gamma",
+            description="Multiplicative factor of learning rate decay",
+        )
+        widgets["gamma"] = gamma
+        widgets["gamma_field"] = gamma_field
+    elif scheduler == "ReduceLROnPlateauLR":
+        factor = InputNumber(value=0.1)
+        factor_field = Field(
+            factor,
+            title="Factor",
+            description="Factor by which the learning rate will be reduced",
+        )
+        patience = InputNumber(value=10)
+        patience_field = Field(
+            patience,
+            title="Patience",
+            description="Number of epochs with no improvement after which learning rate will be reduced",
+        )
+        widgets["factor"] = factor
+        widgets["factor_field"] = factor_field
+        widgets["patience"] = patience
+        widgets["patience_field"] = patience_field
     elif scheduler == "CosineAnnealingLR":
-        widgets["T_max"] = InputNumber(value=10)
+        t_max = InputNumber(value=10)
+        t_max_field = Field(
+            t_max,
+            title="T max",
+            description="Maximum number of iterations",
+        )
+
+        widgets["t_max"] = t_max
+        widgets["t_max_field"] = t_max_field
+
         min_lr_checkbox = Checkbox("Min LR", True)
 
         @min_lr_checkbox.value_changed
@@ -309,14 +364,51 @@ def scheduler_changed(scheduler: str):
                 widgets["min_lr_value"].disable()
                 widgets["min_lr_ratio"].enable()
 
+        min_lr_field = Field(
+            min_lr_checkbox,
+            title="Min LR",
+            description="Use minimum learning rate",
+        )
         widgets["min_lr"] = min_lr_checkbox
-        widgets["min_lr_value"] = InputNumber(value=0.001)
-        widgets["min_lr_ratio"] = InputNumber(value=0.1)
+        widgets["min_lr_field"] = min_lr_field
+
+        min_lr_value = InputNumber(value=0.001)
+        min_lr_value_field = Field(
+            min_lr_value,
+            title="Min LR value",
+            description="Minimum learning rate",
+        )
+        widgets["min_lr_value"] = min_lr_value
+        widgets["min_lr_value_field"] = min_lr_value_field
+
+        min_lr_ratio = InputNumber(value=0.1)
+        min_lr_ratio_field = Field(
+            min_lr_ratio,
+            title="Min LR ratio",
+            description="Minimum learning rate ratio",
+        )
+        widgets["min_lr_ratio"] = min_lr_ratio
+        widgets["min_lr_ratio_field"] = min_lr_ratio_field
+
         widgets["min_lr_ratio"].disable()
 
     elif scheduler == "CosineRestartLR":
-        widgets["periods"] = Input("10,20,30")
-        widgets["restarts"] = Input("2,3,4")
+        periods = Input("10,20,30")
+        periods_field = Field(
+            periods,
+            title="Periods",
+            description="Periods for restarts",
+        )
+        restarts = Input("2,3,4")
+        restarts_field = Field(
+            restarts,
+            title="Restarts",
+            description="Number of restarts",
+        )
+        widgets["periods"] = periods
+        widgets["periods_field"] = periods_field
+        widgets["restarts"] = restarts
+        widgets["restarts_field"] = restarts_field
 
         min_lr_checkbox = Checkbox("Min LR", True)
 
@@ -329,15 +421,40 @@ def scheduler_changed(scheduler: str):
                 widgets["min_lr_value"].disable()
                 widgets["min_lr_ratio"].enable()
 
-        widgets["min_lr"] = min_lr_checkbox
+        min_lr_field = Field(
+            min_lr_checkbox,
+            title="Min LR",
+            description="Use minimum learning rate",
+        )
 
-        widgets["min_lr"] = Checkbox("Min LR", True)
-        widgets["min_lr_value"] = InputNumber(value=0.001)
-        widgets["min_lr_ratio"] = InputNumber(value=0.1)
+        widgets["min_lr"] = min_lr_checkbox
+        widgets["min_lr_field"] = min_lr_field
+
+        min_lr_value = InputNumber(value=0.001)
+        min_lr_value_field = Field(
+            min_lr_value,
+            title="Min LR value",
+            description="Minimum learning rate",
+        )
+        widgets["min_lr_value"] = min_lr_value
+        widgets["min_lr_value_field"] = min_lr_value_field
+
+        min_lr_ratio = InputNumber(value=0.1)
+        min_lr_ratio_field = Field(
+            min_lr_ratio,
+            title="Min LR ratio",
+            description="Minimum learning rate ratio",
+        )
+        widgets["min_lr_ratio"] = min_lr_ratio
+        widgets["min_lr_ratio_field"] = min_lr_ratio_field
+
+        widgets["min_lr_ratio"].disable()
 
     g.widgets = widgets
 
-    scheduler_widgets_container._widgets.extend([widget for widget in widgets.values()])
+    scheduler_widgets_container._widgets.extend(
+        [widget for key, widget in widgets.items() if key.endswith("_field")]
+    )
     scheduler_parameters_area.reload()
 
 
