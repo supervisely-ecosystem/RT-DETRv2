@@ -22,7 +22,6 @@ card = Card(
     lock_message="Click on the Change splits button to select other splits",
 )
 card.lock()
-card.collapse()
 
 
 def init_splits(project_id: Optional[int] = None):
@@ -39,14 +38,9 @@ def splits_selected():
     g.splits = trainval_container._widgets[0].get_splits()
 
     card.lock()
-    card.collapse()
     change_button.show()
 
     parameters.card.unlock()
-    parameters.card.uncollapse()
-
-    # download_project()
-    # create_trainval()
 
 
 @change_button.click
@@ -60,8 +54,6 @@ def change_splits():
     sly.logger.debug("Splits reset.")
 
     card.unlock()
-    card.collapse()
     change_button.hide()
 
     parameters.card.lock()
-    parameters.card.collapse()

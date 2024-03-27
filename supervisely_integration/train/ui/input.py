@@ -41,7 +41,6 @@ def project_selected():
     card.lock()
 
     model.card.unlock()
-    model.card.uncollapse()
 
 
 @change_project_button.click
@@ -59,4 +58,3 @@ def change_project():
     card.unlock()
 
     model.card.lock()
-    model.card.collapse()

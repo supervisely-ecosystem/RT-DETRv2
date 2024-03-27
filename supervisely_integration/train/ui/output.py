@@ -12,4 +12,3 @@ card = Card(
     content=Container([train_progress, output_folder]),
 )
 card.lock()
-card.collapse()
