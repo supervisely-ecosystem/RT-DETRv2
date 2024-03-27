@@ -226,8 +226,8 @@ card = Card(
     ),
     content_top_right=stop_button,
 )
-# card.lock()
-# card.collapse()
+card.lock()
+card.collapse()
 
 
 @advanced_mode_checkbox.value_changed
