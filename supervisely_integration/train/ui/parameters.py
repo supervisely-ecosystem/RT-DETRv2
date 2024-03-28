@@ -3,6 +3,7 @@ import shutil
 from datetime import datetime
 from typing import Any, Dict, List
 
+import numpy as np
 import supervisely as sly
 import yaml
 from pycocotools.coco import COCO
@@ -19,6 +20,8 @@ from supervisely.app.widgets import (
     ReloadableArea,
     Select,
     BindedInputNumber,
+    LineChart,
+    Text,
 )
 
 import rtdetr_pytorch.train as train_cli
@@ -184,19 +187,20 @@ scheduler_widgets_container = Container()
 scheduler_parameters_area = ReloadableArea(scheduler_widgets_container)
 
 enable_warmup_checkbox = Checkbox("Enable warmup", True)
-warmup_iterations_input = InputNumber(value=2)
+warmup_iterations_input = InputNumber(value=100)
 warmup_iterations_field = Field(
     warmup_iterations_input,
     title="Warmup iterations",
-    description="The number of iterations to warm up the learning rate",
+    description="The number of iterations the learning rate will increase linearly to the initial value.",
 )
-warmup_ratio_input = InputNumber(value=0.001)
-warmup_ratio_field = Field(
-    warmup_ratio_input,
-    title="Warmup ratio",
-    description="The ratio of the initial learning rate to use for warmup",
+warmup_container = Container([warmup_iterations_field])
+
+scheduler_preview_chart = LineChart(
+    "Scheduler preview", stroke_curve="straight", height=400, decimalsInFloat=6, markers_size=0
 )
-warmup_container = Container([warmup_iterations_field, warmup_ratio_field])
+scheduler_preview_chart.hide()
+scheduler_preview_btn = Button("Preview", button_size="small")
+scheduler_preview_info = Text("", status="info")
 
 learning_rate_scheduler_tab = Container(
     [
@@ -204,6 +208,9 @@ learning_rate_scheduler_tab = Container(
         scheduler_parameters_area,
         enable_warmup_checkbox,
         warmup_container,
+        scheduler_preview_info,
+        scheduler_preview_chart,
+        scheduler_preview_btn,
     ]
 )
 
@@ -268,6 +275,81 @@ def warmup_changed(is_checked: bool):
         warmup_container.show()
     else:
         warmup_container.hide()
+
+
+@scheduler_preview_btn.click
+def on_preivew_scheduler():
+    import visualize_scheduler
+    from rtdetr_pytorch.utils import name2cls
+    from torch.optim import SGD
+    import torch
+
+    total_epochs = number_of_epochs_input.get_value()
+    batch_size = train_batch_size_input.get_value()
+    start_lr = learning_rate_input.get_value()
+    total_images = g.selected_project_info.items_count
+    
+    from supervisely_integration.train.ui.splits import trainval_container
+    from supervisely.app.widgets import TrainValSplits
+    split_widget : TrainValSplits = trainval_container._widgets[0]
+    split_widget.get_splits()
+    self = split_widget
+    split_method = self._content.get_active_tab()
+    if split_method == "Random":
+        splits_counts = self._random_splits_table.get_splits_counts()
+        train_count = splits_counts["train"]
+        val_count = splits_counts["val"]
+        val_part = val_count / (val_count + train_count)
+        n_images = total_images
+        val_count = round(val_part * n_images)
+        train_count = n_images - val_count
+    elif split_method == "Based on item tags":
+        # can't predict
+        train_count = total_images
+    elif split_method == "Based on datasets":
+        train_ds_ids = self._train_ds_select.get_selected_ids()
+        val_ds_ids = self._val_ds_select.get_selected_ids()
+        ds_infos = self._api.dataset.get_list(self._project_id)
+        train_ds_names, val_ds_names = [], []
+        train_count, val_count = 0, 0
+        for ds_info in ds_infos:
+            if ds_info.id in train_ds_ids:
+                train_ds_names.append(ds_info.name)
+                train_count += ds_info.items_count
+            if ds_info.id in val_ds_ids:
+                val_ds_names.append(ds_info.name)
+                val_count += ds_info.items_count
+
+    dataloader_len = train_count // batch_size
+
+    def instantiate(d, **cls_kwargs):
+        d = d.copy()
+        cls = name2cls(d.pop('type'))
+        return cls(**{**d, **cls_kwargs})
+
+    custom_config = read_parameters()
+    lr_scheduler = custom_config.get("lr_scheduler")
+    dummy_optim = SGD([torch.nn.Parameter(torch.tensor([5.]))], start_lr)
+    if lr_scheduler is not None:
+        lr_scheduler = instantiate(lr_scheduler, optimizer=dummy_optim)
+    lr_warmup = custom_config.get("lr_warmup")
+    if lr_warmup is not None:
+        lr_warmup = instantiate(lr_warmup, optimizer=dummy_optim)
+    
+    x, lrs = visualize_scheduler.test_schedulers(
+        lr_scheduler, lr_warmup, dummy_optim, dataloader_len, total_epochs
+    )
+
+    names = []
+    if lr_warmup is not None:
+        names += ["warmup"]
+    if lr_scheduler is not None:
+        names += [lr_scheduler.__class__.__name__]
+    name = ", ".join(names)
+    scheduler_preview_chart.set_series([])
+    scheduler_preview_chart.add_series(f"{name}", x, lrs)
+    scheduler_preview_chart.show()
+    scheduler_preview_info.set(f"Estimated train images count = {train_count}. Actual curve can be different.", status="info")
 
 
 @scheduler_select.value_changed
@@ -567,8 +649,8 @@ def read_parameters():
         custom_config["val_dataloader"]["num_workers"] = utils.get_num_workers(val_batch_size_input.value)
         
         # LR scheduler
-        # TODO: warmup
-        custom_config["lr_scheduler"] = scheduler_params["scheduler"]
+        train_items, val_items = g.splits
+        total_steps = general_params["epoches"] * np.ceil(len(train_items) / train_batch_size_input.value)
         if scheduler_params["scheduler"] == "MultiStepLR":
             custom_config["lr_scheduler"] = {
                 "type": "MultiStepLR",
@@ -582,12 +664,21 @@ def read_parameters():
                 "eta_min": scheduler_params["min_lr_value"],
             }
         elif scheduler_params["scheduler"] == "OneCycleLR":
-            total_steps = general_params["epoches"] * (len(g.converted_project.datasets.get("train")) // train_batch_size_input.value)
             custom_config["lr_scheduler"] = {
                 "type": "OneCycleLR",
                 "max_lr": scheduler_params["max_lr"],
                 "total_steps": total_steps,
                 "pct_start": scheduler_params["pct_start"],
+            }
+        else:
+            custom_config["lr_scheduler"] = None
+
+        if scheduler_params["enable_warmup"]:
+            custom_config["lr_warmup"] = {
+                "type": "LinearLR",
+                "total_iters": scheduler_params["warmup_iterations"],
+                "start_factor": 0.001,
+                "end_factor": 1.0,
             }
         
         # TODO: set imgaug

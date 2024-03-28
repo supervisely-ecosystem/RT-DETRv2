@@ -172,3 +172,4 @@ rtdetr_pytorch/configs/rtdetr/custom.yml
 /models
 /output
 temp/
+/imgaug.json
