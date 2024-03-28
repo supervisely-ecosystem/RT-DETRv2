@@ -34,6 +34,8 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     
     ema = kwargs.get('ema', None)
     scaler = kwargs.get('scaler', None)
+    lr_warmup = kwargs.get('lr_warmup', None)
+    lr_scheduler = kwargs.get('lr_scheduler', None)
 
     for samples, targets in metric_logger.log_every(data_loader, print_freq, header):
         samples = samples.to(device)
@@ -73,6 +75,12 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         # ema 
         if ema is not None:
             ema.update(model)
+
+        # lr scheduler
+        if lr_warmup is not None:
+            lr_warmup.step()
+        if lr_scheduler is not None and not utils.is_by_epoch(lr_scheduler):
+            lr_scheduler.step()
 
         loss_dict_reduced = reduce_dict(loss_dict)
         loss_value = sum(loss_dict_reduced.values())
