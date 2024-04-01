@@ -8,6 +8,7 @@ import supervisely as sly
 import yaml
 from pycocotools.coco import COCO
 from supervisely.app.widgets import (
+    BindedInputNumber,
     Button,
     Card,
     Checkbox,
@@ -16,17 +17,17 @@ from supervisely.app.widgets import (
     Field,
     Input,
     InputNumber,
+    LineChart,
     RadioTabs,
     ReloadableArea,
     Select,
-    BindedInputNumber,
-    LineChart,
     Text,
 )
 
 import rtdetr_pytorch.train as train_cli
 import supervisely_integration.train.globals as g
 import supervisely_integration.train.ui.output as output
+import supervisely_integration.train.ui.splits as splits
 import supervisely_integration.train.utils as utils
 
 # region advanced widgets
@@ -279,19 +280,22 @@ def warmup_changed(is_checked: bool):
 
 @scheduler_preview_btn.click
 def on_preivew_scheduler():
-    import visualize_scheduler
-    from rtdetr_pytorch.utils import name2cls
-    from torch.optim import SGD
     import torch
+    import visualize_scheduler
+    from torch.optim import SGD
+
+    from rtdetr_pytorch.utils import name2cls
 
     total_epochs = number_of_epochs_input.get_value()
     batch_size = train_batch_size_input.get_value()
     start_lr = learning_rate_input.get_value()
     total_images = g.selected_project_info.items_count
-    
-    from supervisely_integration.train.ui.splits import trainval_container
+
     from supervisely.app.widgets import TrainValSplits
-    split_widget : TrainValSplits = trainval_container._widgets[0]
+
+    from supervisely_integration.train.ui.splits import trainval_container
+
+    split_widget: TrainValSplits = trainval_container._widgets[0]
     split_widget.get_splits()
     self = split_widget
     split_method = self._content.get_active_tab()
@@ -324,18 +328,18 @@ def on_preivew_scheduler():
 
     def instantiate(d, **cls_kwargs):
         d = d.copy()
-        cls = name2cls(d.pop('type'))
+        cls = name2cls(d.pop("type"))
         return cls(**{**d, **cls_kwargs})
 
     custom_config = read_parameters()
     lr_scheduler = custom_config.get("lr_scheduler")
-    dummy_optim = SGD([torch.nn.Parameter(torch.tensor([5.]))], start_lr)
+    dummy_optim = SGD([torch.nn.Parameter(torch.tensor([5.0]))], start_lr)
     if lr_scheduler is not None:
         lr_scheduler = instantiate(lr_scheduler, optimizer=dummy_optim)
     lr_warmup = custom_config.get("lr_warmup")
     if lr_warmup is not None:
         lr_warmup = instantiate(lr_warmup, optimizer=dummy_optim)
-    
+
     x, lrs = visualize_scheduler.test_schedulers(
         lr_scheduler, lr_warmup, dummy_optim, dataloader_len, total_epochs
     )
@@ -349,7 +353,10 @@ def on_preivew_scheduler():
     scheduler_preview_chart.set_series([])
     scheduler_preview_chart.add_series(f"{name}", x, lrs)
     scheduler_preview_chart.show()
-    scheduler_preview_info.set(f"Estimated train images count = {train_count}. Actual curve can be different.", status="info")
+    scheduler_preview_info.set(
+        f"Estimated train images count = {train_count}. Actual curve can be different.",
+        status="info",
+    )
 
 
 @scheduler_select.value_changed
@@ -462,7 +469,7 @@ def scheduler_changed(scheduler: str):
         # widgets["min_lr"] = min_lr_checkbox
         # widgets["min_lr_field"] = min_lr_field
 
-        min_lr_value = InputNumber(value=0.)
+        min_lr_value = InputNumber(value=0.0)
         min_lr_value_field = Field(
             min_lr_value,
             title="Min LR value",
@@ -575,6 +582,9 @@ def scheduler_changed(scheduler: str):
 def run_training():
     output.card.unlock()
 
+    g.splits = splits.trainval_splits.get_splits()
+    sly.logger.debug("Read splits from the widget...")
+
     download_project()
     create_trainval()
 
@@ -603,7 +613,9 @@ def read_parameters():
             custom_config = f.read()
         custom_config = yaml.safe_load(custom_config)
 
-        clip_max_norm = clip_gradient_norm_input.get_value() if clip_gradient_norm_checkbox.is_checked() else -1
+        clip_max_norm = (
+            clip_gradient_norm_input.get_value() if clip_gradient_norm_checkbox.is_checked() else -1
+        )
         general_params = {
             "epoches": number_of_epochs_input.value,
             "val_step": validation_interval_input.value,
@@ -624,10 +636,13 @@ def read_parameters():
         if optimizer_params.get("momentum"):
             custom_config["optimizer"]["momentum"] = optimizer_params["momentum"]
         else:
-            custom_config["optimizer"]["betas"] = [optimizer_params["beta1"], optimizer_params["beta2"]]
+            custom_config["optimizer"]["betas"] = [
+                optimizer_params["beta1"],
+                optimizer_params["beta2"],
+            ]
 
         # Set input_size
-        w,h = input_size_input.get_value()
+        w, h = input_size_input.get_value()
         for op in custom_config["train_dataloader"]["dataset"]["transforms"]["ops"]:
             if op["type"] == "Resize":
                 op["size"] = [w, h]
@@ -645,12 +660,18 @@ def read_parameters():
 
         custom_config["train_dataloader"]["batch_size"] = train_batch_size_input.value
         custom_config["val_dataloader"]["batch_size"] = val_batch_size_input.value
-        custom_config["train_dataloader"]["num_workers"] = utils.get_num_workers(train_batch_size_input.value)
-        custom_config["val_dataloader"]["num_workers"] = utils.get_num_workers(val_batch_size_input.value)
-        
+        custom_config["train_dataloader"]["num_workers"] = utils.get_num_workers(
+            train_batch_size_input.value
+        )
+        custom_config["val_dataloader"]["num_workers"] = utils.get_num_workers(
+            val_batch_size_input.value
+        )
+
         # LR scheduler
         train_items, val_items = g.splits
-        total_steps = general_params["epoches"] * np.ceil(len(train_items) / train_batch_size_input.value)
+        total_steps = general_params["epoches"] * np.ceil(
+            len(train_items) / train_batch_size_input.value
+        )
         if scheduler_params["scheduler"] == "MultiStepLR":
             custom_config["lr_scheduler"] = {
                 "type": "MultiStepLR",
@@ -680,7 +701,7 @@ def read_parameters():
                 "start_factor": 0.001,
                 "end_factor": 1.0,
             }
-        
+
         # TODO: set imgaug
         if False:
             ops = custom_config["train_dataloader"]["dataset"]["transforms"]["ops"]
@@ -689,7 +710,9 @@ def read_parameters():
                     resize_idx = i
                     break
             imgaug_op = {"type": "ImgAug", "config_path": "imgaug.json"}
-            custom_config["train_dataloader"]["dataset"]["transforms"]["ops"] = [imgaug_op] + ops[resize_idx:]
+            custom_config["train_dataloader"]["dataset"]["transforms"]["ops"] = [imgaug_op] + ops[
+                resize_idx:
+            ]
 
     return custom_config
 
@@ -747,7 +770,9 @@ def prepare_config(custom_config: Dict[str, Any]):
     custom_config["remap_mscoco_category"] = False
     custom_config["num_classes"] = len(g.selected_classes)
     custom_config["train_dataloader"]["dataset"]["img_folder"] = f"{g.train_dataset_path}/img"
-    custom_config["train_dataloader"]["dataset"]["ann_file"] = f"{g.train_dataset_path}/coco_anno.json"
+    custom_config["train_dataloader"]["dataset"][
+        "ann_file"
+    ] = f"{g.train_dataset_path}/coco_anno.json"
     custom_config["val_dataloader"]["dataset"]["img_folder"] = f"{g.val_dataset_path}/img"
     custom_config["val_dataloader"]["dataset"]["ann_file"] = f"{g.val_dataset_path}/coco_anno.json"
     selected_classes = [obj_class.name for obj_class in g.selected_classes]

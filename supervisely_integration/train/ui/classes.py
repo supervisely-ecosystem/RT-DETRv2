@@ -4,6 +4,7 @@ import supervisely as sly
 from supervisely.app.widgets import Button, Card, ClassesListSelector, Container, Text
 
 import supervisely_integration.train.globals as g
+import supervisely_integration.train.ui.parameters as parameters
 import supervisely_integration.train.ui.splits as splits
 
 empty_notification = Text("Please, select at least one class.", status="warning")
@@ -48,8 +49,8 @@ def classes_selected():
     card.lock()
     change_classes_button.show()
 
-    splits.init_splits(g.selected_project_id)
     splits.card.unlock()
+    parameters.card.unlock()
 
 
 @change_classes_button.click
@@ -59,5 +60,5 @@ def change_classes():
     card.unlock()
     change_classes_button.hide()
 
-    splits.init_splits()
     splits.card.lock()
+    parameters.card.lock()

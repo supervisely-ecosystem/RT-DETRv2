@@ -1,3 +1,5 @@
 supervisely==6.73.54
 pycocotools
 torch==2.0.1
+torchvision
+scipy
