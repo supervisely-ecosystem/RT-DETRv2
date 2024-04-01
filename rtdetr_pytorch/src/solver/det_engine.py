@@ -31,6 +31,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     header = 'Epoch: [{}]'.format(epoch)
     print_freq = kwargs.get('print_freq', 10)
     LOGS.epoch = epoch
+    grad_norm = None
     
     ema = kwargs.get('ema', None)
     scaler = kwargs.get('scaler', None)
@@ -53,7 +54,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             
             if max_norm > 0:
                 scaler.unscale_(optimizer)
-                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
+                grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
 
             scaler.step(optimizer)
             scaler.update()
@@ -68,7 +69,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             loss.backward()
             
             if max_norm > 0:
-                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
+                grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
 
             optimizer.step()
         
@@ -95,6 +96,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
         # Update supervisely logs
         LOGS.loss = loss_value.item()
+        LOGS.grad_norm = grad_norm.item() if grad_norm is not None else None
         lrs = {}
         for i, param_group in enumerate(optimizer.param_groups):
             lrs[f"lr{i}"] = param_group["lr"]

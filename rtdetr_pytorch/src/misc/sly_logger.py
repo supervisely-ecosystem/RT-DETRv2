@@ -7,14 +7,15 @@ class Logs:
 
     def reset(self):
         self.loss = None
-        self.lrs : dict = None
+        self.lrs: dict = None
+        self.grad_norm = None
         # self.data_time = None  # seconds
         # self.iter_time = None  # seconds
         self.cuda_memory = 0  # MB
 
         self.preview_imgs = None
         self.preview_predictions = None
-        self.evaluation_metrics : dict = None
+        self.evaluation_metrics: dict = None
 
         self.iter_idx = 0
         self.epoch = 0

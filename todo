@@ -17,6 +17,16 @@ Train:
         cfg.yaml_cfg["RTDETRTransformer"]["eval_spatial_size"] = size
 
 
+- augmentations in UI, 3 tabs, readonly=False
+- charts:
+        Loss, Learning Rate, Grad Norm, CUDA Memory;
+        AP@IoU=0.50:0.95|maxDets=100
+        AR@IoU=0.50:0.95|maxDets=100
+        per_class_ap
+        per_class_ar
+
+
+
 Serve:
 - test imgsz support
 - use new GUI interface
