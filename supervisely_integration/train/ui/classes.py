@@ -16,9 +16,8 @@ change_classes_button = Button("Change classes")
 change_classes_button.hide()
 
 card = Card(
-    title="3️⃣ Select classes",
+    title="Select classes",
     description="Select classes to train the model on",
-    collapsable=True,
     content=Container([train_classes_selector, select_classes_button]),
     content_top_right=change_classes_button,
     lock_message="Click on the Change classes button to select other classes",
@@ -28,7 +27,7 @@ card.lock()
 
 def fill_classes_selector(clear: Optional[bool] = False):
     if not clear:
-        train_classes_selector.set(g.selected_project_meta.obj_classes)
+        train_classes_selector.set(g.project_meta.obj_classes)
         train_classes_selector.select_all()
         train_classes_selector.show()
     else:
@@ -52,6 +51,8 @@ def classes_selected():
     splits.card.unlock()
     parameters.card.unlock()
 
+    g.update_step()
+
 
 @change_classes_button.click
 def change_classes():
@@ -62,3 +63,5 @@ def change_classes():
 
     splits.card.lock()
     parameters.card.lock()
+
+    g.update_step(back=True)

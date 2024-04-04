@@ -1,5 +1,6 @@
 import os
 import sys
+from typing import Optional
 
 import supervisely as sly
 from dotenv import load_dotenv
@@ -29,6 +30,10 @@ sly.logger.debug(f"Download dir: {DOWNLOAD_DIR}, converted dir: {CONVERTED_DIR}"
 OUTPUT_DIR = os.path.join(TEMP_DIR, "output")
 sly.fs.mkdir(OUTPUT_DIR, remove_content_if_exists=True)
 sly.logger.debug(f"Output dir: {OUTPUT_DIR}")
+AUG_TEMPLATES_DIR = os.path.join(CURRENT_DIR, "aug_templates")
+
+data_dir = os.path.join(CURRENT_DIR, "data")
+sly.fs.mkdir(data_dir, remove_content_if_exists=True)
 
 MODEL_MODES = ["Pretrained models", "Custom weights"]
 TABLE_COLUMNS = [
@@ -51,20 +56,19 @@ SCHEDULERS = [
     "CosineAnnealingLR",
     "CosineRestartLR",
 ]
-
 # endregion
 # region envvars
 team_id = sly.env.team_id()
 wotkspace_id = sly.env.workspace_id()
 project_id = sly.env.project_id()
-
 # endregion
 api = sly.Api.from_env()
-
+augs = []
 # region state
-selected_project_id = None
-selected_project_info = None
-selected_project_meta = None
+team = api.team.get_info_by_id(team_id)
+stepper = None
+project_info = None
+project_meta = None
 project_dir = None
 project = None
 converted_project = None
@@ -76,3 +80,32 @@ selected_classes = None
 splits = None
 widgets = None
 # endregion
+
+
+def update_step(back: Optional[bool] = False, step: Optional[int] = None) -> None:
+    if step is None:
+        current_step = stepper.get_active_step()
+        sly.logger.debug(f"Current step: {current_step}")
+        step = current_step - 1 if back else current_step + 1
+    sly.logger.debug(f"Next step: {step}")
+    stepper.set_active_step(step)
+
+
+def read_augs():
+    aug_files = sly.fs.list_files(
+        AUG_TEMPLATES_DIR, valid_extensions=[".json"], ignore_valid_extensions_case=True
+    )
+    sly.logger.debug(f"Found {len(aug_files)} augmentation templates")
+
+    for aug_path in aug_files:
+        aug_name = sly.utils.camel_to_snake(sly.fs.get_file_name(aug_path))
+        template = {
+            "label": aug_name,
+            "value": aug_path,
+        }
+        augs.append(template)
+
+    sly.logger.debug(f"Prepared {len(augs)} augmentation templates")
+
+
+read_augs()

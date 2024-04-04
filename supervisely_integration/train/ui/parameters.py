@@ -233,9 +233,8 @@ parameters_tabs = RadioTabs(
 )
 
 card = Card(
-    title="5️⃣ Training hyperparameters",
+    title="Training hyperparameters",
     description="Specify training hyperparameters using one of the methods.",
-    collapsable=True,
     content=Container(
         [advanced_mode_field, advanced_mode_editor, parameters_tabs, run_button],
     ),
@@ -289,7 +288,7 @@ def on_preivew_scheduler():
     total_epochs = number_of_epochs_input.get_value()
     batch_size = train_batch_size_input.get_value()
     start_lr = learning_rate_input.get_value()
-    total_images = g.selected_project_info.items_count
+    total_images = g.project_info.items_count
 
     from supervisely.app.widgets import TrainValSplits
 
@@ -778,8 +777,8 @@ def prepare_config(custom_config: Dict[str, Any]):
     selected_classes = [obj_class.name for obj_class in g.selected_classes]
     custom_config["sly_metadata"] = {
         "classes": selected_classes,
-        "project_id": g.selected_project_id,
-        "project_name": g.selected_project_info.name,
+        "project_id": g.project_id,
+        "project_name": g.project_info.name,
         "model": model_name,
     }
 
@@ -808,9 +807,7 @@ def save_config(cfg):
 def upload_model(output_dir):
     model_name = g.train_mode.pretrained[0]
     timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-    team_files_dir = (
-        f"/RT-DETR/{g.selected_project_info.name}_{g.selected_project_id}/{timestamp}_{model_name}"
-    )
+    team_files_dir = f"/RT-DETR/{g.project_info.name}_{g.project_id}/{timestamp}_{model_name}"
     local_dir = f"{output_dir}/upload"
     sly.fs.mkdir(local_dir)
 
@@ -829,9 +826,9 @@ def upload_model(output_dir):
 
 
 def download_project():
-    g.project_dir = os.path.join(g.DOWNLOAD_DIR, g.selected_project_info.name)
+    g.project_dir = os.path.join(g.DOWNLOAD_DIR, g.project_info.name)
     sly.logger.info(f"Downloading project to {g.project_dir}...")
-    sly.Project.download(g.api, g.selected_project_info.id, g.project_dir)
+    sly.Project.download(g.api, g.project_info.id, g.project_dir)
     sly.logger.info(f"Project downloaded to {g.project_dir}.")
     g.project = sly.Project(g.project_dir, sly.OpenMode.READ)
     sly.logger.info(f"Project loaded from {g.project_dir}.")
@@ -843,7 +840,7 @@ def create_trainval():
     train_items: List[sly.project.project.ItemInfo]
     val_items: List[sly.project.project.ItemInfo]
 
-    converted_project_dir = os.path.join(g.CONVERTED_DIR, g.selected_project_info.name)
+    converted_project_dir = os.path.join(g.CONVERTED_DIR, g.project_info.name)
     sly.logger.debug(f"Converted project will be saved to {converted_project_dir}.")
     sly.fs.mkdir(converted_project_dir)
     train_dataset_path = os.path.join(converted_project_dir, "train")

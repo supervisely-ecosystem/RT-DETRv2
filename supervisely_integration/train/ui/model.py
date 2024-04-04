@@ -51,14 +51,12 @@ model_mode = RadioTabs(
 )
 
 card = Card(
-    title="2️⃣ Select a model",
+    title="Select a model",
     description="Select a model to train",
-    collapsable=True,
     content=Container([model_mode, select_model_button]),
     content_top_right=change_model_button,
     lock_message="Click on the Change model button to select another model",
 )
-card.lock()
 
 
 @select_model_button.click
@@ -83,6 +81,8 @@ def model_selected():
     classes.fill_classes_selector()
     classes.card.unlock()
 
+    g.update_step()
+
 
 @change_model_button.click
 def change_model():
@@ -92,3 +92,5 @@ def change_model():
 
     classes.fill_classes_selector(clear=True)
     classes.card.lock()
+
+    g.update_step(back=True)
