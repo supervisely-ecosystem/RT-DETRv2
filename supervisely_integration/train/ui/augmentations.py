@@ -1,8 +1,11 @@
-from supervisely.app.widgets import AugmentationsWithTabs, Card, Container
+from supervisely.app.widgets import Card
+from supervisely.app.widgets.augmentations.augmentations import AugmentationsWithTabsNew
 
 import supervisely_integration.train.globals as g
 
-augmentations = AugmentationsWithTabs(g, templates=g.augs, task_type="detection")
+augmentations = AugmentationsWithTabsNew(
+    g.api, g.project_id, templates=g.augs, task_type="detection"
+)
 
 card = Card(
     title="Augmentations",
