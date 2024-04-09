@@ -19,7 +19,7 @@ class Logs:
 
         self.iter_idx = 0
         self.epoch = 0
-        
+
     def log_evaluation(self, stats, class_ap, class_ar):
         if len(stats) != 12:
             raise ValueError("Expected 12 COCO stats, got {}".format(len(stats)))
@@ -49,7 +49,7 @@ class Logs:
         metrics["per_class_ap"] = class_ap
         metrics["per_class_ar"] = class_ar
         self.evaluation_metrics = metrics
-        
+
         if self.eval_callback is not None:
             self.eval_callback(self)
 

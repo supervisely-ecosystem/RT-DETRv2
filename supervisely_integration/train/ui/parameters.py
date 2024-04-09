@@ -15,6 +15,7 @@ from supervisely.app.widgets import (
     Container,
     Editor,
     Field,
+    Flexbox,
     Input,
     InputNumber,
     LineChart,
@@ -220,6 +221,7 @@ learning_rate_scheduler_tab = Container(
 run_button = Button("Run training")
 stop_button = Button("Stop training", button_type="danger")
 stop_button.hide()
+buttons_flexbox = Flexbox([run_button, stop_button])
 
 
 parameters_tabs = RadioTabs(
@@ -236,9 +238,8 @@ card = Card(
     title="Training hyperparameters",
     description="Specify training hyperparameters using one of the methods.",
     content=Container(
-        [advanced_mode_field, advanced_mode_editor, parameters_tabs, run_button],
+        [advanced_mode_field, advanced_mode_editor, parameters_tabs, buttons_flexbox],
     ),
-    content_top_right=stop_button,
 )
 card.lock()
 
