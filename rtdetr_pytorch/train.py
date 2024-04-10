@@ -9,7 +9,12 @@ from src.misc.sly_logger import LOGS, Logs
 from src.solver import DetSolver
 
 
-def train(model: str, finetune: bool, config_path: str):
+def train(
+    model: str,
+    finetune: bool,
+    config_path: str,
+    progress: sly.app.widgets.Progress,
+):
 
     if finetune:
         checkpoint_url = checkpoints[model]
@@ -29,7 +34,7 @@ def train(model: str, finetune: bool, config_path: str):
     )
 
     solver = DetSolver(cfg)
-    solver.fit()
+    solver.fit(progress)
 
     return cfg
 

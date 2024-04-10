@@ -27,6 +27,7 @@ from supervisely.app.widgets import (
 
 import rtdetr_pytorch.train as train_cli
 import supervisely_integration.train.globals as g
+import supervisely_integration.train.ui.augmentations as augmentations
 import supervisely_integration.train.ui.output as output
 import supervisely_integration.train.ui.splits as splits
 import supervisely_integration.train.utils as utils
@@ -221,7 +222,6 @@ learning_rate_scheduler_tab = Container(
 run_button = Button("Run training")
 stop_button = Button("Stop training", button_type="danger")
 stop_button.hide()
-buttons_flexbox = Flexbox([run_button, stop_button])
 
 
 parameters_tabs = RadioTabs(
@@ -238,8 +238,9 @@ card = Card(
     title="Training hyperparameters",
     description="Specify training hyperparameters using one of the methods.",
     content=Container(
-        [advanced_mode_field, advanced_mode_editor, parameters_tabs, buttons_flexbox],
+        [advanced_mode_field, advanced_mode_editor, parameters_tabs, run_button],
     ),
+    content_top_right=stop_button,
 )
 card.lock()
 
@@ -581,7 +582,9 @@ def scheduler_changed(scheduler: str):
 @run_button.click
 def run_training():
     output.card.unlock()
+    stop_button.show()
     card.lock()
+    augmentations.card.lock()
     g.update_step()
     run_button.text = "Running..."
 
@@ -599,6 +602,7 @@ def run_training():
     print(out_path)
 
     card.unlock()
+    augmentations.card.unlock()
     run_button.text = "Run training"
 
 
@@ -606,7 +610,9 @@ def run_training():
 def stop_training():
     # TODO: Implement the stop process
     g.update_step(back=True)
+    stop_button.hide()
     card.unlock()
+    augmentations.card.unlock()
     run_button.text = "Run training"
 
 
@@ -799,7 +805,7 @@ def prepare_config(custom_config: Dict[str, Any]):
 def train():
     model = g.train_mode.pretrained[0]
     finetune = g.train_mode.finetune
-    cfg = train_cli.train(model, finetune, g.custom_config_path)
+    cfg = train_cli.train(model, finetune, g.custom_config_path, output.train_progress)
     return cfg
 
 

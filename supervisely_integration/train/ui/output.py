@@ -32,7 +32,7 @@ validation_metrics = LineChart(
     ],
 )
 
-train_progress = Progress()
+train_progress = Progress(hide_on_finish=False)
 
 output_folder = FolderThumbnail()
 output_folder.hide()
@@ -66,6 +66,6 @@ train_cli.setup_callbacks(iter_callback=iter_callback, eval_callback=eval_callba
 card = Card(
     title="Download the weights",
     description="Here you can download the weights of the trained model",
-    content=Container([train_progress, iter_container, validation_metrics, output_folder]),
+    content=Container([train_progress, output_folder, iter_container, validation_metrics]),
 )
 card.lock()
