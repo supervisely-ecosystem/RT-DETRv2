@@ -581,6 +581,9 @@ def scheduler_changed(scheduler: str):
 @run_button.click
 def run_training():
     output.card.unlock()
+    card.lock()
+    g.update_step()
+    run_button.text = "Running..."
 
     g.splits = splits.trainval_splits.get_splits()
     sly.logger.debug("Read splits from the widget...")
@@ -595,11 +598,16 @@ def run_training():
     out_path = upload_model(cfg.output_dir)
     print(out_path)
 
+    card.unlock()
+    run_button.text = "Run training"
+
 
 @stop_button.click
 def stop_training():
     # TODO: Implement the stop process
-    pass
+    g.update_step(back=True)
+    card.unlock()
+    run_button.text = "Run training"
 
 
 def read_parameters():

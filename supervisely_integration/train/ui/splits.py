@@ -22,7 +22,7 @@ def splits_selected():
     card.lock()
     change_button.show()
 
-    g.update_step()
+    g.update_step(step=6)
 
 
 @change_button.click
