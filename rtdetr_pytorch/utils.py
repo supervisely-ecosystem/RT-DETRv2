@@ -59,7 +59,7 @@ def is_by_epoch(lr_scheduler):
         return True
     else:
         raise NotImplementedError(f"Unsupported lr_scheduler: {lr_scheduler}")
-    
+
 
 def name2cls(name):
     if name == 'OneCycleLR':
