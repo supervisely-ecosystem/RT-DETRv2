@@ -1,31 +1,56 @@
-from supervisely.app.widgets import Card
-from supervisely.app.widgets.augmentations.augmentations import AugmentationsWithTabsNew, Editor
+import os
+from pathlib import Path
+
+from supervisely.app.widgets import AugmentationsWithTabs, Button, Card, Container, Switch
 
 import supervisely_integration.train.globals as g
 
-# TODO: Change to real custom augs template
-custom_augs = "custom-augs-template: 100"
 
-content = []
-additional_tabs = [
-    AugmentationsWithTabsNew.Tab(
-        tab_title="Custom",
-        content_title="Custom augmentations",
-        content_description="Use Editor to write custom augmentations",
-        content=content,
-        tab_description="Custom augmentations",
-    )
-]
+def name_from_path(aug_path):
+    name = os.path.basename(aug_path).split(".json")[0].capitalize()
+    name = " + ".join(name.split("_"))
+    return name
 
 
-augmentations = AugmentationsWithTabsNew(
-    g.api, g.project_id, templates=g.augs, task_type="detection", additional_tabs=additional_tabs
-)
-custom_editor: Editor = augmentations.get_editor("Custom")
-custom_editor.set_text(custom_augs)
+template_dir = "supervisely_integration/train/aug_templates"
+template_paths = list(map(str, Path(template_dir).glob("*.json")))
+template_paths = sorted(template_paths, key=lambda x: x.replace(".", "_"))[::-1]
+
+templates = [{"label": name_from_path(path), "value": path} for path in template_paths]
+
+
+swithcer = Switch(True)
+augments = AugmentationsWithTabs(g, task_type="detection", templates=templates)
+
+select_btn = Button("Select")
+container = Container([swithcer, augments, select_btn])
 
 card = Card(
-    title="Augmentations",
-    description="Select augmentations for training",
-    content=augmentations,
+    title="Training augmentations",
+    description="Choose one of the prepared templates or provide custom pipeline",
+    content=container,
 )
+card.lock("Confirm splits.")
+
+
+def reset_widgets():
+    if swithcer.is_switched():
+        augments.show()
+    else:
+        augments.hide()
+
+
+def get_selected_aug():
+    # path to aug pipline (.json file)
+    if swithcer.is_switched():
+        return augments._current_augs._template_path
+    else:
+        return None
+
+
+@swithcer.value_changed
+def on_switch(is_switched: bool):
+    reset_widgets()
+
+
+reset_widgets()

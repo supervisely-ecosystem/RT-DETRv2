@@ -792,7 +792,7 @@ def prepare_config(custom_config: Dict[str, Any]):
     selected_classes = [obj_class.name for obj_class in g.selected_classes]
     custom_config["sly_metadata"] = {
         "classes": selected_classes,
-        "project_id": g.project_id,
+        "project_id": g.PROJECT_ID,
         "project_name": g.project_info.name,
         "model": model_name,
     }
@@ -822,7 +822,7 @@ def save_config(cfg):
 def upload_model(output_dir):
     model_name = g.train_mode.pretrained[0]
     timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-    team_files_dir = f"/RT-DETR/{g.project_info.name}_{g.project_id}/{timestamp}_{model_name}"
+    team_files_dir = f"/RT-DETR/{g.project_info.name}_{g.PROJECT_ID}/{timestamp}_{model_name}"
     local_dir = f"{output_dir}/upload"
     sly.fs.mkdir(local_dir)
 

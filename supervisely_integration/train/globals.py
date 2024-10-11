@@ -57,15 +57,18 @@ SCHEDULERS = [
     "CosineRestartLR",
 ]
 # endregion
+
 # region envvars
-team_id = sly.env.team_id()
-wotkspace_id = sly.env.workspace_id()
-project_id = sly.env.project_id()
+TEAM_ID = sly.env.team_id()
+WORKSPACE_ID = sly.env.workspace_id()
+PROJECT_ID = sly.env.project_id()
+
+USE_CACHE = True
 # endregion
 api = sly.Api.from_env()
 augs = []
 # region state
-team = api.team.get_info_by_id(team_id)
+team = api.team.get_info_by_id(TEAM_ID)
 stepper = None
 project_info = None
 project_meta = None

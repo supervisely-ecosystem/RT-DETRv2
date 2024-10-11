@@ -1,6 +1,7 @@
 supervisely
 pycocotools
 torch==2.0.1
-torchvision
+# torchvision
+torchvision==0.15.2
 scipy
 imgaug

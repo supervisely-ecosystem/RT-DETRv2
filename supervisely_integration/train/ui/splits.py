@@ -2,7 +2,7 @@ from supervisely.app.widgets import Button, Card, Container, TrainValSplits
 
 import supervisely_integration.train.globals as g
 
-trainval_splits = TrainValSplits(g.project_id)
+trainval_splits = TrainValSplits(g.PROJECT_ID)
 select_button = Button("Select splits")
 change_button = Button("Change splits")
 change_button.hide()
