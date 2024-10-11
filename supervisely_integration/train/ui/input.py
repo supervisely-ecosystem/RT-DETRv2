@@ -1,5 +1,5 @@
 import supervisely as sly
-from supervisely.app.widgets import Card, Checkbox, ProjectThumbnail, Text
+from supervisely.app.widgets import Card, Checkbox, Container, ProjectThumbnail, Text
 from supervisely.project.download import is_cached
 
 import supervisely_integration.train.globals as g
@@ -20,5 +20,5 @@ use_cache_checkbox = Checkbox(use_cache_text, checked=g.USE_CACHE)
 card = Card(
     title="Selected project",
     description="The project that will be used for training.",
-    content=project_thumbnail,
+    content=Container(widgets=[project_thumbnail, use_cache_checkbox]),
 )

@@ -28,7 +28,7 @@ def get_file_tree(api: sly.Api, team_id: int, path: Optional[str] = "/") -> List
     return tree_items
 
 
-select_custom_weights = FileViewer(get_file_tree(g.api, g.team_id), selection_type="file")
+select_custom_weights = FileViewer(get_file_tree(g.api, g.TEAM_ID), selection_type="file")
 pretrained_models_table = RadioTable(columns=g.TABLE_COLUMNS, rows=g.PRETRAINED_MODELS)
 
 finetune_checkbox = Checkbox("Fine-tune", True)
