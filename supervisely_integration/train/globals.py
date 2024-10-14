@@ -64,6 +64,8 @@ WORKSPACE_ID = sly.env.workspace_id()
 PROJECT_ID = sly.env.project_id()
 
 USE_CACHE = True
+STOP_TRAINING = False
+
 # endregion
 api = sly.Api.from_env()
 augs = []

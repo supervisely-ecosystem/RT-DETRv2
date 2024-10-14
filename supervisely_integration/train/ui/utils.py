@@ -4,6 +4,9 @@ from typing import Any, Callable, Dict, Iterable, List, Optional
 from supervisely.app import DataJson
 from supervisely.app.widgets import Button, Card, Container, InputNumber, Stepper, Switch, Widget
 
+select_params = {"icon": None, "plain": False, "text": "Select"}
+reselect_params = {"icon": "zmdi zmdi-refresh", "plain": True, "text": "Reselect"}
+
 
 def update_custom_params(
     btn: Button,
@@ -15,6 +18,7 @@ def update_custom_params(
             raise AttributeError(f"Parameter {key} doesn't exists.")
         else:
             DataJson()[btn.widget_id][key] = params_dct[key]
+            btn.text = params_dct["text"]
     DataJson().send_changes()
 
 

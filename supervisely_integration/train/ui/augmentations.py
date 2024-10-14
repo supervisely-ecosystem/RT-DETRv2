@@ -5,6 +5,7 @@ from supervisely.app.widgets import AugmentationsWithTabs, Button, Card, Contain
 
 import supervisely_integration.train.globals as g
 import supervisely_integration.train.ui.parameters as parameters
+import supervisely_integration.train.ui.utils as utils
 
 
 def name_from_path(aug_path):
@@ -23,14 +24,14 @@ templates = [{"label": name_from_path(path), "value": path} for path in template
 switcher = Switch(True)
 augments = AugmentationsWithTabs(g, task_type="detection", templates=templates)
 
-select_button = Button("Select augs")
-change_button = Button("Change augs")
-container = Container([switcher, augments, select_button])
+select_augs_button = Button("Select")
+container = Container([switcher, augments, select_augs_button])
 
 card = Card(
     title="Training augmentations",
     description="Choose one of the prepared templates or provide custom pipeline",
     content=container,
+    lock_message="Select splits to unlock",
 )
 card.lock("Confirm splits.")
 
@@ -58,17 +59,22 @@ def on_switch(is_switched: bool):
 reset_widgets()
 
 
-@select_button.click
+@select_augs_button.click
 def splits_selected():
-    card.lock()
-    change_button.show()
-    parameters.card.unlock()
-    g.update_step(step=6)
+    if select_augs_button.text == "Select":
+        # widgets to disable
+        utils.disable_enable([switcher, augments, container, card], True)
 
+        utils.update_custom_button_params(select_augs_button, utils.reselect_params)
+        g.update_step(step=6)
 
-@change_button.click
-def change_splits():
-    card.unlock()
-    parameters.card.lock()
-    change_button.hide()
-    g.update_step(back=True)
+        # unlock
+        parameters.card.unlock()
+    else:
+        # lock
+        parameters.card.lock()
+        utils.update_custom_button_params(select_augs_button, utils.select_params)
+
+        # widgets to enable
+        utils.disable_enable([switcher, augments, container, card], False)
+        g.update_step(back=True)

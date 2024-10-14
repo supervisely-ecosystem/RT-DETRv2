@@ -3,38 +3,47 @@ from supervisely.app.widgets import Button, Card, Container, TrainValSplits
 
 import supervisely_integration.train.globals as g
 import supervisely_integration.train.ui.augmentations as augmentations
+import supervisely_integration.train.ui.parameters as parameters
+import supervisely_integration.train.ui.utils as utils
 
 trainval_splits = TrainValSplits(g.PROJECT_ID)
-select_button = Button("Select splits")
-change_button = Button("Change splits")
-change_button.hide()
+select_splits_button = Button("Select")
 
 card = Card(
     title="Train / Validation splits",
     description="Select splits for training and validation",
-    content=Container([trainval_splits, select_button]),
-    content_top_right=change_button,
-    lock_message="Click on the Change splits button to select other splits",
+    content=Container([trainval_splits, select_splits_button]),
+    lock_message="Select classes to unlock",
 )
 card.lock()
 
 
-@select_button.click
+@select_splits_button.click
 def splits_selected():
-    card.lock()
-    change_button.show()
-    # g.splits = trainval_splits.get_splits()
-    augmentations.card.unlock()
-    g.update_step(step=5)
+    if select_splits_button.text == "Select":
+        # widgets to disable
+        utils.disable_enable([trainval_splits, card], True)
 
+        # g.splits = trainval_splits.get_splits()
 
-@change_button.click
-def change_splits():
-    card.unlock()
-    augmentations.card.lock()
-    change_button.hide()
+        utils.update_custom_button_params(select_splits_button, utils.reselect_params)
+        g.update_step()
 
-    g.update_step(back=True)
+        # unlock
+        augmentations.card.unlock()
+    else:
+        # lock
+        augmentations.card.lock()
+        utils.update_custom_button_params(augmentations.select_augs_button, utils.select_params)
+
+        parameters.card.lock()
+        # utils.update_custom_button_params(parameters.run_training, utils.select_params)
+
+        utils.update_custom_button_params(select_splits_button, utils.select_params)
+
+        # widgets to enable
+        utils.disable_enable([trainval_splits, card], False)
+        g.update_step(back=True)
 
 
 def dump_train_val_splits(project_dir):

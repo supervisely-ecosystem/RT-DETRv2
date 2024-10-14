@@ -1,11 +1,43 @@
-from typing import Dict
+import os
+import shutil
+from datetime import datetime
+from typing import Any, Dict, List
 
-from supervisely.app.widgets import Card, Container, FolderThumbnail, LineChart, Progress
+import numpy as np
+import supervisely as sly
+import yaml
+from pycocotools.coco import COCO
+from supervisely.app.widgets import (
+    Button,
+    Card,
+    Container,
+    DoneLabel,
+    Empty,
+    FolderThumbnail,
+    LineChart,
+    Progress,
+)
 
 import rtdetr_pytorch.train as train_cli
+import supervisely_integration.train.globals as g
+import supervisely_integration.train.ui.augmentations as augmentations_ui
+import supervisely_integration.train.ui.parameters as parameters_ui
+import supervisely_integration.train.ui.splits as splits_ui
+from supervisely_integration.train.ui.project_cached import download_project
 
 # TODO: Fix import, now it's causing error
 # from rtdetr_pytorch.src.misc.sly_logger import Logs
+
+start_train_btn = Button("Train")
+stop_train_btn = Button("Stop", button_type="danger")
+
+btn_container = Container(
+    [start_train_btn, stop_train_btn, Empty()],
+    "horizontal",
+    overflow="wrap",
+    fractions=[1, 1, 10],
+    gap=1,
+)
 
 loss = LineChart("Loss", series=[{"name": "Loss", "data": []}])
 learning_rate = LineChart(
@@ -19,6 +51,7 @@ learning_rate = LineChart(
 )
 cuda_memory = LineChart("CUDA Memory", series=[{"name": "Memory", "data": []}])
 iter_container = Container([loss, learning_rate, cuda_memory])
+iter_container.hide()
 
 validation_metrics = LineChart(
     "Validation Metrics",
@@ -31,11 +64,32 @@ validation_metrics = LineChart(
         {"name": "AR@IoU=0.50:0.95|maxDets=100", "data": []},
     ],
 )
+validation_metrics.hide()
 
 train_progress = Progress(hide_on_finish=False)
+download_progress = Progress(hide_on_finish=True)
 
 output_folder = FolderThumbnail()
 output_folder.hide()
+
+success_msg = DoneLabel("Training completed. Training artifacts were uploaded to Team Files.")
+success_msg.hide()
+
+card = Card(
+    title="Training Progress",
+    description="Task progress, detailed logs, metrics charts, and other visualizations",
+    content=Container(
+        [
+            success_msg,
+            output_folder,
+            train_progress,
+            btn_container,
+            iter_container,
+            validation_metrics,
+        ]
+    ),
+)
+card.lock()
 
 
 def iter_callback(logs):
@@ -63,9 +117,251 @@ def add_metrics(epoch: int, metrics: Dict[str, float]):
 
 train_cli.setup_callbacks(iter_callback=iter_callback, eval_callback=eval_callback)
 
-card = Card(
-    title="Download the weights",
-    description="Here you can download the weights of the trained model",
-    content=Container([train_progress, output_folder, iter_container, validation_metrics]),
-)
-card.lock()
+
+@start_train_btn.click
+def run_training():
+    project_dir = os.path.join(g.data_dir, "sly_project")
+    g.project_dir = project_dir
+    # iter_progress = Progress("Iterations", hide_on_finish=False)
+
+    download_project(
+        api=g.api,
+        project_id=g.PROJECT_ID,
+        project_dir=project_dir,
+        use_cache=g.USE_CACHE,
+        progress=train_progress,
+    )
+    g.project = sly.read_project(project_dir)
+    # prepare split files
+    try:
+        splits_ui.dump_train_val_splits(project_dir)
+    except Exception:
+        if not g.USE_CACHE:
+            raise
+        sly.logger.warn(
+            "Failed to dump train/val splits. Trying to re-download project.", exc_info=True
+        )
+        download_project(
+            api=g.api,
+            project_id=g.PROJECT_ID,
+            project_dir=project_dir,
+            use_cache=False,
+            progress=train_progress,
+        )
+        splits_ui.dump_train_val_splits(project_dir)
+        g.project = sly.read_project(project_dir)
+
+    g.splits = splits_ui.trainval_splits.get_splits()
+    sly.logger.debug("Read splits from the widget...")
+
+    create_trainval()
+
+    custom_config = parameters_ui.read_parameters(len(g.splits[0]))
+    prepare_config(custom_config)
+
+    iter_container.show()
+    validation_metrics.show()
+
+    cfg = train()
+    save_config(cfg)
+    out_path = upload_model(cfg.output_dir)
+    print(out_path)
+
+
+@stop_train_btn.click
+def stop_training():
+    # TODO: Implement the stop process
+    g.STOP_TRAINING = True
+    stop_train_btn.disable()
+
+
+def prepare_config(custom_config: Dict[str, Any]):
+    model_name = g.train_mode.pretrained[0]
+    arch = model_name.split("_coco")[0]
+    config_name = f"{arch}_6x_coco"
+    sly.logger.info(f"Model name: {model_name}, arch: {arch}, config_name: {config_name}")
+
+    custom_config["__include__"] = [f"{config_name}.yml"]
+    custom_config["remap_mscoco_category"] = False
+    custom_config["num_classes"] = len(g.selected_classes)
+    custom_config["train_dataloader"]["dataset"]["img_folder"] = f"{g.train_dataset_path}/img"
+    custom_config["train_dataloader"]["dataset"][
+        "ann_file"
+    ] = f"{g.train_dataset_path}/coco_anno.json"
+    custom_config["val_dataloader"]["dataset"]["img_folder"] = f"{g.val_dataset_path}/img"
+    custom_config["val_dataloader"]["dataset"]["ann_file"] = f"{g.val_dataset_path}/coco_anno.json"
+    selected_classes = g.selected_classes
+    custom_config["sly_metadata"] = {
+        "classes": selected_classes,
+        "project_id": g.PROJECT_ID,
+        "project_name": g.project_info.name,
+        "model": model_name,
+    }
+
+    g.custom_config_path = os.path.join(g.CONFIG_PATHS_DIR, "custom.yml")
+    with open(g.custom_config_path, "w") as f:
+        yaml.dump(custom_config, f)
+
+
+def train():
+    model = g.train_mode.pretrained[0]
+    finetune = g.train_mode.finetune
+    cfg = train_cli.train(model, finetune, g.custom_config_path, train_progress)
+    return cfg
+
+
+def save_config(cfg):
+    if "__include__" in cfg.yaml_cfg:
+        cfg.yaml_cfg.pop("__include__")
+
+    output_path = os.path.join(g.OUTPUT_DIR, "config.yml")
+
+    with open(output_path, "w") as f:
+        yaml.dump(cfg.yaml_cfg, f)
+
+
+def upload_model(output_dir):
+    model_name = g.train_mode.pretrained[0]
+    timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+    team_files_dir = f"/RT-DETR/{g.project_info.name}_{g.PROJECT_ID}/{timestamp}_{model_name}"
+    local_dir = f"{output_dir}/upload"
+    sly.fs.mkdir(local_dir)
+
+    checkpoints = [f for f in os.listdir(output_dir) if f.endswith(".pth")]
+    latest_checkpoint = sorted(checkpoints)[-1]
+    shutil.move(f"{output_dir}/{latest_checkpoint}", f"{local_dir}/{latest_checkpoint}")
+    shutil.move(f"{output_dir}/log.txt", f"{local_dir}/log.txt")
+    shutil.move("output/config.yml", f"{local_dir}/config.yml")
+
+    out_path = g.api.file.upload_directory(
+        sly.env.team_id(),
+        local_dir,
+        team_files_dir,
+    )
+    return out_path
+
+
+def create_trainval():
+    # g.splits = splits.trainval_splits.get_splits()
+    train_items, val_items = g.splits
+    sly.logger.debug(f"Creating trainval datasets from splits: {g.splits}...")
+    train_items: List[sly.project.project.ItemInfo]
+    val_items: List[sly.project.project.ItemInfo]
+
+    converted_project_dir = os.path.join(g.CONVERTED_DIR, g.project_info.name)
+    sly.logger.debug(f"Converted project will be saved to {converted_project_dir}.")
+    sly.fs.mkdir(converted_project_dir)
+    train_dataset_path = os.path.join(converted_project_dir, "train")
+    val_dataset_path = os.path.join(converted_project_dir, "val")
+    sly.logger.debug(
+        f"Train dataset path: {train_dataset_path}, val dataset path: {val_dataset_path}."
+    )
+
+    g.train_dataset_path = train_dataset_path
+    g.val_dataset_path = val_dataset_path
+
+    project_meta_path = os.path.join(converted_project_dir, "meta.json")
+    sly.json.dump_json_file(g.project.meta.to_json(), project_meta_path)
+
+    for items, dataset_path in zip(
+        [train_items, val_items], [train_dataset_path, val_dataset_path]
+    ):
+        prepare_dataset(dataset_path, items)
+
+    g.converted_project = sly.Project(converted_project_dir, sly.OpenMode.READ)
+    sly.logger.info(f"Project created in {converted_project_dir}")
+
+    for dataset_fs in g.converted_project.datasets:
+        dataset_fs: sly.Dataset
+        selected_classes = g.selected_classes
+
+        coco_anno = get_coco_annotations(dataset_fs, g.converted_project.meta, selected_classes)
+        coco_anno_path = os.path.join(dataset_fs.directory, "coco_anno.json")
+        sly.json.dump_json_file(coco_anno, coco_anno_path)
+
+    sly.logger.info("COCO annotations created")
+
+
+def prepare_dataset(dataset_path: str, items: List[sly.project.project.ItemInfo]):
+    sly.logger.debug(f"Preparing dataset in {dataset_path}...")
+    img_dir = os.path.join(dataset_path, "img")
+    ann_dir = os.path.join(dataset_path, "ann")
+    sly.fs.mkdir(img_dir)
+    sly.fs.mkdir(ann_dir)
+    for item in items:
+        src_img_path = os.path.join(g.project_dir, fix_widget_path(item.img_path))
+        src_ann_path = os.path.join(g.project_dir, fix_widget_path(item.ann_path))
+        dst_img_path = os.path.join(img_dir, item.name)
+        dst_ann_path = os.path.join(ann_dir, f"{item.name}.json")
+        sly.fs.copy_file(src_img_path, dst_img_path)
+        sly.fs.copy_file(src_ann_path, dst_ann_path)
+
+    sly.logger.info(f"Dataset prepared in {dataset_path}")
+
+
+def fix_widget_path(bugged_path: str) -> str:
+    """Fixes the broken ItemInfo paths from TrainValSplits widget.
+    Removes the first two folders from the path.
+
+    Bugged path: app_data/1IkWRgJG62f1ZuZ/ds0/ann/pexels_2329440.jpeg.json
+    Corrected path: ds0/ann/pexels_2329440.jpeg.json
+
+    :param bugged_path: Path to fix
+    :type bugged_path: str
+    :return: Fixed path
+    :rtype: str
+    """
+    path = bugged_path.split("/")
+    updated_path = path[8:]
+    correct_path = "/".join(updated_path)
+    return correct_path
+
+
+def get_coco_annotations(dataset: sly.Dataset, meta: sly.ProjectMeta, selected_classes: List[str]):
+    coco_anno = {"images": [], "categories": [], "annotations": []}
+    cat2id = {name: i for i, name in enumerate(selected_classes)}
+    img_id = 1
+    ann_id = 1
+    for name in dataset.get_items_names():
+        ann = dataset.get_ann(name, meta)
+        img_dict = {
+            "id": img_id,
+            "height": ann.img_size[0],
+            "width": ann.img_size[1],
+            "file_name": name,
+        }
+        coco_anno["images"].append(img_dict)
+
+        for label in ann.labels:
+            if isinstance(label.geometry, (sly.Bitmap, sly.Polygon)):
+                rect = label.geometry.to_bbox()
+            elif isinstance(label.geometry, sly.Rectangle):
+                rect = label.geometry
+            else:
+                continue
+            class_name = label.obj_class.name
+            if class_name not in selected_classes:
+                continue
+            x, y, x2, y2 = rect.left, rect.top, rect.right, rect.bottom
+            ann_dict = {
+                "id": ann_id,
+                "image_id": img_id,
+                "category_id": cat2id[class_name],
+                "bbox": [x, y, x2 - x, y2 - y],
+                "area": (x2 - x) * (y2 - y),
+                "iscrowd": 0,
+            }
+            coco_anno["annotations"].append(ann_dict)
+            ann_id += 1
+
+        img_id += 1
+
+    coco_anno["categories"] = [{"id": i, "name": name} for name, i in cat2id.items()]
+    # Test:
+    coco_api = COCO()
+    coco_api.dataset = coco_anno
+    coco_api.createIndex()
+    return coco_anno
+
+
+# parameters handlers

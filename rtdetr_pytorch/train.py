@@ -34,7 +34,8 @@ def train(
     )
 
     solver = DetSolver(cfg)
-    solver.fit(progress)
+    solver.fit()
+    # solver.fit(progress)
 
     return cfg
 

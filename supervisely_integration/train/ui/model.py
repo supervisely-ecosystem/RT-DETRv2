@@ -14,7 +14,11 @@ from supervisely.app.widgets import (
 )
 
 import supervisely_integration.train.globals as g
+import supervisely_integration.train.ui.augmentations as augmentations
 import supervisely_integration.train.ui.classes as classes
+import supervisely_integration.train.ui.parameters as parameters
+import supervisely_integration.train.ui.splits as splits
+import supervisely_integration.train.ui.utils as utils
 
 TrainMode = namedtuple("TrainMode", ["pretrained", "custom", "finetune"])
 
@@ -38,9 +42,7 @@ finetune_field = Field(
     description="Fine-tuning allows you to continue training a model from a checkpoint.",
 )
 
-select_model_button = Button("Select model")
-change_model_button = Button("Change model")
-change_model_button.hide()
+select_model_button = Button("Select")
 
 model_mode = RadioTabs(
     g.MODEL_MODES.copy(),
@@ -54,43 +56,75 @@ card = Card(
     title="Select a model",
     description="Select a model to train",
     content=Container([model_mode, select_model_button]),
-    content_top_right=change_model_button,
     lock_message="Click on the Change model button to select another model",
 )
 
 
 @select_model_button.click
 def model_selected():
-    mode = model_mode.get_active_tab()
-    if mode == g.MODEL_MODES[0]:
-        pretrained: List[str] = pretrained_models_table.get_selected_row()
-        custom = None
-        sly.logger.debug(f"Selected mode: {mode}, selected pretrained model: {pretrained}")
+    if select_model_button.text == "Select":
+        # widgets to disable
+        utils.disable_enable(
+            [
+                select_custom_weights,
+                pretrained_models_table,
+                finetune_checkbox,
+                finetune_field,
+                model_mode,
+                card,
+            ],
+            True,
+        )
+
+        mode = model_mode.get_active_tab()
+        if mode == g.MODEL_MODES[0]:
+            pretrained: List[str] = pretrained_models_table.get_selected_row()
+            custom = None
+            sly.logger.debug(f"Selected mode: {mode}, selected pretrained model: {pretrained}")
+        else:
+            pretrained = None
+            custom: List[str] = select_custom_weights.get_selected_items()
+            # TODO: Add single-item mode to the widget and remove indexing
+            custom = custom[0] if custom else None
+            sly.logger.debug(f"Selected mode: {mode}, path to custom weights: {custom}")
+        finetune = finetune_checkbox.is_checked()
+        g.train_mode = TrainMode(pretrained, custom, finetune)
+        classes.fill_classes_selector()
+
+        utils.update_custom_button_params(select_model_button, utils.reselect_params)
+        g.update_step()
+
+        # unlock
+        classes.card.unlock()
     else:
-        pretrained = None
-        custom: List[str] = select_custom_weights.get_selected_items()
-        # TODO: Add single-item mode to the widget and remove indexing
-        custom = custom[0] if custom else None
-        sly.logger.debug(f"Selected mode: {mode}, path to custom weights: {custom}")
-    finetune = finetune_checkbox.is_checked()
-    g.train_mode = TrainMode(pretrained, custom, finetune)
+        g.train_mode = None
+        classes.fill_classes_selector(clear=True)
 
-    card.lock()
-    change_model_button.show()
+        # lock
+        classes.card.lock()
+        utils.update_custom_button_params(classes.select_classes_button, utils.select_params)
 
-    classes.fill_classes_selector()
-    classes.card.unlock()
+        splits.card.lock()
+        utils.update_custom_button_params(splits.select_splits_button, utils.select_params)
 
-    g.update_step()
+        augmentations.card.lock()
+        utils.update_custom_button_params(augmentations.select_augs_button, utils.select_params)
 
+        parameters.card.lock()
+        # utils.update_custom_button_params(parameters.run_training, utils.select_params)
 
-@change_model_button.click
-def change_model():
-    g.train_mode = None
-    card.unlock()
-    change_model_button.hide()
+        utils.update_custom_button_params(select_model_button, utils.select_params)
 
-    classes.fill_classes_selector(clear=True)
-    classes.card.lock()
-
-    g.update_step(back=True)
+        # widgets to enable
+        utils.disable_enable(
+            [
+                select_custom_weights,
+                pretrained_models_table,
+                finetune_checkbox,
+                finetune_field,
+                model_mode,
+                card,
+            ],
+            False,
+        )
+        g.update_step(back=True)

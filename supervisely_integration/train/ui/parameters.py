@@ -1,38 +1,15 @@
-import os
-import shutil
-from datetime import datetime
-from typing import Any, Dict, List
-
 import numpy as np
 import supervisely as sly
 import yaml
-from pycocotools.coco import COCO
-from supervisely.app.widgets import (
-    BindedInputNumber,
-    Button,
-    Card,
-    Checkbox,
-    Container,
-    Editor,
-    Empty,
-    Field,
-    Input,
-    InputNumber,
-    LineChart,
-    Progress,
-    Select,
-    Switch,
-    Tabs,
-    Text,
-)
+from supervisely.app.widgets import (BindedInputNumber, Button, Card, Checkbox,
+                                     Container, Editor, Empty, Field, Input,
+                                     InputNumber, LineChart, Select, Switch,
+                                     Tabs, Text)
 
-import rtdetr_pytorch.train as train_cli
 import supervisely_integration.train.globals as g
-import supervisely_integration.train.ui.augmentations as augmentations
-import supervisely_integration.train.ui.output as output
+import supervisely_integration.train.ui.output as output_ui
 import supervisely_integration.train.ui.schedulers as schedulers
-import supervisely_integration.train.ui.splits as splits
-import supervisely_integration.train.ui.utils as ui_utils
+import supervisely_integration.train.ui.utils as utils_ui
 import supervisely_integration.train.utils as utils
 
 # region advanced widgets
@@ -196,7 +173,7 @@ select_scheduler_field = Field(
 enable_warmup_input = Switch(True)
 enable_warmup_field = Field(enable_warmup_input, "Enable warmup")
 
-warmup = ui_utils.OrderedWidgetWrapper("warmup")
+warmup = utils_ui.OrderedWidgetWrapper("warmup")
 warmup_iterations = InputNumber(25, 0)
 warmup_iterations_field = Field(
     warmup_iterations, "Warmup iterations", "The number of iterations that warmup lasts"
@@ -242,10 +219,7 @@ learning_rate_scheduler_tab = Container(
 
 # endregion
 
-run_button = Button("Run training")
-stop_button = Button("Stop training", button_type="danger")
-stop_button.hide()
-
+select_params_button = Button("Select")
 
 parameters_tabs = Tabs(
     ["General", "Optimizer", "Learning rate scheduler"],
@@ -257,15 +231,41 @@ parameters_tabs = Tabs(
     ],
 )
 
+# Model Benchmark to be implemented
+run_model_benchmark_checkbox = Checkbox(content="Run Model Benchmark evaluation", checked=False)
+run_model_benchmark_checkbox.disable()
+
+# run_speedtest_checkbox = Checkbox(content="Run speed test", checked=True)
+model_benchmark_f = Field(
+    Container(
+        widgets=[
+            run_model_benchmark_checkbox,
+            # run_speedtest_checkbox,
+        ]
+    ),
+    title="Model Evaluation Benchmark (To be implemented)",
+    description=f"Generate evalutaion dashboard with visualizations and detailed analysis of the model performance after training. The best checkpoint will be used for evaluation. You can also run speed test to evaluate model inference speed.",
+)
+docs_link = '<a href="https://docs.supervisely.com/neural-networks/model-evaluation-benchmark/" target="_blank">documentation</a>'
+model_benchmark_learn_more = Text(
+    f"Learn more about Model Benchmark in the {docs_link}.", status="info"
+)
+
 content = Container(
-    [advanced_mode_field, advanced_mode_editor, parameters_tabs, run_button],
+    [
+        advanced_mode_field,
+        advanced_mode_editor,
+        parameters_tabs,
+        model_benchmark_f,
+        select_params_button,
+    ],
 )
 
 card = Card(
     title="Training hyperparameters",
     description="Specify training hyperparameters using one of the methods.",
     content=content,
-    content_top_right=stop_button,
+    lock_message="Select augmentations to unlock",
 )
 card.lock()
 
@@ -305,7 +305,7 @@ def warmup_changed(is_checked: bool):
 
 
 @scheduler_preview_btn.click
-def on_preivew_scheduler():
+def on_preview_scheduler():
     import torch
     import visualize_scheduler
     from torch.optim import SGD
@@ -407,70 +407,89 @@ def scheduler_changed(new_value: str):
             schedulers.schedulers_params[scheduler].hide()
 
 
-@run_button.click
-def run_training():
-    output.card.unlock()
-    stop_button.show()
-    card.lock()
-    augmentations.card.lock()
-    g.update_step()
-    run_button.text = "Running..."
-
-    project_dir = os.path.join(g.data_dir, "sly_project")
-    iter_progress = Progress("Iterations", hide_on_finish=False)
-
-    download_project(
-        api=g.api,
-        project_id=g.PROJECT_ID,
-        project_dir=project_dir,
-        use_cache=g.USE_CACHE,
-        progress=iter_progress,
-    )
-
-    # prepare split files
-    try:
-        splits.dump_train_val_splits(project_dir)
-    except Exception:
-        if not g.USE_CACHE:
-            raise
-        sly.logger.warn(
-            "Failed to dump train/val splits. Trying to re-download project.", exc_info=True
+@select_params_button.click
+def select_params():
+    if select_params_button.text == "Select":
+        # widgets to disable
+        utils_ui.disable_enable(
+            [
+                advanced_mode_checkbox,
+                advanced_mode_editor,
+                number_of_epochs_input,
+                input_size_input,
+                train_batch_size_input,
+                val_batch_size_input,
+                validation_interval_input,
+                checkpoints_interval_input,
+                optimizer_select,
+                learning_rate_input,
+                wight_decay_input,
+                momentum_input,
+                beta1_input,
+                beta2_input,
+                clip_gradient_norm_checkbox,
+                clip_gradient_norm_input,
+                scheduler_select,
+                enable_warmup_checkbox,
+                warmup_iterations_input,
+                scheduler_preview_chart,
+                scheduler_preview_btn,
+                scheduler_clear_btn,
+                select_scheduler,
+                enable_warmup_input,
+                warmup,
+                warmup_iterations,
+                warmup_ratio,
+                parameters_tabs,
+            ],
+            True,
         )
-        download_project(
-            api=g.api,
-            project_id=g.PROJECT_ID,
-            project_dir=project_dir,
-            use_cache=False,
-            progress=iter_progress,
+
+        utils_ui.update_custom_button_params(select_params_button, utils_ui.reselect_params)
+        g.update_step()
+
+        # unlock
+        output_ui.card.unlock()
+    else:
+        # lock
+        output_ui.card.lock()
+        utils_ui.update_custom_button_params(select_params_button, utils_ui.select_params)
+
+        # widgets to enable
+        utils_ui.disable_enable(
+            [
+                advanced_mode_checkbox,
+                advanced_mode_editor,
+                number_of_epochs_input,
+                input_size_input,
+                train_batch_size_input,
+                val_batch_size_input,
+                validation_interval_input,
+                checkpoints_interval_input,
+                optimizer_select,
+                learning_rate_input,
+                wight_decay_input,
+                momentum_input,
+                beta1_input,
+                beta2_input,
+                clip_gradient_norm_checkbox,
+                clip_gradient_norm_input,
+                scheduler_select,
+                enable_warmup_checkbox,
+                warmup_iterations_input,
+                scheduler_preview_chart,
+                scheduler_preview_btn,
+                scheduler_clear_btn,
+                select_scheduler,
+                enable_warmup_input,
+                warmup,
+                warmup_iterations,
+                warmup_ratio,
+                parameters_tabs,
+            ],
+            False,
         )
-        splits.dump_train_val_splits(project_dir)
-
-    g.splits = splits.trainval_splits.get_splits()
-    sly.logger.debug("Read splits from the widget...")
-
-    download_project()
-    create_trainval()
-
-    custom_config = read_parameters(len(g.splits[0]))
-    prepare_config(custom_config)
-    cfg = train()
-    save_config(cfg)
-    out_path = upload_model(cfg.output_dir)
-    print(out_path)
-
-    card.unlock()
-    augmentations.card.unlock()
-    run_button.text = "Run training"
-
-
-@stop_button.click
-def stop_training():
-    # TODO: Implement the stop process
-    g.update_step(back=True)
-    stop_button.hide()
-    card.unlock()
-    augmentations.card.unlock()
-    run_button.text = "Run training"
+        g.update_step(back=True)
 
 
 def read_parameters(train_items_cnt: int):
@@ -630,198 +649,3 @@ def read_scheduler_parameters():
                 parameters[key] = widget.is_checked()
 
     return parameters
-
-
-def prepare_config(custom_config: Dict[str, Any]):
-    model_name = g.train_mode.pretrained[0]
-    arch = model_name.split("_coco")[0]
-    config_name = f"{arch}_6x_coco"
-    sly.logger.info(f"Model name: {model_name}, arch: {arch}, config_name: {config_name}")
-
-    custom_config["__include__"] = [f"{config_name}.yml"]
-    custom_config["remap_mscoco_category"] = False
-    custom_config["num_classes"] = len(g.selected_classes)
-    custom_config["train_dataloader"]["dataset"]["img_folder"] = f"{g.train_dataset_path}/img"
-    custom_config["train_dataloader"]["dataset"][
-        "ann_file"
-    ] = f"{g.train_dataset_path}/coco_anno.json"
-    custom_config["val_dataloader"]["dataset"]["img_folder"] = f"{g.val_dataset_path}/img"
-    custom_config["val_dataloader"]["dataset"]["ann_file"] = f"{g.val_dataset_path}/coco_anno.json"
-    selected_classes = g.selected_classes
-    custom_config["sly_metadata"] = {
-        "classes": selected_classes,
-        "project_id": g.PROJECT_ID,
-        "project_name": g.project_info.name,
-        "model": model_name,
-    }
-
-    g.custom_config_path = os.path.join(g.CONFIG_PATHS_DIR, "custom.yml")
-    with open(g.custom_config_path, "w") as f:
-        yaml.dump(custom_config, f)
-
-
-def train():
-    model = g.train_mode.pretrained[0]
-    finetune = g.train_mode.finetune
-    cfg = train_cli.train(model, finetune, g.custom_config_path, output.train_progress)
-    return cfg
-
-
-def save_config(cfg):
-    if "__include__" in cfg.yaml_cfg:
-        cfg.yaml_cfg.pop("__include__")
-
-    output_path = os.path.join(g.OUTPUT_DIR, "config.yml")
-
-    with open(output_path, "w") as f:
-        yaml.dump(cfg.yaml_cfg, f)
-
-
-def upload_model(output_dir):
-    model_name = g.train_mode.pretrained[0]
-    timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-    team_files_dir = f"/RT-DETR/{g.project_info.name}_{g.PROJECT_ID}/{timestamp}_{model_name}"
-    local_dir = f"{output_dir}/upload"
-    sly.fs.mkdir(local_dir)
-
-    checkpoints = [f for f in os.listdir(output_dir) if f.endswith(".pth")]
-    latest_checkpoint = sorted(checkpoints)[-1]
-    shutil.move(f"{output_dir}/{latest_checkpoint}", f"{local_dir}/{latest_checkpoint}")
-    shutil.move(f"{output_dir}/log.txt", f"{local_dir}/log.txt")
-    shutil.move("output/config.yml", f"{local_dir}/config.yml")
-
-    out_path = g.api.file.upload_directory(
-        sly.env.team_id(),
-        local_dir,
-        team_files_dir,
-    )
-    return out_path
-
-
-def download_project():
-    g.project_dir = os.path.join(g.DOWNLOAD_DIR, g.project_info.name)
-    sly.logger.info(f"Downloading project to {g.project_dir}...")
-    sly.Project.download(g.api, g.project_info.id, g.project_dir)
-    sly.logger.info(f"Project downloaded to {g.project_dir}.")
-    g.project = sly.Project(g.project_dir, sly.OpenMode.READ)
-    sly.logger.info(f"Project loaded from {g.project_dir}.")
-
-
-def create_trainval():
-    # g.splits = splits.trainval_splits.get_splits()
-    train_items, val_items = g.splits
-    sly.logger.debug(f"Creating trainval datasets from splits: {g.splits}...")
-    train_items: List[sly.project.project.ItemInfo]
-    val_items: List[sly.project.project.ItemInfo]
-
-    converted_project_dir = os.path.join(g.CONVERTED_DIR, g.project_info.name)
-    sly.logger.debug(f"Converted project will be saved to {converted_project_dir}.")
-    sly.fs.mkdir(converted_project_dir)
-    train_dataset_path = os.path.join(converted_project_dir, "train")
-    val_dataset_path = os.path.join(converted_project_dir, "val")
-    sly.logger.debug(
-        f"Train dataset path: {train_dataset_path}, val dataset path: {val_dataset_path}."
-    )
-
-    g.train_dataset_path = train_dataset_path
-    g.val_dataset_path = val_dataset_path
-
-    project_meta_path = os.path.join(converted_project_dir, "meta.json")
-    sly.json.dump_json_file(g.project.meta.to_json(), project_meta_path)
-
-    for items, dataset_path in zip(
-        [train_items, val_items], [train_dataset_path, val_dataset_path]
-    ):
-        prepare_dataset(dataset_path, items)
-
-    g.converted_project = sly.Project(converted_project_dir, sly.OpenMode.READ)
-    sly.logger.info(f"Project created in {converted_project_dir}")
-
-    for dataset_fs in g.converted_project.datasets:
-        dataset_fs: sly.Dataset
-        selected_classes = g.selected_classes
-
-        coco_anno = get_coco_annotations(dataset_fs, g.converted_project.meta, selected_classes)
-        coco_anno_path = os.path.join(dataset_fs.directory, "coco_anno.json")
-        sly.json.dump_json_file(coco_anno, coco_anno_path)
-
-    sly.logger.info("COCO annotations created")
-
-
-def prepare_dataset(dataset_path: str, items: List[sly.project.project.ItemInfo]):
-    sly.logger.debug(f"Preparing dataset in {dataset_path}...")
-    img_dir = os.path.join(dataset_path, "img")
-    ann_dir = os.path.join(dataset_path, "ann")
-    sly.fs.mkdir(img_dir)
-    sly.fs.mkdir(ann_dir)
-    for item in items:
-        src_img_path = os.path.join(g.project_dir, fix_widget_path(item.img_path))
-        src_ann_path = os.path.join(g.project_dir, fix_widget_path(item.ann_path))
-        dst_img_path = os.path.join(img_dir, item.name)
-        dst_ann_path = os.path.join(ann_dir, f"{item.name}.json")
-        sly.fs.copy_file(src_img_path, dst_img_path)
-        sly.fs.copy_file(src_ann_path, dst_ann_path)
-
-    sly.logger.info(f"Dataset prepared in {dataset_path}")
-
-
-def fix_widget_path(bugged_path: str) -> str:
-    """Fixes the broken ItemInfo paths from TrainValSplits widget.
-    Removes the first two folders from the path.
-
-    Bugged path: app_data/1IkWRgJG62f1ZuZ/ds0/ann/pexels_2329440.jpeg.json
-    Corrected path: ds0/ann/pexels_2329440.jpeg.json
-
-    :param bugged_path: Path to fix
-    :type bugged_path: str
-    :return: Fixed path
-    :rtype: str
-    """
-    return "/".join(bugged_path.split("/")[2:])
-
-
-def get_coco_annotations(dataset: sly.Dataset, meta: sly.ProjectMeta, selected_classes: List[str]):
-    coco_anno = {"images": [], "categories": [], "annotations": []}
-    cat2id = {name: i for i, name in enumerate(selected_classes)}
-    img_id = 1
-    ann_id = 1
-    for name in dataset.get_items_names():
-        ann = dataset.get_ann(name, meta)
-        img_dict = {
-            "id": img_id,
-            "height": ann.img_size[0],
-            "width": ann.img_size[1],
-            "file_name": name,
-        }
-        coco_anno["images"].append(img_dict)
-
-        for label in ann.labels:
-            if isinstance(label.geometry, (sly.Bitmap, sly.Polygon)):
-                rect = label.geometry.to_bbox()
-            elif isinstance(label.geometry, sly.Rectangle):
-                rect = label.geometry
-            else:
-                continue
-            class_name = label.obj_class.name
-            if class_name not in selected_classes:
-                continue
-            x, y, x2, y2 = rect.left, rect.top, rect.right, rect.bottom
-            ann_dict = {
-                "id": ann_id,
-                "image_id": img_id,
-                "category_id": cat2id[class_name],
-                "bbox": [x, y, x2 - x, y2 - y],
-                "area": (x2 - x) * (y2 - y),
-                "iscrowd": 0,
-            }
-            coco_anno["annotations"].append(ann_dict)
-            ann_id += 1
-
-        img_id += 1
-
-    coco_anno["categories"] = [{"id": i, "name": name} for name, i in cat2id.items()]
-    # Test:
-    coco_api = COCO()
-    coco_api.dataset = coco_anno
-    coco_api.createIndex()
-    return coco_anno
