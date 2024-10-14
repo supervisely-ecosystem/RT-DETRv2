@@ -71,7 +71,7 @@ def download_project(
         # copy datasets from cache
         total = sum([get_cache_size(project_info.id, ds.name) for ds in dataset_infos])
         with progress(
-            message="Retreiving data from cache...",
+            message="Retrieving data from cache...",
             total=total,
             unit="B",
             unit_scale=True,
