@@ -14,14 +14,15 @@ from supervisely.app.widgets import (
     Checkbox,
     Container,
     Editor,
+    Empty,
     Field,
-    Flexbox,
     Input,
     InputNumber,
     LineChart,
-    RadioTabs,
-    ReloadableArea,
+    Progress,
     Select,
+    Switch,
+    Tabs,
     Text,
 )
 
@@ -29,7 +30,9 @@ import rtdetr_pytorch.train as train_cli
 import supervisely_integration.train.globals as g
 import supervisely_integration.train.ui.augmentations as augmentations
 import supervisely_integration.train.ui.output as output
+import supervisely_integration.train.ui.schedulers as schedulers
 import supervisely_integration.train.ui.splits as splits
+import supervisely_integration.train.ui.utils as ui_utils
 import supervisely_integration.train.utils as utils
 
 # region advanced widgets
@@ -100,27 +103,6 @@ general_tab = Container(
 )
 # endregion
 
-# region checkpoints widgets
-# checkpoints_interval_input = InputNumber(value=1, min=1)
-# checkpoints_interval_field = Field(
-#     checkpoints_interval_input,
-#     title="Checkpoints interval",
-#     description="The number of epochs between each checkpoint save",
-# )
-
-# save_last_checkpoint_checkbox = Checkbox("Save last checkpoint")
-# save_best_checkpoint_checkbox = Checkbox("Save best checkpoint")
-
-# save_checkpoint_field = Field(
-#     Container([save_last_checkpoint_checkbox, save_best_checkpoint_checkbox]),
-#     title="Save checkpoints",
-#     description="Choose which checkpoints to save",
-# )
-
-# checkpoints_tab = Container([checkpoints_interval_field, save_checkpoint_field])
-
-# endregion
-
 # region optimizer widgets
 optimizer_select = Select([Select.Item(opt) for opt in g.OPTIMIZERS])
 optimizer_field = Field(
@@ -187,7 +169,6 @@ optimization_tab = Container(
 scheduler_select = Select([Select.Item(sch) for sch in g.SCHEDULERS])
 
 scheduler_widgets_container = Container()
-scheduler_parameters_area = ReloadableArea(scheduler_widgets_container)
 
 enable_warmup_checkbox = Checkbox("Enable warmup", True)
 warmup_iterations_input = InputNumber(value=100)
@@ -203,18 +184,60 @@ scheduler_preview_chart = LineChart(
 )
 scheduler_preview_chart.hide()
 scheduler_preview_btn = Button("Preview", button_size="small")
+scheduler_clear_btn = Button("Clear", button_size="small", plain=True)
 scheduler_preview_info = Text("", status="info")
+
+select_scheduler = Select([Select.Item(val, label) for val, label in schedulers.schedulers])
+select_scheduler_field = Field(
+    select_scheduler,
+    title="Select scheduler",
+)
+
+enable_warmup_input = Switch(True)
+enable_warmup_field = Field(enable_warmup_input, "Enable warmup")
+
+warmup = ui_utils.OrderedWidgetWrapper("warmup")
+warmup_iterations = InputNumber(25, 0)
+warmup_iterations_field = Field(
+    warmup_iterations, "Warmup iterations", "The number of iterations that warmup lasts"
+)
+warmup.add_input("warmup_iters", warmup_iterations, warmup_iterations_field)
+
+warmup_ratio = InputNumber(0.001, step=1e-4)
+warmup_ratio_field = Field(
+    warmup_ratio,
+    "Warmup ratio",
+    "LR used at the beginning of warmup equals to warmup_ratio * initial_lr",
+)
+warmup.add_input("warmup_ratio", warmup_ratio, warmup_ratio_field)
 
 learning_rate_scheduler_tab = Container(
     [
-        scheduler_select,
-        scheduler_parameters_area,
-        enable_warmup_checkbox,
-        warmup_container,
-        scheduler_preview_info,
+        select_scheduler_field,
+        Container(
+            [
+                schedulers.step_scheduler.create_container(hide=True),
+                schedulers.multi_steps_scheduler.create_container(hide=True),
+                schedulers.exp_scheduler.create_container(hide=True),
+                schedulers.reduce_plateau_scheduler.create_container(hide=True),
+                schedulers.cosineannealing_scheduler.create_container(hide=True),
+                schedulers.cosinerestart_scheduler.create_container(hide=True),
+                schedulers.linear_scheduler.create_container(hide=True),
+                schedulers.poly_scheduler.create_container(hide=True),
+                # onecycle_scheduler.create_container(hide=True),
+            ],
+            gap=0,
+        ),
+        enable_warmup_field,
+        warmup.create_container(),
         scheduler_preview_chart,
-        scheduler_preview_btn,
-    ]
+        Container(
+            [scheduler_preview_btn, scheduler_clear_btn, Empty()],
+            "horizontal",
+            0,
+            fractions=[1, 1, 10],
+        ),
+    ],
 )
 
 # endregion
@@ -224,7 +247,7 @@ stop_button = Button("Stop training", button_type="danger")
 stop_button.hide()
 
 
-parameters_tabs = RadioTabs(
+parameters_tabs = Tabs(
     ["General", "Optimizer", "Learning rate scheduler"],
     contents=[
         general_tab,
@@ -234,12 +257,14 @@ parameters_tabs = RadioTabs(
     ],
 )
 
+content = Container(
+    [advanced_mode_field, advanced_mode_editor, parameters_tabs, run_button],
+)
+
 card = Card(
     title="Training hyperparameters",
     description="Specify training hyperparameters using one of the methods.",
-    content=Container(
-        [advanced_mode_field, advanced_mode_editor, parameters_tabs, run_button],
-    ),
+    content=content,
     content_top_right=stop_button,
 )
 card.lock()
@@ -294,10 +319,10 @@ def on_preivew_scheduler():
 
     from supervisely.app.widgets import TrainValSplits
 
-    from supervisely_integration.train.ui.splits import trainval_container
+    from supervisely_integration.train.ui.splits import trainval_splits
 
-    split_widget: TrainValSplits = trainval_container._widgets[0]
-    split_widget.get_splits()
+    split_widget: TrainValSplits = trainval_splits
+    # split_widget.get_splits()
     self = split_widget
     split_method = self._content.get_active_tab()
     if split_method == "Random":
@@ -332,7 +357,7 @@ def on_preivew_scheduler():
         cls = name2cls(d.pop("type"))
         return cls(**{**d, **cls_kwargs})
 
-    custom_config = read_parameters()
+    custom_config = read_parameters(train_count)
     lr_scheduler = custom_config.get("lr_scheduler")
     dummy_optim = SGD([torch.nn.Parameter(torch.tensor([5.0]))], start_lr)
     if lr_scheduler is not None:
@@ -351,7 +376,6 @@ def on_preivew_scheduler():
     if lr_scheduler is not None:
         names += [lr_scheduler.__class__.__name__]
     name = ", ".join(names)
-    scheduler_preview_chart.set_series([])
     scheduler_preview_chart.add_series(f"{name}", x, lrs)
     scheduler_preview_chart.show()
     scheduler_preview_info.set(
@@ -360,223 +384,27 @@ def on_preivew_scheduler():
     )
 
 
+@scheduler_clear_btn.click
+def on_clear_preview():
+    scheduler_preview_chart.set_series([])
+
+
+@select_scheduler.value_changed
+def update_scheduler(new_value):
+    for scheduler in schedulers.schedulers_params.keys():
+        if new_value == scheduler:
+            schedulers.schedulers_params[scheduler].show()
+        else:
+            schedulers.schedulers_params[scheduler].hide()
+
+
 @scheduler_select.value_changed
-def scheduler_changed(scheduler: str):
-    # StepLR: by_epoch_checkbox, LR scheduler step (input number), gamma (input number)
-    # MultiStepLR: by_epoch_checkbox, LR scheduler steps (input), gamma (input number)
-    # ExponentialLR: by_epoch_checkbox, gamma (input number)
-    # ReduceLROnPlateauLR: by_epoch_checkbox, factor (input number), patience (input number)
-    # CosineAnnealingLR: by_epoch_checkbox, T_max (input number), min lr checkbox, min lr (input number), min lr ratio (input number)
-    # CosineRestartLR: by_epoch_checkbox, periods (input), restarts (input), min lr checkbox, min lr (input number), min lr ratio (input number)
-
-    scheduler_widgets_container._widgets.clear()
-    scheduler_parameters_area.reload()
-    g.widgets = None
-
-    if not scheduler != "Without scheduler":
-        by_epoch = Checkbox("By epoch", True)
-        by_epoch_field = Field(by_epoch, title="By epoch", description="Use epoch-based scheduler")
-        widgets = {
-            "by_epoch": by_epoch,
-            "by_epoch_field": by_epoch_field,
-        }
-    else:
-        widgets = {}
-
-    if scheduler == "StepLR":
-        step = InputNumber(value=1)
-        step_field = Field(
-            step,
-            title="Step",
-            description="Period of learning rate decay",
-        )
-        widgets["step"] = step
-        widgets["step_field"] = step_field
-    elif scheduler == "MultiStepLR":
-        # Decays the learning rate of each parameter group by gamma once the
-        # number of epoch reaches one of the milestones
-        steps = Input("15,18")
-        steps_field = Field(
-            steps,
-            title="Milestones",
-            description="List of epoch indices. Must be increasing.",
-        )
-        gamma = InputNumber(value=0.1)
-        gamma_field = Field(
-            gamma,
-            title="Gamma",
-            description="Multiplicative factor of learning rate decay",
-        )
-        widgets["steps"] = steps
-        widgets["steps_field"] = steps_field
-        widgets["gamma"] = gamma
-        widgets["gamma_field"] = gamma_field
-    elif scheduler == "ExponentialLR":
-        gamma = InputNumber(value=0.1)
-        gamma_field = Field(
-            gamma,
-            title="Gamma",
-            description="Multiplicative factor of learning rate decay",
-        )
-        widgets["gamma"] = gamma
-        widgets["gamma_field"] = gamma_field
-    elif scheduler == "ReduceLROnPlateauLR":
-        factor = InputNumber(value=0.1)
-        factor_field = Field(
-            factor,
-            title="Factor",
-            description="Factor by which the learning rate will be reduced",
-        )
-        patience = InputNumber(value=10)
-        patience_field = Field(
-            patience,
-            title="Patience",
-            description="Number of epochs with no improvement after which learning rate will be reduced",
-        )
-        widgets["factor"] = factor
-        widgets["factor_field"] = factor_field
-        widgets["patience"] = patience
-        widgets["patience_field"] = patience_field
-    elif scheduler == "CosineAnnealingLR":
-        # Set the learning rate of each parameter group using a cosine annealing
-        # schedule, where :math:`\eta_{max}` is set to the initial lr and
-        # :math:`T_{cur}` is the number of epochs since the last restart in SGDR:
-        t_max = InputNumber(value=10)
-        t_max_field = Field(
-            t_max,
-            title="T max",
-            description="Maximum number of iterations",
-        )
-
-        widgets["t_max"] = t_max
-        widgets["t_max_field"] = t_max_field
-
-        # min_lr_checkbox = Checkbox("Min LR", True)
-
-        # @min_lr_checkbox.value_changed
-        # def min_lr_changed(is_checked: bool):
-        #     if is_checked:
-        #         widgets["min_lr_value"].enable()
-        #         widgets["min_lr_ratio"].disable()
-        #     else:
-        #         widgets["min_lr_value"].disable()
-        #         widgets["min_lr_ratio"].enable()
-
-        # min_lr_field = Field(
-        #     min_lr_checkbox,
-        #     title="Min LR",
-        #     description="Use minimum learning rate",
-        # )
-        # widgets["min_lr"] = min_lr_checkbox
-        # widgets["min_lr_field"] = min_lr_field
-
-        min_lr_value = InputNumber(value=0.0)
-        min_lr_value_field = Field(
-            min_lr_value,
-            title="Min LR value",
-            description="Minimum learning rate",
-        )
-        widgets["min_lr_value"] = min_lr_value
-        widgets["min_lr_value_field"] = min_lr_value_field
-
-        # min_lr_ratio = InputNumber(value=0.1)
-        # min_lr_ratio_field = Field(
-        #     min_lr_ratio,
-        #     title="Min LR ratio",
-        #     description="Minimum learning rate ratio",
-        # )
-        # widgets["min_lr_ratio"] = min_lr_ratio
-        # widgets["min_lr_ratio_field"] = min_lr_ratio_field
-
-        # widgets["min_lr_ratio"].disable()
-
-    elif scheduler == "CosineRestartLR":
-        periods = Input("10,20,30")
-        periods_field = Field(
-            periods,
-            title="Periods",
-            description="Periods for restarts",
-        )
-        restarts = Input("2,3,4")
-        restarts_field = Field(
-            restarts,
-            title="Restarts",
-            description="Number of restarts",
-        )
-        widgets["periods"] = periods
-        widgets["periods_field"] = periods_field
-        widgets["restarts"] = restarts
-        widgets["restarts_field"] = restarts_field
-
-        min_lr_checkbox = Checkbox("Min LR", True)
-
-        @min_lr_checkbox.value_changed
-        def min_lr_changed(is_checked: bool):
-            if is_checked:
-                widgets["min_lr_value"].enable()
-                widgets["min_lr_ratio"].disable()
-            else:
-                widgets["min_lr_value"].disable()
-                widgets["min_lr_ratio"].enable()
-
-        min_lr_field = Field(
-            min_lr_checkbox,
-            title="Min LR",
-            description="Use minimum learning rate",
-        )
-
-        widgets["min_lr"] = min_lr_checkbox
-        widgets["min_lr_field"] = min_lr_field
-
-        min_lr_value = InputNumber(value=0.001)
-        min_lr_value_field = Field(
-            min_lr_value,
-            title="Min LR value",
-            description="Minimum learning rate",
-        )
-        widgets["min_lr_value"] = min_lr_value
-        widgets["min_lr_value_field"] = min_lr_value_field
-
-        min_lr_ratio = InputNumber(value=0.1)
-        min_lr_ratio_field = Field(
-            min_lr_ratio,
-            title="Min LR ratio",
-            description="Minimum learning rate ratio",
-        )
-        widgets["min_lr_ratio"] = min_lr_ratio
-        widgets["min_lr_ratio_field"] = min_lr_ratio_field
-
-        widgets["min_lr_ratio"].disable()
-
-    elif scheduler == "OneCycleLR":
-        # Sets the learning rate of each parameter group according to the
-        # 1cycle learning rate policy. The 1cycle policy anneals the learning
-        # rate from an initial learning rate to some maximum learning rate and then
-        # from that maximum learning rate to some minimum learning rate much lower
-        # than the initial learning rate.
-        max_lr = InputNumber(value=0.005)
-        max_lr_field = Field(
-            max_lr,
-            title="Max LR",
-            description="Maximum learning rate",
-        )
-        pct_start = InputNumber(value=0.3)
-        pct_start_field = Field(
-            pct_start,
-            title="Pct start",
-            description="The percentage of the cycle spent increasing the learning rate",
-        )
-        widgets["max_lr"] = max_lr
-        widgets["max_lr_field"] = max_lr_field
-        widgets["pct_start"] = pct_start
-        widgets["pct_start_field"] = pct_start_field
-
-    g.widgets = widgets
-
-    scheduler_widgets_container._widgets.extend(
-        [widget for key, widget in widgets.items() if key.endswith("_field")]
-    )
-    scheduler_parameters_area.reload()
+def scheduler_changed(new_value: str):
+    for scheduler in schedulers.schedulers_params.keys():
+        if new_value == scheduler:
+            schedulers.schedulers_params[scheduler].show()
+        else:
+            schedulers.schedulers_params[scheduler].hide()
 
 
 @run_button.click
@@ -588,13 +416,42 @@ def run_training():
     g.update_step()
     run_button.text = "Running..."
 
+    project_dir = os.path.join(g.data_dir, "sly_project")
+    iter_progress = Progress("Iterations", hide_on_finish=False)
+
+    download_project(
+        api=g.api,
+        project_id=g.PROJECT_ID,
+        project_dir=project_dir,
+        use_cache=g.USE_CACHE,
+        progress=iter_progress,
+    )
+
+    # prepare split files
+    try:
+        splits.dump_train_val_splits(project_dir)
+    except Exception:
+        if not g.USE_CACHE:
+            raise
+        sly.logger.warn(
+            "Failed to dump train/val splits. Trying to re-download project.", exc_info=True
+        )
+        download_project(
+            api=g.api,
+            project_id=g.PROJECT_ID,
+            project_dir=project_dir,
+            use_cache=False,
+            progress=iter_progress,
+        )
+        splits.dump_train_val_splits(project_dir)
+
     g.splits = splits.trainval_splits.get_splits()
     sly.logger.debug("Read splits from the widget...")
 
     download_project()
     create_trainval()
 
-    custom_config = read_parameters()
+    custom_config = read_parameters(len(g.splits[0]))
     prepare_config(custom_config)
     cfg = train()
     save_config(cfg)
@@ -616,7 +473,7 @@ def stop_training():
     run_button.text = "Run training"
 
 
-def read_parameters():
+def read_parameters(train_items_cnt: int):
     sly.logger.debug("Reading training parameters...")
     if advanced_mode_checkbox.is_checked():
         sly.logger.info("Advanced mode enabled, using custom config from the editor.")
@@ -682,9 +539,10 @@ def read_parameters():
         )
 
         # LR scheduler
-        train_items, val_items = g.splits
+        # g.splits = splits.trainval_splits.get_splits()
+        # train_items, val_items = g.splits
         total_steps = general_params["epoches"] * np.ceil(
-            len(train_items) / train_batch_size_input.value
+            train_items_cnt / train_batch_size_input.value
         )
         if scheduler_params["scheduler"] == "MultiStepLR":
             custom_config["lr_scheduler"] = {
@@ -789,7 +647,7 @@ def prepare_config(custom_config: Dict[str, Any]):
     ] = f"{g.train_dataset_path}/coco_anno.json"
     custom_config["val_dataloader"]["dataset"]["img_folder"] = f"{g.val_dataset_path}/img"
     custom_config["val_dataloader"]["dataset"]["ann_file"] = f"{g.val_dataset_path}/coco_anno.json"
-    selected_classes = [obj_class.name for obj_class in g.selected_classes]
+    selected_classes = g.selected_classes
     custom_config["sly_metadata"] = {
         "classes": selected_classes,
         "project_id": g.PROJECT_ID,
@@ -850,6 +708,7 @@ def download_project():
 
 
 def create_trainval():
+    # g.splits = splits.trainval_splits.get_splits()
     train_items, val_items = g.splits
     sly.logger.debug(f"Creating trainval datasets from splits: {g.splits}...")
     train_items: List[sly.project.project.ItemInfo]
@@ -880,7 +739,7 @@ def create_trainval():
 
     for dataset_fs in g.converted_project.datasets:
         dataset_fs: sly.Dataset
-        selected_classes = [obj_class.name for obj_class in g.selected_classes]
+        selected_classes = g.selected_classes
 
         coco_anno = get_coco_annotations(dataset_fs, g.converted_project.meta, selected_classes)
         coco_anno_path = os.path.join(dataset_fs.directory, "coco_anno.json")

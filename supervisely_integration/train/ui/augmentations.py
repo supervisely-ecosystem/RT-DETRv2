@@ -4,6 +4,7 @@ from pathlib import Path
 from supervisely.app.widgets import AugmentationsWithTabs, Button, Card, Container, Switch
 
 import supervisely_integration.train.globals as g
+import supervisely_integration.train.ui.parameters as parameters
 
 
 def name_from_path(aug_path):
@@ -19,11 +20,12 @@ template_paths = sorted(template_paths, key=lambda x: x.replace(".", "_"))[::-1]
 templates = [{"label": name_from_path(path), "value": path} for path in template_paths]
 
 
-swithcer = Switch(True)
+switcher = Switch(True)
 augments = AugmentationsWithTabs(g, task_type="detection", templates=templates)
 
-select_btn = Button("Select")
-container = Container([swithcer, augments, select_btn])
+select_button = Button("Select augs")
+change_button = Button("Change augs")
+container = Container([switcher, augments, select_button])
 
 card = Card(
     title="Training augmentations",
@@ -34,7 +36,7 @@ card.lock("Confirm splits.")
 
 
 def reset_widgets():
-    if swithcer.is_switched():
+    if switcher.is_switched():
         augments.show()
     else:
         augments.hide()
@@ -42,15 +44,31 @@ def reset_widgets():
 
 def get_selected_aug():
     # path to aug pipline (.json file)
-    if swithcer.is_switched():
+    if switcher.is_switched():
         return augments._current_augs._template_path
     else:
         return None
 
 
-@swithcer.value_changed
+@switcher.value_changed
 def on_switch(is_switched: bool):
     reset_widgets()
 
 
 reset_widgets()
+
+
+@select_button.click
+def splits_selected():
+    card.lock()
+    change_button.show()
+    parameters.card.unlock()
+    g.update_step(step=6)
+
+
+@change_button.click
+def change_splits():
+    card.unlock()
+    parameters.card.lock()
+    change_button.hide()
+    g.update_step(back=True)

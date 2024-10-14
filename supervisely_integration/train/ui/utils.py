@@ -1,7 +1,8 @@
-from typing import Any, Callable, Dict, List, Optional
+from collections import OrderedDict
+from typing import Any, Callable, Dict, Iterable, List, Optional
 
 from supervisely.app import DataJson
-from supervisely.app.widgets import Button, Card, Stepper, Widget
+from supervisely.app.widgets import Button, Card, Container, InputNumber, Stepper, Switch, Widget
 
 
 def update_custom_params(
@@ -93,3 +94,168 @@ def set_stepper_step(stepper: Stepper, button: Button, next_pos: int):
         stepper.set_active_step(next_pos)
     else:
         stepper.set_active_step(next_pos - 1)
+
+
+class InputContainer(object):
+    def __init__(self) -> None:
+        self._widgets = {}
+        self._custom_get_value = {}
+        self._custom_set_value = {}
+
+    def add_input(
+        self,
+        name: str,
+        widget: Widget,
+        custom_value_getter: Optional[Callable[[Widget], Any]] = None,
+        custom_value_setter: Optional[Callable[[Widget, Any], None]] = None,
+    ) -> None:
+        self._widgets[name] = widget
+        if custom_value_getter is not None:
+            self._custom_get_value[name] = custom_value_getter
+            self._custom_set_value[name] = custom_value_setter
+
+    def get_params(self) -> Dict[str, Any]:
+        params = {}
+        for name in self._widgets.keys():
+            params[name] = self._get_value(name)
+        return params
+
+    def set(self, name: str, value: Any) -> None:
+        if name in self._widgets:
+            self._set_value(name, value)
+        else:
+            raise AttributeError(
+                f"Widget with name {name} does not exists, only {self._widgets.keys()}"
+            )
+
+    def disable(self) -> None:
+        for w in self._widgets.values():
+            if isinstance(w, Iterable):
+                for wi in w:
+                    self._disable_w(wi)
+            else:
+                self._disable_w(w)
+
+    def enable(self) -> None:
+        for w in self._widgets.values():
+            if isinstance(w, Iterable):
+                for wi in w:
+                    self._enable_w(wi)
+            else:
+                self._enable_w(w)
+
+    def _enable_w(self, wg: Any) -> None:
+        if isinstance(wg, Widget):
+            wg.enable()
+
+    def _disable_w(self, wg: Any) -> None:
+        if isinstance(wg, Widget):
+            wg.disable()
+
+    def _get_value(self, name: str):
+        if name in self._custom_get_value:
+            widget = self._widgets[name]
+            return self._custom_get_value[name](widget)
+        return self._widgets[name].get_value()
+
+    def _set_value(self, name: str, value: Any):
+        if name in self._custom_set_value:
+            widget = self._widgets[name]
+            self._custom_set_value[name](widget, value)
+        else:
+            self._widgets[name].value = value
+
+    def __getattr__(self, __name: str) -> Any:
+        if __name in self._widgets:
+            return self._get_value(__name)
+        raise AttributeError(
+            f"Widget with name {__name} does not exists, only {self._widgets.keys()}"
+        )
+
+
+class OrderedWidgetWrapper(InputContainer):
+    def __init__(self, name: str) -> None:
+        super().__init__()
+        self._name = name
+        self._wraped_widgets = OrderedDict()
+        self._container = None
+
+    def add_input(
+        self,
+        name: str,
+        widget: Widget,
+        wraped_widget: Widget,
+        custom_value_getter: Optional[Callable[[Widget], Any]] = None,
+        custom_value_setter: Optional[Callable[[Widget, Any], None]] = None,
+    ) -> None:
+        super().add_input(name, widget, custom_value_getter, custom_value_setter)
+        self._wraped_widgets[name] = wraped_widget
+
+    def create_container(self, hide=False, update=False) -> Container:
+        if self._container is not None and not update:
+            return self._container
+        widgets = [widget for widget in self._wraped_widgets.values()]
+        self._container = Container(widgets)
+        if hide:
+            self.hide()
+        return self._container
+
+    def hide(self):
+        if self._container is None:
+            return
+        self._container.hide()
+
+    def show(self):
+        if self._container is None:
+            return
+        self._container.show()
+
+    def __repr__(self) -> str:
+        return self._name
+
+
+def get_switch_value(switch: Switch):
+    return switch.is_switched()
+
+
+def set_switch_value(switch: Switch, value: bool):
+    if value:
+        switch.on()
+    else:
+        switch.off()
+
+
+def create_linked_getter(
+    widget1: InputNumber,
+    widget2: InputNumber,
+    switcher: Switch,
+    get_first: bool = True,
+) -> Callable[[Widget], Any]:
+    """Return getter for widgets depends on switcher value.
+
+    :param widget1: first input
+    :type widget1: InputNumber
+    :param widget2: second input
+    :type widget2: InputNumber
+    :param switcher: switcher widget
+    :type switcher: Switch
+    :param get_first: if True return getter for first widget, defaults to True
+    :type get_first: bool, optional
+    :return: getter function
+    :rtype: Callable[[InputNumber], Any]
+    """
+
+    def getter(any_widget: InputNumber):
+        widget1_val = widget1.value
+        widget2_val = widget2.value
+
+        if switcher.is_switched():
+            widget1_val = None
+        else:
+            widget2_val = None
+
+        if get_first:
+            return widget1_val
+        return widget2_val
+
+    return getter
