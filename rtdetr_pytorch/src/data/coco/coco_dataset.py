@@ -12,6 +12,8 @@ import torchvision
 torchvision.disable_beta_transforms_warning()
 
 from pycocotools import mask as coco_mask
+from PIL import ImageOps
+
 from src.core import register
 from torchvision import datapoints
 
@@ -34,6 +36,7 @@ class CocoDetection(torchvision.datasets.CocoDetection):
 
     def __getitem__(self, idx):
         img, target = super(CocoDetection, self).__getitem__(idx)
+        img = ImageOps.exif_transpose(img)
         image_id = self.ids[idx]
         target = {"image_id": image_id, "annotations": target}
         img, target = self.prepare(img, target)

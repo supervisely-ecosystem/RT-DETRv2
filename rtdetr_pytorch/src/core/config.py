@@ -127,7 +127,6 @@ class BaseConfig(object):
     @property
     def lr_warmup(self, ) -> LRScheduler:
         return self._lr_warmup
-    
 
     @property
     def train_dataloader(self):
