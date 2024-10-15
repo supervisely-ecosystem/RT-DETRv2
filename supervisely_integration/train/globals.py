@@ -86,6 +86,8 @@ splits = None
 widgets = None
 # endregion
 
+app = None
+
 
 def update_step(back: Optional[bool] = False, step: Optional[int] = None) -> None:
     if step is None:

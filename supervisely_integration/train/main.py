@@ -25,3 +25,4 @@ g.stepper = Stepper(
 )
 
 app = sly.Application(layout=g.stepper)
+g.app = app

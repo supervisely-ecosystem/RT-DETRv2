@@ -1,6 +1,7 @@
 import os
 import shutil
 from datetime import datetime
+from functools import partial
 from typing import Any, Dict, List
 
 import numpy as np
@@ -13,7 +14,9 @@ from supervisely.app.widgets import (
     Container,
     DoneLabel,
     Empty,
+    Field,
     FolderThumbnail,
+    Grid,
     LineChart,
     Progress,
 )
@@ -30,6 +33,7 @@ from supervisely_integration.train.ui.project_cached import download_project
 
 start_train_btn = Button("Train")
 stop_train_btn = Button("Stop", button_type="danger")
+stop_train_btn.disable()
 
 btn_container = Container(
     [start_train_btn, stop_train_btn, Empty()],
@@ -50,9 +54,6 @@ learning_rate = LineChart(
     ],
 )
 cuda_memory = LineChart("CUDA Memory", series=[{"name": "Memory", "data": []}])
-iter_container = Container([loss, learning_rate, cuda_memory])
-iter_container.hide()
-
 validation_metrics = LineChart(
     "Validation Metrics",
     series=[
@@ -64,10 +65,27 @@ validation_metrics = LineChart(
         {"name": "AR@IoU=0.50:0.95|maxDets=100", "data": []},
     ],
 )
-validation_metrics.hide()
 
-train_progress = Progress(hide_on_finish=False)
-download_progress = Progress(hide_on_finish=True)
+
+# charts_grid = Grid([loss, learning_rate, cuda_memory, validation_metrics], columns=2, gap=5)
+
+charts_grid = Container(
+    [
+        Container([loss, learning_rate], direction="horizontal", widgets_style="display: null"),
+        Container(
+            [cuda_memory, validation_metrics], direction="horizontal", widgets_style="display: null"
+        ),
+    ]
+)
+
+charts_grid_f = Field(charts_grid, "Training and validation metrics")
+charts_grid_f.hide()
+
+progress_bar_download_project = Progress()
+progress_bar_prepare_project = Progress()
+progress_bar_download_model = Progress()
+progress_bar_epochs = Progress()
+progress_bar_upload_artifacts = Progress(hide_on_finish=True)
 
 output_folder = FolderThumbnail()
 output_folder.hide()
@@ -82,12 +100,16 @@ card = Card(
         [
             success_msg,
             output_folder,
-            train_progress,
+            progress_bar_download_project,
+            progress_bar_prepare_project,
+            progress_bar_download_model,
+            progress_bar_epochs,
+            progress_bar_upload_artifacts,
             btn_container,
-            iter_container,
-            validation_metrics,
+            charts_grid_f,
         ]
     ),
+    lock_message="Select parameterts to unlock",
 )
 card.lock()
 
@@ -128,8 +150,8 @@ def run_training():
         api=g.api,
         project_id=g.PROJECT_ID,
         project_dir=project_dir,
-        use_cache=g.USE_CACHE,
-        progress=train_progress,
+        use_cache=False,  # g.USE_CACHE,
+        progress=progress_bar_download_project,
     )
     g.project = sly.read_project(project_dir)
     # prepare split files
@@ -146,26 +168,45 @@ def run_training():
             project_id=g.PROJECT_ID,
             project_dir=project_dir,
             use_cache=False,
-            progress=train_progress,
+            progress=progress_bar_download_project,
         )
         splits_ui.dump_train_val_splits(project_dir)
         g.project = sly.read_project(project_dir)
 
-    g.splits = splits_ui.trainval_splits.get_splits()
-    sly.logger.debug("Read splits from the widget...")
+    # add prepare model progress
+    with progress_bar_prepare_project(
+        message="Preparing project...", total=1
+    ) as prepare_project_pbar:
+        g.splits = splits_ui.trainval_splits.get_splits()
+        sly.logger.debug("Read splits from the widget...")
+        create_trainval()
+        custom_config = parameters_ui.read_parameters(len(g.splits[0]))
+        prepare_config(custom_config)
+        prepare_project_pbar.update(1)
 
-    create_trainval()
-
-    custom_config = parameters_ui.read_parameters(len(g.splits[0]))
-    prepare_config(custom_config)
-
-    iter_container.show()
-    validation_metrics.show()
+    stop_train_btn.enable()
+    charts_grid_f.show()
 
     cfg = train()
     save_config(cfg)
-    out_path = upload_model(cfg.output_dir)
+    out_path, file_info = upload_model(cfg.output_dir)
     print(out_path)
+
+    # hide buttons
+    start_train_btn.hide()
+    stop_train_btn.hide()
+
+    # add file tb
+    output_folder.set(file_info)
+    # add success text
+    success_msg.show()
+    output_folder.show()
+    start_train_btn.disable()
+    stop_train_btn.disable()
+
+    # stop app
+
+    g.app.stop()
 
 
 @stop_train_btn.click
@@ -206,7 +247,15 @@ def prepare_config(custom_config: Dict[str, Any]):
 def train():
     model = g.train_mode.pretrained[0]
     finetune = g.train_mode.finetune
-    cfg = train_cli.train(model, finetune, g.custom_config_path, train_progress)
+    cfg = train_cli.train(
+        model,
+        finetune,
+        g.custom_config_path,
+        progress_bar_download_model,
+        progress_bar_epochs,
+        stop_train_btn,
+        charts_grid_f,
+    )
     return cfg
 
 
@@ -214,7 +263,7 @@ def save_config(cfg):
     if "__include__" in cfg.yaml_cfg:
         cfg.yaml_cfg.pop("__include__")
 
-    output_path = os.path.join(g.OUTPUT_DIR, "config.yml")
+    output_path = os.path.join(cfg.output_dir, "config.yml")
 
     with open(output_path, "w") as f:
         yaml.dump(cfg.yaml_cfg, f)
@@ -224,21 +273,50 @@ def upload_model(output_dir):
     model_name = g.train_mode.pretrained[0]
     timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
     team_files_dir = f"/RT-DETR/{g.project_info.name}_{g.PROJECT_ID}/{timestamp}_{model_name}"
-    local_dir = f"{output_dir}/upload"
-    sly.fs.mkdir(local_dir)
+    local_artifacts_dir = f"{output_dir}/upload"
+    sly.fs.mkdir(local_artifacts_dir)
+    sly.logger.info(f"Local artifacts dir: {local_artifacts_dir}")
 
     checkpoints = [f for f in os.listdir(output_dir) if f.endswith(".pth")]
     latest_checkpoint = sorted(checkpoints)[-1]
-    shutil.move(f"{output_dir}/{latest_checkpoint}", f"{local_dir}/{latest_checkpoint}")
-    shutil.move(f"{output_dir}/log.txt", f"{local_dir}/log.txt")
-    shutil.move("output/config.yml", f"{local_dir}/config.yml")
+    shutil.move(f"{output_dir}/{latest_checkpoint}", f"{local_artifacts_dir}/{latest_checkpoint}")
+    shutil.move(f"{output_dir}/log.txt", f"{local_artifacts_dir}/log.txt")
+    shutil.move(f"{output_dir}/config.yml", f"{local_artifacts_dir}/config.yml")
 
-    out_path = g.api.file.upload_directory(
-        sly.env.team_id(),
-        local_dir,
-        team_files_dir,
+    def upload_monitor(monitor, api: sly.Api, progress: sly.Progress):
+        value = monitor.bytes_read
+        if progress.total == 0:
+            progress.set(value, monitor.len, report=False)
+        else:
+            progress.set_current_value(value, report=False)
+        artifacts_pbar.update(progress.current - artifacts_pbar.n)
+
+    local_files = sly.fs.list_files_recursively(local_artifacts_dir)
+    total_size = sum([sly.fs.get_file_size(file_path) for file_path in local_files])
+    progress = sly.Progress(
+        message="",
+        total_cnt=total_size,
+        is_size=True,
     )
-    return out_path
+    progress_cb = partial(upload_monitor, api=g.api, progress=progress)
+    with progress_bar_upload_artifacts(
+        message="Uploading train artifacts to Team Files...",
+        total=total_size,
+        unit="bytes",
+        unit_scale=True,
+    ) as artifacts_pbar:
+        out_path = g.api.file.upload_directory(
+            sly.env.team_id(),
+            local_artifacts_dir,
+            team_files_dir,
+            progress_size_cb=progress_cb,
+        )
+
+    file_info = g.api.file.get_info_by_path(g.TEAM_ID, os.path.join(team_files_dir, "config.yml"))
+
+    sly.logger.info("Training artifacts uploaded successfully")
+    sly.output.set_directory(team_files_dir)
+    return out_path, file_info
 
 
 def create_trainval():

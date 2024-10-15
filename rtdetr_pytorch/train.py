@@ -1,5 +1,7 @@
 import os
+from functools import partial
 from typing import Callable, Optional
+from urllib.request import urlopen
 
 import supervisely as sly
 import torch
@@ -7,14 +9,27 @@ from checkpoints import checkpoints
 from src.core import YAMLConfig
 from src.misc.sly_logger import LOGS, Logs
 from src.solver import DetSolver
+from supervisely.app.widgets import Button, Field, Progress
+
+import supervisely_integration.train.globals as g
 
 
 def train(
     model: str,
     finetune: bool,
     config_path: str,
-    progress: sly.app.widgets.Progress,
+    progress_download_model: Progress,
+    progress_bar_epochs: Progress,
+    stop_button: Button,
+    charts_grid: Field,
 ):
+    def download_monitor(monitor, api: sly.Api, progress: sly.Progress):
+        value = monitor
+        if progress.total == 0:
+            progress.set(value, monitor.len, report=False)
+        else:
+            progress.set_current_value(value, report=False)
+        weights_pbar.update(progress.current)
 
     if finetune:
         checkpoint_url = checkpoints[model]
@@ -22,7 +37,27 @@ def train(
         checkpoint_path = f"models/{name}"
         if not os.path.exists(checkpoint_path):
             os.makedirs("models", exist_ok=True)
-            torch.hub.download_url_to_file(checkpoint_url, checkpoint_path)
+            # torch.hub.download_url_to_file(checkpoint_url, checkpoint_path)
+            with urlopen(checkpoint_url) as file:
+                weights_size = file.length
+
+            progress = sly.Progress(
+                message="",
+                total_cnt=weights_size,
+                is_size=True,
+            )
+            progress_cb = partial(download_monitor, api=g.api, progress=progress)
+            with progress_download_model(
+                message="Downloading model weights...",
+                total=weights_size,
+                unit="bytes",
+                unit_scale=True,
+            ) as weights_pbar:
+                sly.fs.download(
+                    url=checkpoint_url,
+                    save_path=checkpoint_path,
+                    progress=progress_cb,
+                )
         tuning = checkpoint_path
     else:
         tuning = ""
@@ -34,8 +69,7 @@ def train(
     )
 
     solver = DetSolver(cfg)
-    solver.fit()
-    # solver.fit(progress)
+    solver.fit(progress_bar_epochs, stop_button, charts_grid)
 
     return cfg
 
@@ -64,4 +98,5 @@ def setup_callbacks(
 
     LOGS.iter_callback = iter_callback
     LOGS.eval_callback = eval_callback
+    sly.logger.debug("Callbacks set...")
     sly.logger.debug("Callbacks set...")

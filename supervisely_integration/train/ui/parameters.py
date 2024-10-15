@@ -1,10 +1,23 @@
 import numpy as np
 import supervisely as sly
 import yaml
-from supervisely.app.widgets import (BindedInputNumber, Button, Card, Checkbox,
-                                     Container, Editor, Empty, Field, Input,
-                                     InputNumber, LineChart, Select, Switch,
-                                     Tabs, Text)
+from supervisely.app.widgets import (
+    BindedInputNumber,
+    Button,
+    Card,
+    Checkbox,
+    Container,
+    Editor,
+    Empty,
+    Field,
+    Input,
+    InputNumber,
+    LineChart,
+    Select,
+    Switch,
+    Tabs,
+    Text,
+)
 
 import supervisely_integration.train.globals as g
 import supervisely_integration.train.ui.output as output_ui
@@ -143,11 +156,6 @@ optimization_tab = Container(
 # endregion
 
 # region scheduler widgets
-scheduler_select = Select([Select.Item(sch) for sch in g.SCHEDULERS])
-
-scheduler_widgets_container = Container()
-
-enable_warmup_checkbox = Checkbox("Enable warmup", True)
 warmup_iterations_input = InputNumber(value=100)
 warmup_iterations_field = Field(
     warmup_iterations_input,
@@ -222,7 +230,7 @@ learning_rate_scheduler_tab = Container(
 select_params_button = Button("Select")
 
 parameters_tabs = Tabs(
-    ["General", "Optimizer", "Learning rate scheduler"],
+    ["General", "Optimizer (Advanced)", "Learning rate scheduler (Advanced)"],
     contents=[
         general_tab,
         # checkpoints_tab,
@@ -296,11 +304,19 @@ def optimizer_changed(optimizer: str):
         momentum_field.show()
 
 
-@enable_warmup_checkbox.value_changed
-def warmup_changed(is_checked: bool):
-    if is_checked:
+@enable_warmup_input.value_changed
+def warmup_changed(is_switched: bool):
+    if is_switched:
+        warmup_iterations_field.show()
+        warmup_iterations.show()
+        warmup_ratio_field.show()
+        warmup_ratio.show()
         warmup_container.show()
     else:
+        warmup_iterations_field.hide()
+        warmup_iterations.hide()
+        warmup_ratio_field.hide()
+        warmup_ratio.hide()
         warmup_container.hide()
 
 
@@ -362,20 +378,22 @@ def on_preview_scheduler():
     dummy_optim = SGD([torch.nn.Parameter(torch.tensor([5.0]))], start_lr)
     if lr_scheduler is not None:
         lr_scheduler = instantiate(lr_scheduler, optimizer=dummy_optim)
-    lr_warmup = custom_config.get("lr_warmup")
-    if lr_warmup is not None:
-        lr_warmup = instantiate(lr_warmup, optimizer=dummy_optim)
+
+    use_lr_warmup = enable_warmup_input.is_switched()
+    if use_lr_warmup:
+        lr_warmup = custom_config.get("lr_warmup")
+        if lr_warmup is not None:
+            lr_warmup = instantiate(lr_warmup, optimizer=dummy_optim)
+    else:
+        lr_warmup = None
 
     x, lrs = visualize_scheduler.test_schedulers(
         lr_scheduler, lr_warmup, dummy_optim, dataloader_len, total_epochs
     )
 
-    names = []
-    if lr_warmup is not None:
-        names += ["warmup"]
-    if lr_scheduler is not None:
-        names += [lr_scheduler.__class__.__name__]
-    name = ", ".join(names)
+    name = (
+        f"{select_scheduler.get_value()} warmup" if use_lr_warmup else select_scheduler.get_value()
+    )
     scheduler_preview_chart.add_series(f"{name}", x, lrs)
     scheduler_preview_chart.show()
     scheduler_preview_info.set(
@@ -391,15 +409,6 @@ def on_clear_preview():
 
 @select_scheduler.value_changed
 def update_scheduler(new_value):
-    for scheduler in schedulers.schedulers_params.keys():
-        if new_value == scheduler:
-            schedulers.schedulers_params[scheduler].show()
-        else:
-            schedulers.schedulers_params[scheduler].hide()
-
-
-@scheduler_select.value_changed
-def scheduler_changed(new_value: str):
     for scheduler in schedulers.schedulers_params.keys():
         if new_value == scheduler:
             schedulers.schedulers_params[scheduler].show()
@@ -429,8 +438,6 @@ def select_params():
                 beta2_input,
                 clip_gradient_norm_checkbox,
                 clip_gradient_norm_input,
-                scheduler_select,
-                enable_warmup_checkbox,
                 warmup_iterations_input,
                 scheduler_preview_chart,
                 scheduler_preview_btn,
@@ -474,8 +481,6 @@ def select_params():
                 beta2_input,
                 clip_gradient_norm_checkbox,
                 clip_gradient_norm_input,
-                scheduler_select,
-                enable_warmup_checkbox,
                 warmup_iterations_input,
                 scheduler_preview_chart,
                 scheduler_preview_btn,
@@ -633,11 +638,11 @@ def read_optimizer_parameters():
 
 
 def read_scheduler_parameters():
-    scheduler = scheduler_select.get_value()
+    scheduler = select_scheduler.get_value()
 
     parameters = {
         "scheduler": scheduler,
-        "enable_warmup": enable_warmup_checkbox.is_checked(),
+        "enable_warmup": enable_warmup_input.is_switched(),
         "warmup_iterations": warmup_iterations_input.get_value(),
     }
 
