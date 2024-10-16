@@ -33,6 +33,7 @@ from supervisely_integration.train.ui.project_cached import download_project
 
 start_train_btn = Button("Train")
 stop_train_btn = Button("Stop", button_type="danger")
+stop_train_btn.hide()
 stop_train_btn.disable()
 
 btn_container = Container(
@@ -84,8 +85,9 @@ charts_grid_f.hide()
 progress_bar_download_project = Progress()
 progress_bar_prepare_project = Progress()
 progress_bar_download_model = Progress()
-progress_bar_epochs = Progress()
-progress_bar_upload_artifacts = Progress(hide_on_finish=True)
+progress_bar_epochs = Progress(hide_on_finish=False)
+progress_bar_iters = Progress(hide_on_finish=False)
+progress_bar_upload_artifacts = Progress()
 
 output_folder = FolderThumbnail()
 output_folder.hide()
@@ -104,6 +106,7 @@ card = Card(
             progress_bar_prepare_project,
             progress_bar_download_model,
             progress_bar_epochs,
+            progress_bar_iters,
             progress_bar_upload_artifacts,
             btn_container,
             charts_grid_f,
@@ -189,6 +192,10 @@ def run_training():
 
     cfg = train()
     save_config(cfg)
+
+    progress_bar_epochs.hide()
+    progress_bar_iters.hide()
+
     out_path, file_info = upload_model(cfg.output_dir)
     print(out_path)
 
@@ -253,6 +260,7 @@ def train():
         g.custom_config_path,
         progress_bar_download_model,
         progress_bar_epochs,
+        progress_bar_iters,
         stop_train_btn,
         charts_grid_f,
     )
@@ -269,17 +277,39 @@ def save_config(cfg):
         yaml.dump(cfg.yaml_cfg, f)
 
 
+def generate_train_info(
+    local_artifacts_dir: str, remote_artifacts_dir: str, checkpoint_infos: List[List]
+):
+    train_info = {
+        "app_name": "Train RT-DETR",
+        "task_id": g.TASK_ID,
+        "artifacts_folder": remote_artifacts_dir,
+        "session_link": f"/apps/sessions/{g.TASK_ID}",
+        "task_type": "object detection",
+        "project_name": g.project_info.name,
+        "checkpoints": checkpoint_infos,
+    }
+
+    local_save_path = os.path.join(local_artifacts_dir, "train_info.json")
+    remote_save_path = os.path.join(remote_artifacts_dir, "train_info.json")
+
+    sly.json.dump_json_file(train_info, local_save_path, indent=None)
+    g.api.file.upload(g.TEAM_ID, local_save_path, remote_save_path)
+
+
 def upload_model(output_dir):
     model_name = g.train_mode.pretrained[0]
     timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-    team_files_dir = f"/RT-DETR/{g.project_info.name}_{g.PROJECT_ID}/{timestamp}_{model_name}"
-    local_artifacts_dir = f"{output_dir}/upload"
+    team_files_dir = f"/RT-DETR/{g.project_info.name}/{g.TASK_ID}/{timestamp}_{model_name}"
+    local_artifacts_dir = os.path.join(output_dir, "upload")
+    local_checkpoints_dir = os.path.join(local_artifacts_dir, "checkpoints")
     sly.fs.mkdir(local_artifacts_dir)
+    sly.fs.mkdir(local_checkpoints_dir)
     sly.logger.info(f"Local artifacts dir: {local_artifacts_dir}")
 
     checkpoints = [f for f in os.listdir(output_dir) if f.endswith(".pth")]
     latest_checkpoint = sorted(checkpoints)[-1]
-    shutil.move(f"{output_dir}/{latest_checkpoint}", f"{local_artifacts_dir}/{latest_checkpoint}")
+    shutil.move(f"{output_dir}/{latest_checkpoint}", f"{local_checkpoints_dir}/{latest_checkpoint}")
     shutil.move(f"{output_dir}/log.txt", f"{local_artifacts_dir}/log.txt")
     shutil.move(f"{output_dir}/config.yml", f"{local_artifacts_dir}/config.yml")
 
@@ -309,9 +339,13 @@ def upload_model(output_dir):
             sly.env.team_id(),
             local_artifacts_dir,
             team_files_dir,
-            progress_size_cb=progress_cb,
+            progress_size_cb=artifacts_pbar,
         )
 
+    checkpoint_infos = g.api.file.list(
+        g.TEAM_ID, os.path.join(team_files_dir, "checkpoints"), False, "fileinfo"
+    )
+    generate_train_info(local_artifacts_dir, team_files_dir, checkpoint_infos)
     file_info = g.api.file.get_info_by_path(g.TEAM_ID, os.path.join(team_files_dir, "config.yml"))
 
     sly.logger.info("Training artifacts uploaded successfully")

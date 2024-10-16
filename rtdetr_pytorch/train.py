@@ -20,6 +20,7 @@ def train(
     config_path: str,
     progress_download_model: Progress,
     progress_bar_epochs: Progress,
+    progress_bar_iters: Progress,
     stop_button: Button,
     charts_grid: Field,
 ):
@@ -69,7 +70,7 @@ def train(
     )
 
     solver = DetSolver(cfg)
-    solver.fit(progress_bar_epochs, stop_button, charts_grid)
+    solver.fit(progress_bar_epochs, progress_bar_iters, stop_button, charts_grid)
 
     return cfg
 

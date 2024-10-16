@@ -20,7 +20,13 @@ from .solver import BaseSolver
 
 class DetSolver(BaseSolver):
 
-    def fit(self, progress_bar_epochs: Progress, stop_button: Button, charts_grid: Field):
+    def fit(
+        self,
+        progress_bar_epochs: Progress,
+        progress_bar_iters: Progress,
+        stop_button: Button,
+        charts_grid: Field,
+    ):
         print("Start training")
         self.train()
 
@@ -55,6 +61,7 @@ class DetSolver(BaseSolver):
                     scaler=self.scaler,
                     lr_warmup=self.lr_warmup,
                     lr_scheduler=self.lr_scheduler,
+                    progress_bar_iters=progress_bar_iters,
                 )
 
                 if self.lr_scheduler is not None and is_by_epoch(self.lr_scheduler):

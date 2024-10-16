@@ -59,6 +59,7 @@ SCHEDULERS = [
 # endregion
 
 # region envvars
+TASK_ID = 99999  # sly.env.task_id()
 TEAM_ID = sly.env.team_id()
 WORKSPACE_ID = sly.env.workspace_id()
 PROJECT_ID = sly.env.project_id()
