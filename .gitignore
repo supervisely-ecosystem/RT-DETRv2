@@ -174,4 +174,4 @@ rtdetr_pytorch/configs/rtdetr/custom.yml
 temp/
 /imgaug.json
 imgaug.json
-
+supervisely_integration/train/data
