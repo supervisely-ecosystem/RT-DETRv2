@@ -23,7 +23,7 @@ from supervisely.app.widgets import (
 
 import rtdetr_pytorch.train as train_cli
 import supervisely_integration.train.globals as g
-import supervisely_integration.train.ui.augmentations as augmentations_ui
+import supervisely_integration.train.ui.input as input_ui
 import supervisely_integration.train.ui.parameters as parameters_ui
 import supervisely_integration.train.ui.splits as splits_ui
 from supervisely_integration.train.ui.project_cached import download_project
@@ -149,11 +149,12 @@ def run_training():
     g.project_dir = project_dir
     # iter_progress = Progress("Iterations", hide_on_finish=False)
 
+    g.USE_CACHE = input_ui.use_cache_checkbox.is_checked()
     download_project(
         api=g.api,
         project_id=g.PROJECT_ID,
         project_dir=project_dir,
-        use_cache=False,  # g.USE_CACHE,
+        use_cache=g.USE_CACHE,
         progress=progress_bar_download_project,
     )
     g.project = sly.read_project(project_dir)
