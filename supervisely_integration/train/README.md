@@ -21,7 +21,7 @@
 
 # Overview
 
-Train RT-DETR models in Supervisely.
+Train RT-DETR models in Supervisely on your custom data. All annotations will be converted to the bounding boxes automatically. Configure Train / Validation splits, model and training hyperparameters. Run on any agent (with GPU) in your team. Monitor progress, metrics, logs and other visualizations withing a single dashboard.
 
 # Model Zoo
 
