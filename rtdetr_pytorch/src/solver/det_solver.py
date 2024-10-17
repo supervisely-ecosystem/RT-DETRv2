@@ -4,6 +4,7 @@ by lyuwenyu
 
 import datetime
 import json
+import shutil
 import time
 
 import torch
@@ -131,6 +132,15 @@ class DetSolver(BaseSolver):
                     break
         epochs_pbar.close()
         stop_button.disable()
+
+        # Save the best checkpoint
+        best_epoch_idx = best_stat["epoch"]
+        best_checkpoint_path = self.output_dir / f"best_{best_epoch_idx}.pth"
+        for file in self.output_dir.glob("checkpoint*.pth"):
+            if file.stem.endswith(f"{best_epoch_idx:04}"):
+                shutil.copy(file, best_checkpoint_path)
+                g.best_checkpoint_path = best_checkpoint_path
+                break
 
         total_time = time.time() - start_time
         total_time_str = str(datetime.timedelta(seconds=int(total_time)))

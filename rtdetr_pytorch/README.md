@@ -1,109 +1,81 @@
-## TODO
-<details>
-<summary> see details </summary>
+<div align="center" markdown>
 
-- [x] Training
-- [x] Evaluation
-- [x] Export onnx
-- [x] Upload source code
-- [x] Upload weight convert from paddle, see [*links*](https://github.com/lyuwenyu/RT-DETR/issues/42)
-- [x] Align training details with the [*paddle version*](../rtdetr_paddle/)
-- [x] Tuning rtdetr based on [*pretrained weights*](https://github.com/lyuwenyu/RT-DETR/issues/42)
+<img src=""/>  
 
-</details>
+# Train RT-DETR
 
+<p align="center">
+  <a href="#Overview">Overview</a> •
+  <a href="#How-To-Run">How To Run</a> •
+  <a href="#Obtain-saved-checkpoints">Obtain saved checkpoints</a> •
+  <a href="#Acknowledgment">Acknowledgment</a>
+</p>
 
-## Model Zoo
+[![](https://img.shields.io/badge/supervisely-ecosystem-brightgreen)](https://ecosystem.supervise.ly/apps/supervisely-ecosystem/RT-DETR/supervisely_integration/train)
+[![](https://img.shields.io/badge/slack-chat-green.svg?logo=slack)](https://supervise.ly/slack)
+![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/supervisely-ecosystem/RT-DETR)
+[![views](https://app.supervise.ly/img/badges/views/supervisely-ecosystem/RT-DETR/supervisely_integration/train.png)](https://supervise.ly)
+[![runs](https://app.supervise.ly/img/badges/runs/supervisely-ecosystem/RT-DETR/supervisely_integration/train.png)](https://supervise.ly)
 
-| Model | Dataset | Input Size | AP<sup>val</sup> | AP<sub>50</sub><sup>val</sup> | #Params(M) | FPS |  checkpoint |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-rtdetr_r18vd | COCO | 640 | 46.4 | 63.7 | 20 | 217 | [url<sup>*</sup>](https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r18vd_dec3_6x_coco_from_paddle.pth)
-rtdetr_r34vd | COCO | 640 | 48.9 | 66.8 | 31 | 161 | [url<sup>*</sup>](https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r34vd_dec4_6x_coco_from_paddle.pth)
-rtdetr_r50vd_m | COCO | 640 | 51.3 | 69.5 | 36 | 145 | [url<sup>*</sup>](https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r50vd_m_6x_coco_from_paddle.pth)
-rtdetr_r50vd | COCO | 640 | 53.1 | 71.2| 42 | 108 | [url<sup>*</sup>](https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r50vd_6x_coco_from_paddle.pth)
-rtdetr_r101vd | COCO | 640 | 54.3 | 72.8 | 76 | 74 | [url<sup>*</sup>](https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r101vd_6x_coco_from_paddle.pth)
-rtdetr_18vd | COCO+Objects365 | 640 | 49.0 | 66.5 | 20 | 217 | [url<sup>*</sup>](https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r18vd_5x_coco_objects365_from_paddle.pth)
-rtdetr_r50vd | COCO+Objects365 | 640 | 55.2 | 73.4 | 42 | 108 | [url<sup>*</sup>](https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r50vd_2x_coco_objects365_from_paddle.pth)
-rtdetr_r101vd | COCO+Objects365 | 640 | 56.2 | 74.5 | 76 | 74 | [url<sup>*</sup>](https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r101vd_2x_coco_objects365_from_paddle.pth)
+</div>
+
+# Overview
+
+Train RT-DETR models in Supervisely.
+
+# Model Zoo
+
+|     Model      |     Dataset     | Input Size | AP<sup>val</sup> | AP<sub>50</sub><sup>val</sup> | #Params(M) | FPS |                                                           checkpoint                                                           |
+|:--------------:|:---------------:|:----------:|:----------------:|:-----------------------------:|:----------:|:---:|:------------------------------------------------------------------------------------------------------------------------------:|
+|  rtdetr_r18vd  |      COCO       |    640     |       46.4       |             63.7              |     20     | 217 |    [url<sup>*</sup>](https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r18vd_dec3_6x_coco_from_paddle.pth)     |
+|  rtdetr_r34vd  |      COCO       |    640     |       48.9       |             66.8              |     31     | 161 |    [url<sup>*</sup>](https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r34vd_dec4_6x_coco_from_paddle.pth)     |
+| rtdetr_r50vd_m |      COCO       |    640     |       51.3       |             69.5              |     36     | 145 |      [url<sup>*</sup>](https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r50vd_m_6x_coco_from_paddle.pth)      |
+|  rtdetr_r50vd  |      COCO       |    640     |       53.1       |             71.2              |     42     | 108 |       [url<sup>*</sup>](https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r50vd_6x_coco_from_paddle.pth)       |
+| rtdetr_r101vd  |      COCO       |    640     |       54.3       |             72.8              |     76     | 74  |      [url<sup>*</sup>](https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r101vd_6x_coco_from_paddle.pth)       |
+|  rtdetr_18vd   | COCO+Objects365 |    640     |       49.0       |             66.5              |     20     | 217 | [url<sup>*</sup>](https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r18vd_5x_coco_objects365_from_paddle.pth)  |
+|  rtdetr_r50vd  | COCO+Objects365 |    640     |       55.2       |             73.4              |     42     | 108 | [url<sup>*</sup>](https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r50vd_2x_coco_objects365_from_paddle.pth)  |
+| rtdetr_r101vd  | COCO+Objects365 |    640     |       56.2       |             74.5              |     76     | 74  | [url<sup>*</sup>](https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r101vd_2x_coco_objects365_from_paddle.pth) |
 
 Notes
 - `COCO + Objects365` in the table means finetuned model on `COCO` using pretrained weights trained on `Objects365`.
 - `url`<sup>`*`</sup> is the url of pretrained weights convert from paddle model for save energy. *It may have slight differences between this table and paper*
-<!-- - `FPS` is evaluated on a single T4 GPU with $batch\\_size = 1$ and $tensorrt\\_fp16$ mode -->
 
-## Quick start
+# How to Run
 
-<details>
-<summary>Install</summary>
+**Step 1.** Run the app from context menu of the project with annotations or from the Ecosystem
 
-```bash
-pip install -r requirements.txt
-```
+**Step 2.** Choose the pretrained or custom object detection model
 
-</details>
+<img src="https://github.com/user-attachments/assets/c236ced3-9165-4d5c-a2f0-2fb29edee05c" width="100%" style='padding-top: 10px'>  
 
+**Step 3.** Select the classes you want to train RT-DETR on
 
-<details>
-<summary>Data</summary>
+<img src="https://github.com/user-attachments/assets/f0b2c84d-e2a8-4314-af4e-5ec7f784ce1f" width="100%" style='padding-top: 10px'>  
 
-- Download and extract COCO 2017 train and val images.
-```
-path/to/coco/
-  annotations/  # annotation json files
-  train2017/    # train images
-  val2017/      # val images
-```
-- Modify config [`img_folder`, `ann_file`](configs/dataset/coco_detection.yml)
-</details>
+**Step 4.** Define the train/val splits
 
+<img src="https://github.com/user-attachments/assets/3a2ac582-0489-493d-b2ff-8a98c94dfa20" width="100%" style='padding-top: 10px'>  
 
+**Step 5.** Choose either ready-to-use augmentation template or provide custom pipeline
 
-<details>
-<summary>Training & Evaluation</summary>
+<img src="https://github.com/user-attachments/assets/a053fd89-4acc-44c0-af42-1ec0b84804a6" width="100%" style='padding-top: 10px'>  
 
-- Training on a Single GPU:
+**Step 6.** Configure the training parameters
 
-```shell
-# training on single-gpu
-export CUDA_VISIBLE_DEVICES=0
-python tools/train.py -c configs/rtdetr/rtdetr_r50vd_6x_coco.yml
-```
+<img src="https://github.com/user-attachments/assets/c5c715f0-836d-4613-a004-d139e2cf9706" width="100%" style='padding-top: 10px'>  
 
-- Training on Multiple GPUs:
+**Step 7.** Click `Train` button and observe the training progress, metrics charts and visualizations 
 
-```shell
-# train on multi-gpu
-export CUDA_VISIBLE_DEVICES=0,1,2,3
-torchrun --nproc_per_node=4 tools/train.py -c configs/rtdetr/rtdetr_r50vd_6x_coco.yml
-```
+<img src="https://github.com/user-attachments/assets/703e182f-c84e-47de-8dc3-b01da8457580" width="100%" style='padding-top: 10px'>  
 
-- Evaluation on Multiple GPUs:
+# Obtain saved checkpoints
 
-```shell
-# val on multi-gpu
-export CUDA_VISIBLE_DEVICES=0,1,2,3
-torchrun --nproc_per_node=4 tools/train.py -c configs/rtdetr/rtdetr_r50vd_6x_coco.yml -r path/to/checkpoint --test-only
-```
+All the trained checkpoints, that are generated through the process of training models are stored in [Team Files](https://app.supervise.ly/files/) in the folder **RT-DETR**.
 
-</details>
+You will see a folder thumbnail with a link to you saved checkpoints by the end of training process.
 
+<img src="https://github.com/user-attachments/assets/6dd036f4-41de-4eb9-a87a-3387fb849ff1" width="100%" style='padding-top: 10px'>  
 
+# Acknowledgment
 
-<details>
-<summary>Export</summary>
-
-```shell
-python tools/export_onnx.py -c configs/rtdetr/rtdetr_r18vd_6x_coco.yml -r path/to/checkpoint --check
-```
-</details>
-
-
-
-
-<details open>
-<summary>Train custom data</summary>
-
-1. set `remap_mscoco_category: False`. This variable only works for ms-coco dataset. If you want to use `remap_mscoco_category` logic on your dataset, please modify variable [`mscoco_category2name`](https://github.com/lyuwenyu/RT-DETR/blob/main/rtdetr_pytorch/src/data/coco/coco_dataset.py#L154) based on your dataset.
-
-2. add `-t path/to/checkpoint` (optinal) to tuning rtdetr based on pretrained checkpoint. see [training script details](./tools/README.md).
-</details>
+This app is based on the great work `RT-DETR` ([github](https://github.com/lyuwenyu/RT-DETR)). ![GitHub Org's stars](https://img.shields.io/github/stars/lyuwenyu/RT-DETR?style=social)

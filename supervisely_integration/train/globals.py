@@ -8,8 +8,8 @@ from dotenv import load_dotenv
 from rtdetr_pytorch.model_list import _models
 
 if sly.is_development:
-    load_dotenv(os.path.expanduser("~/supervisely.env"))
     load_dotenv("local.env")
+    load_dotenv(os.path.expanduser("~/supervisely.env"))
 
 # region constants
 cwd = os.getcwd()
@@ -59,7 +59,7 @@ SCHEDULERS = [
 # endregion
 
 # region envvars
-TASK_ID = sly.env.task_id()
+TASK_ID = 998  # sly.env.task_id()
 TEAM_ID = sly.env.team_id()
 WORKSPACE_ID = sly.env.workspace_id()
 PROJECT_ID = sly.env.project_id()
@@ -86,6 +86,9 @@ selected_classes = None
 splits = None
 widgets = None
 # endregion
+
+best_checkpoint_path = None
+latest_checkpoint_name = "last.pth"
 
 app = None
 

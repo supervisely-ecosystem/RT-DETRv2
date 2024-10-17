@@ -1,7 +1,6 @@
 import os
 import shutil
 from datetime import datetime
-from functools import partial
 from typing import Any, Dict, List
 
 import numpy as np
@@ -16,10 +15,10 @@ from supervisely.app.widgets import (
     Empty,
     Field,
     FolderThumbnail,
-    Grid,
     LineChart,
     Progress,
 )
+from supervisely.io.fs import get_file_name
 
 import rtdetr_pytorch.train as train_cli
 import supervisely_integration.train.globals as g
@@ -308,28 +307,28 @@ def upload_model(output_dir):
     sly.fs.mkdir(local_checkpoints_dir)
     sly.logger.info(f"Local artifacts dir: {local_artifacts_dir}")
 
-    checkpoints = [f for f in os.listdir(output_dir) if f.endswith(".pth")]
+    checkpoints = [
+        f
+        for f in os.listdir(output_dir)
+        if f.endswith(".pth") and f"{output_dir}/{f}" is not g.best_checkpoint_path
+    ]
+
+    # Move last checkpoint to checkpoints folder
     latest_checkpoint = sorted(checkpoints)[-1]
-    shutil.move(f"{output_dir}/{latest_checkpoint}", f"{local_checkpoints_dir}/{latest_checkpoint}")
+    shutil.move(
+        f"{output_dir}/{latest_checkpoint}", f"{local_checkpoints_dir}/{g.latest_checkpoint_name}"
+    )
+
+    # Move best checkpoint to checkpoints folder
+    best_checkpoint_file_name = get_file_name(g.best_checkpoint_path)
+    shutil.move(g.best_checkpoint_path, f"{local_checkpoints_dir}/{best_checkpoint_file_name}.pth")
+
+    # Move log and config files to artifacts folder
     shutil.move(f"{output_dir}/log.txt", f"{local_artifacts_dir}/log.txt")
     shutil.move(f"{output_dir}/config.yml", f"{local_artifacts_dir}/config.yml")
 
-    def upload_monitor(monitor, api: sly.Api, progress: sly.Progress):
-        value = monitor.bytes_read
-        if progress.total == 0:
-            progress.set(value, monitor.len, report=False)
-        else:
-            progress.set_current_value(value, report=False)
-        artifacts_pbar.update(progress.current - artifacts_pbar.n)
-
     local_files = sly.fs.list_files_recursively(local_artifacts_dir)
     total_size = sum([sly.fs.get_file_size(file_path) for file_path in local_files])
-    progress = sly.Progress(
-        message="",
-        total_cnt=total_size,
-        is_size=True,
-    )
-    progress_cb = partial(upload_monitor, api=g.api, progress=progress)
     with progress_bar_upload_artifacts(
         message="Uploading train artifacts to Team Files...",
         total=total_size,
