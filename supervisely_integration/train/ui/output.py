@@ -425,7 +425,11 @@ def fix_widget_path(bugged_path: str) -> str:
     :rtype: str
     """
     path = bugged_path.split("/")
-    updated_path = path[8:]
+
+    if sly.is_development():
+        updated_path = path[8:]
+    else:
+        updated_path = path[7:]
     correct_path = "/".join(updated_path)
     return correct_path
 
