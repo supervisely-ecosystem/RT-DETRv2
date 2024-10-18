@@ -8,9 +8,9 @@ from supervisely.app.widgets import (
     Checkbox,
     Container,
     Field,
-    FileViewer,
     RadioTable,
     RadioTabs,
+    TeamFilesSelector,
 )
 
 import supervisely_integration.train.globals as g
@@ -23,16 +23,7 @@ import supervisely_integration.train.ui.utils as utils
 TrainMode = namedtuple("TrainMode", ["pretrained", "custom", "finetune"])
 
 
-def get_file_tree(api: sly.Api, team_id: int, path: Optional[str] = "/") -> List[Dict]:
-    files = api.file.list(team_id, path)
-    tree_items = []
-    for file in files:
-        path = file["path"]
-        tree_items.append({"path": path})
-    return tree_items
-
-
-select_custom_weights = FileViewer(get_file_tree(g.api, g.TEAM_ID), selection_type="file")
+select_custom_weights = TeamFilesSelector(g.TEAM_ID, selection_file_type="file")
 pretrained_models_table = RadioTable(columns=g.TABLE_COLUMNS, rows=g.PRETRAINED_MODELS)
 
 finetune_checkbox = Checkbox("Fine-tune", True)
@@ -77,13 +68,14 @@ def model_selected():
         )
 
         mode = model_mode.get_active_tab()
+        g.model_mode = mode
         if mode == g.MODEL_MODES[0]:
             pretrained: List[str] = pretrained_models_table.get_selected_row()
             custom = None
             sly.logger.debug(f"Selected mode: {mode}, selected pretrained model: {pretrained}")
         else:
             pretrained = None
-            custom: List[str] = select_custom_weights.get_selected_items()
+            custom: List[str] = select_custom_weights.get_selected_paths()
             # TODO: Add single-item mode to the widget and remove indexing
             custom = custom[0] if custom else None
             sly.logger.debug(f"Selected mode: {mode}, path to custom weights: {custom}")
@@ -98,6 +90,7 @@ def model_selected():
         classes.card.unlock()
     else:
         g.train_mode = None
+        g.model_mode = None
         classes.fill_classes_selector(clear=True)
 
         # lock

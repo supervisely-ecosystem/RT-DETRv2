@@ -33,33 +33,52 @@ def train(
         weights_pbar.update(progress.current)
 
     if finetune:
-        checkpoint_url = checkpoints[model]
-        name = os.path.basename(checkpoint_url)
-        checkpoint_path = f"models/{name}"
-        if not os.path.exists(checkpoint_path):
-            os.makedirs("models", exist_ok=True)
-            # torch.hub.download_url_to_file(checkpoint_url, checkpoint_path)
-            with urlopen(checkpoint_url) as file:
-                weights_size = file.length
+        if g.model_mode == g.MODEL_MODES[0]:
+            checkpoint_url = checkpoints[model]
+            name = os.path.basename(checkpoint_url)
+            checkpoint_path = f"models/{name}"
+            if not os.path.exists(checkpoint_path):
+                os.makedirs("models", exist_ok=True)
+                # torch.hub.download_url_to_file(checkpoint_url, checkpoint_path)
+                with urlopen(checkpoint_url) as file:
+                    weights_size = file.length
 
-            progress = sly.Progress(
-                message="",
-                total_cnt=weights_size,
-                is_size=True,
-            )
-            progress_cb = partial(download_monitor, api=g.api, progress=progress)
+                progress = sly.Progress(
+                    message="",
+                    total_cnt=weights_size,
+                    is_size=True,
+                )
+                progress_cb = partial(download_monitor, api=g.api, progress=progress)
+                with progress_download_model(
+                    message="Downloading model weights...",
+                    total=weights_size,
+                    unit="bytes",
+                    unit_scale=True,
+                ) as weights_pbar:
+                    sly.fs.download(
+                        url=checkpoint_url,
+                        save_path=checkpoint_path,
+                        progress=progress_cb,
+                    )
+            tuning = checkpoint_path
+        else:
+            checkpoint_url = model
+            name = os.path.basename(checkpoint_url)
+            checkpoint_path = f"models/{name}"
+            checkpoint_info = g.api.file.get_info_by_path(g.TEAM_ID, checkpoint_url)
+            weights_size = checkpoint_info.sizeb
             with progress_download_model(
                 message="Downloading model weights...",
                 total=weights_size,
                 unit="bytes",
                 unit_scale=True,
             ) as weights_pbar:
-                sly.fs.download(
-                    url=checkpoint_url,
-                    save_path=checkpoint_path,
-                    progress=progress_cb,
-                )
-        tuning = checkpoint_path
+                if not os.path.exists(checkpoint_path):
+                    os.makedirs("models", exist_ok=True)
+                    g.api.file.download(
+                        g.TEAM_ID, checkpoint_url, checkpoint_path, progress_cb=weights_pbar.update
+                    )
+            tuning = checkpoint_path
     else:
         tuning = ""
 

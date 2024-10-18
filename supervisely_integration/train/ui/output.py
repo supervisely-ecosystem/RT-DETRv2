@@ -18,7 +18,7 @@ from supervisely.app.widgets import (
     LineChart,
     Progress,
 )
-from supervisely.io.fs import get_file_name
+from supervisely.io.fs import get_file_name, get_file_name_with_ext
 
 import rtdetr_pytorch.train as train_cli
 import supervisely_integration.train.globals as g
@@ -224,12 +224,26 @@ def stop_training():
 
 
 def prepare_config(custom_config: Dict[str, Any]):
-    model_name = g.train_mode.pretrained[0]
-    arch = model_name.split("_coco")[0]
-    config_name = f"{arch}_6x_coco"
-    sly.logger.info(f"Model name: {model_name}, arch: {arch}, config_name: {config_name}")
+    if g.model_mode == g.MODEL_MODES[0]:
+        model_name = g.train_mode.pretrained[0]
+        arch = model_name.split("_coco")[0]
+        config_name = f"{arch}_6x_coco"
+        sly.logger.info(f"Model name: {model_name}, arch: {arch}, config_name: {config_name}")
+    else:
+        model_name = get_file_name_with_ext(g.train_mode.custom)
+        config_name = "custom"
+        sly.logger.info(f"Model name: {model_name}, config_name: {config_name}")
 
-    custom_config["__include__"] = [f"{config_name}.yml"]
+    if g.model_mode == g.MODEL_MODES[0]:
+        custom_config["__include__"] = [f"{config_name}.yml"]
+    else:
+        custom_config["__include__"] = [
+            "../dataset/coco_detection.yml",
+            "../runtime.yml",
+            "./include/dataloader.yml",
+            "./include/optimizer.yml",
+            "./include/rtdetr_r50vd.yml",
+        ]
     custom_config["remap_mscoco_category"] = False
     custom_config["num_classes"] = len(g.selected_classes)
     custom_config["train_dataloader"]["dataset"]["img_folder"] = f"{g.train_dataset_path}/img"
@@ -252,8 +266,12 @@ def prepare_config(custom_config: Dict[str, Any]):
 
 
 def train():
-    model = g.train_mode.pretrained[0]
-    finetune = g.train_mode.finetune
+    if g.model_mode == g.MODEL_MODES[0]:
+        model = g.train_mode.pretrained[0]
+        finetune = g.train_mode.finetune
+    else:
+        model = g.train_mode.custom
+        finetune = True
     cfg = train_cli.train(
         model,
         finetune,
@@ -298,9 +316,13 @@ def generate_train_info(
 
 
 def upload_model(output_dir):
-    model_name = g.train_mode.pretrained[0]
+    if g.model_mode == g.MODEL_MODES[0]:
+        model_name = g.train_mode.pretrained[0]
+    else:
+        model_name = get_file_name(g.train_mode.custom)
+
     timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-    team_files_dir = f"/RT-DETR/{g.project_info.name}/{g.TASK_ID}/{timestamp}_{model_name}"
+    team_files_dir = f"/RT-DETR/{g.project_info.name}/{g.TASK_ID}"
     local_artifacts_dir = os.path.join(output_dir, "upload")
     local_checkpoints_dir = os.path.join(local_artifacts_dir, "checkpoints")
     sly.fs.mkdir(local_artifacts_dir)
