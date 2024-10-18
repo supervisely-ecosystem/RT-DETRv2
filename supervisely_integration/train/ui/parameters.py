@@ -100,32 +100,32 @@ optimizer_field = Field(
     title="Select optimizer",
     description="Choose the optimizer to use for training",
 )
-learning_rate_input = InputNumber(value=0.0002)
+learning_rate_input = InputNumber(value=0.0002, step=0.0001)
 learning_rate_field = Field(
     learning_rate_input,
     title="Learning rate",
     description="The learning rate to use for the optimizer",
 )
-wight_decay_input = InputNumber(value=0.0001)
+wight_decay_input = InputNumber(value=0.0001, step=0.0001)
 wight_decay_field = Field(
     wight_decay_input,
     title="Weight decay",
     description="The amount of L2 regularization to apply to the weights",
 )
-momentum_input = InputNumber(value=0.9)
+momentum_input = InputNumber(value=0.9, step=0.1)
 momentum_field = Field(
     momentum_input,
     title="Momentum",
     description="The amount of momentum to apply to the weights",
 )
 momentum_field.hide()
-beta1_input = InputNumber(value=0.9)
+beta1_input = InputNumber(value=0.9, step=0.1)
 beta1_field = Field(
     beta1_input,
     title="Beta 1",
     description="The exponential decay rate for the first moment estimates",
 )
-beta2_input = InputNumber(value=0.999)
+beta2_input = InputNumber(value=0.999, step=0.001)
 beta2_field = Field(
     beta2_input,
     title="Beta 2",
@@ -133,7 +133,7 @@ beta2_field = Field(
 )
 
 clip_gradient_norm_checkbox = Checkbox("Clip gradient norm")
-clip_gradient_norm_input = InputNumber(value=0.1)
+clip_gradient_norm_input = InputNumber(value=0.1, step=0.1)
 clip_gradient_norm_field = Field(
     Container([clip_gradient_norm_checkbox, clip_gradient_norm_input]),
     title="Clip gradient norm",
