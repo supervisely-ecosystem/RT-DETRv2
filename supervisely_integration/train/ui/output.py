@@ -316,15 +316,15 @@ def generate_train_info(
 
 
 def upload_model(output_dir):
-    if g.model_mode == g.MODEL_MODES[0]:
-        model_name = g.train_mode.pretrained[0]
-    else:
-        model_name = get_file_name(g.train_mode.custom)
+    # if g.model_mode == g.MODEL_MODES[0]:
+    #     model_name = g.train_mode.pretrained[0]
+    # else:
+    #     model_name = get_file_name(g.train_mode.custom)
+    # timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
 
-    timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
     team_files_dir = f"/RT-DETR/{g.project_info.name}/{g.TASK_ID}"
     local_artifacts_dir = os.path.join(output_dir, "upload")
-    local_checkpoints_dir = os.path.join(local_artifacts_dir, "checkpoints")
+    local_checkpoints_dir = os.path.join(local_artifacts_dir, "weights")
     sly.fs.mkdir(local_artifacts_dir)
     sly.fs.mkdir(local_checkpoints_dir)
     sly.logger.info(f"Local artifacts dir: {local_artifacts_dir}")

@@ -156,14 +156,6 @@ optimization_tab = Container(
 # endregion
 
 # region scheduler widgets
-warmup_iterations_input = InputNumber(value=100)
-warmup_iterations_field = Field(
-    warmup_iterations_input,
-    title="Warmup iterations",
-    description="The number of iterations the learning rate will increase linearly to the initial value.",
-)
-warmup_container = Container([warmup_iterations_field])
-
 scheduler_preview_chart = LineChart(
     "Scheduler preview", stroke_curve="straight", height=400, decimalsInFloat=6, markers_size=0
 )
@@ -172,7 +164,19 @@ scheduler_preview_btn = Button("Preview", button_size="small")
 scheduler_clear_btn = Button("Clear", button_size="small", plain=True)
 scheduler_preview_info = Text("", status="info")
 
-select_scheduler = Select([Select.Item(val, label) for val, label in schedulers.schedulers])
+
+disabled_schedulers = ["ReduceOnPlateauLR", "CosineAnnealingLR", "CosineRestartLR", "PolyLR"]
+
+
+select_scheduler_items = []
+
+for val, label in schedulers.schedulers:
+    if val in disabled_schedulers:
+        select_scheduler_items.append(Select.Item(val, label, disabled=True))
+    else:
+        select_scheduler_items.append(Select.Item(val, label))
+
+select_scheduler = Select(items=select_scheduler_items)
 select_scheduler_field = Field(
     select_scheduler,
     title="Select scheduler",
@@ -182,11 +186,11 @@ enable_warmup_input = Switch(True)
 enable_warmup_field = Field(enable_warmup_input, "Enable warmup")
 
 warmup = utils_ui.OrderedWidgetWrapper("warmup")
-warmup_iterations = InputNumber(25, 0)
+warmup_iterations_input = InputNumber(25, 1, step=1)
 warmup_iterations_field = Field(
-    warmup_iterations, "Warmup iterations", "The number of iterations that warmup lasts"
+    warmup_iterations_input, "Warmup iterations", "The number of iterations that warmup lasts"
 )
-warmup.add_input("warmup_iters", warmup_iterations, warmup_iterations_field)
+warmup.add_input("warmup_iters", warmup_iterations_input, warmup_iterations_field)
 
 warmup_ratio = InputNumber(0.001, step=1e-4)
 warmup_ratio_field = Field(
@@ -308,16 +312,14 @@ def optimizer_changed(optimizer: str):
 def warmup_changed(is_switched: bool):
     if is_switched:
         warmup_iterations_field.show()
-        warmup_iterations.show()
+        warmup_iterations_input.show()
         warmup_ratio_field.show()
         warmup_ratio.show()
-        warmup_container.show()
     else:
         warmup_iterations_field.hide()
-        warmup_iterations.hide()
+        warmup_iterations_input.hide()
         warmup_ratio_field.hide()
         warmup_ratio.hide()
-        warmup_container.hide()
 
 
 @scheduler_preview_btn.click
@@ -445,7 +447,7 @@ def select_params():
                 select_scheduler,
                 enable_warmup_input,
                 warmup,
-                warmup_iterations,
+                warmup_iterations_input,
                 warmup_ratio,
                 parameters_tabs,
             ],
@@ -488,7 +490,7 @@ def select_params():
                 select_scheduler,
                 enable_warmup_input,
                 warmup,
-                warmup_iterations,
+                warmup_iterations_input,
                 warmup_ratio,
                 parameters_tabs,
             ],
@@ -518,7 +520,7 @@ def read_parameters(train_items_cnt: int):
             "clip_max_norm": clip_max_norm,
         }
         optimizer_params = read_optimizer_parameters()
-        scheduler_params = read_scheduler_parameters()
+        scheduler_params, scheduler_cls_params = read_scheduler_parameters()
 
         sly.logger.debug(f"General parameters: {general_params}")
         sly.logger.debug(f"Optimizer parameters: {optimizer_params}")
@@ -562,33 +564,10 @@ def read_parameters(train_items_cnt: int):
             val_batch_size_input.value
         )
 
-        # LR scheduler
-        # g.splits = splits.trainval_splits.get_splits()
-        # train_items, val_items = g.splits
-        total_steps = general_params["epoches"] * np.ceil(
-            train_items_cnt / train_batch_size_input.value
-        )
-        if scheduler_params["scheduler"] == "MultiStepLR":
-            custom_config["lr_scheduler"] = {
-                "type": "MultiStepLR",
-                "milestones": scheduler_params["steps"],
-                "gamma": scheduler_params["gamma"],
-            }
-        elif scheduler_params["scheduler"] == "CosineAnnealingLR":
-            custom_config["lr_scheduler"] = {
-                "type": "CosineAnnealingLR",
-                "T_max": scheduler_params["t_max"],
-                "eta_min": scheduler_params["min_lr_value"],
-            }
-        elif scheduler_params["scheduler"] == "OneCycleLR":
-            custom_config["lr_scheduler"] = {
-                "type": "OneCycleLR",
-                "max_lr": scheduler_params["max_lr"],
-                "total_steps": total_steps,
-                "pct_start": scheduler_params["pct_start"],
-            }
-        else:
+        if scheduler_params["type"] == "Without scheduler":
             custom_config["lr_scheduler"] = None
+        else:
+            custom_config["lr_scheduler"] = scheduler_cls_params
 
         if scheduler_params["enable_warmup"]:
             custom_config["lr_warmup"] = {
@@ -639,18 +618,31 @@ def read_optimizer_parameters():
 
 def read_scheduler_parameters():
     scheduler = select_scheduler.get_value()
+    if scheduler == "empty":
+        scheduler = "Without scheduler"
 
     parameters = {
-        "scheduler": scheduler,
+        "type": scheduler,
         "enable_warmup": enable_warmup_input.is_switched(),
         "warmup_iterations": warmup_iterations_input.get_value(),
     }
 
-    if g.widgets is not None:
-        for key, widget in g.widgets.items():
-            if isinstance(widget, (InputNumber, Input)):
-                parameters[key] = widget.get_value()
-            elif isinstance(widget, Checkbox):
-                parameters[key] = widget.is_checked()
+    if scheduler == "Without scheduler":
+        return parameters, {}
 
-    return parameters
+    scheduler_cls_params = {
+        "type": scheduler,
+    }
+
+    scheduler_widgets = schedulers.schedulers_params[scheduler]._widgets
+    if scheduler_widgets is not None:
+        for key, widget in scheduler_widgets.items():
+            if isinstance(widget, (InputNumber, Input)):
+                scheduler_cls_params[key] = widget.get_value()
+            elif isinstance(widget, Checkbox):
+                scheduler_cls_params[key] = widget.is_checked()
+            elif isinstance(widget, Switch):
+                if not key == "by_epoch":
+                    scheduler_cls_params[key] = widget.is_switched()
+
+    return parameters, scheduler_cls_params

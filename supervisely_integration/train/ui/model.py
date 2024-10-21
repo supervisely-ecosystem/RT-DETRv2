@@ -30,7 +30,7 @@ finetune_checkbox = Checkbox("Fine-tune", True)
 finetune_field = Field(
     finetune_checkbox,
     title="Enable fine-tuning",
-    description="Fine-tuning allows you to continue training a model from a checkpoint.",
+    description="Fine-tuning allows you to continue training a model from a checkpoint. If not selected, model will be trained from scratch and will be configured as in selected checkpoint.",
 )
 
 select_model_button = Button("Select")
