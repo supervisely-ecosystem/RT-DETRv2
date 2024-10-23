@@ -2,10 +2,11 @@ import os
 import sys
 from typing import Optional
 
-import supervisely as sly
 from dotenv import load_dotenv
 
+import supervisely as sly
 from rtdetr_pytorch.model_list import _models
+from supervisely.nn.artifacts.rtdetr import RTDETR
 
 if sly.is_development:
     load_dotenv("local.env")
@@ -59,13 +60,15 @@ SCHEDULERS = [
 # endregion
 
 # region envvars
-TASK_ID = sly.env.task_id()
+TASK_ID = 54346  # sly.env.task_id()
 TEAM_ID = sly.env.team_id()
 WORKSPACE_ID = sly.env.workspace_id()
 PROJECT_ID = sly.env.project_id()
 
 USE_CACHE = True
 STOP_TRAINING = False
+
+rtdetr_artifacts = RTDETR(TEAM_ID)
 
 # endregion
 api = sly.Api.from_env()

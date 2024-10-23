@@ -4,9 +4,15 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 import numpy as np
-import supervisely as sly
 import yaml
 from pycocotools.coco import COCO
+
+import rtdetr_pytorch.train as train_cli
+import supervisely as sly
+import supervisely_integration.train.globals as g
+import supervisely_integration.train.ui.input as input_ui
+import supervisely_integration.train.ui.parameters as parameters_ui
+import supervisely_integration.train.ui.splits as splits_ui
 from supervisely.app.widgets import (
     Button,
     Card,
@@ -19,12 +25,6 @@ from supervisely.app.widgets import (
     Progress,
 )
 from supervisely.io.fs import get_file_name, get_file_name_with_ext
-
-import rtdetr_pytorch.train as train_cli
-import supervisely_integration.train.globals as g
-import supervisely_integration.train.ui.input as input_ui
-import supervisely_integration.train.ui.parameters as parameters_ui
-import supervisely_integration.train.ui.splits as splits_ui
 from supervisely_integration.train.ui.project_cached import download_project
 
 # TODO: Fix import, now it's causing error
@@ -295,34 +295,10 @@ def save_config(cfg):
         yaml.dump(cfg.yaml_cfg, f)
 
 
-def generate_train_info(
-    local_artifacts_dir: str, remote_artifacts_dir: str, checkpoint_infos: List[List]
-):
-    train_info = {
-        "app_name": "Train RT-DETR",
-        "task_id": g.TASK_ID,
-        "artifacts_folder": remote_artifacts_dir,
-        "session_link": f"/apps/sessions/{g.TASK_ID}",
-        "task_type": "object detection",
-        "project_name": g.project_info.name,
-        "checkpoints": checkpoint_infos,
-    }
-
-    local_save_path = os.path.join(local_artifacts_dir, "train_info.json")
-    remote_save_path = os.path.join(remote_artifacts_dir, "train_info.json")
-
-    sly.json.dump_json_file(train_info, local_save_path, indent=None)
-    g.api.file.upload(g.TEAM_ID, local_save_path, remote_save_path)
-
-
 def upload_model(output_dir):
-    # if g.model_mode == g.MODEL_MODES[0]:
-    #     model_name = g.train_mode.pretrained[0]
-    # else:
-    #     model_name = get_file_name(g.train_mode.custom)
-    # timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-
-    team_files_dir = f"/RT-DETR/{g.project_info.name}/{g.TASK_ID}"
+    remote_artifacts_dir = f"/RT-DETR/{g.project_info.name}/{g.TASK_ID}"
+    remote_weights_path = g.rtdetr_artifacts.get_weights_path(remote_artifacts_dir)
+    remote_config_path = g.rtdetr_artifacts.get_config_path(remote_artifacts_dir)
     local_artifacts_dir = os.path.join(output_dir, "upload")
     local_checkpoints_dir = os.path.join(local_artifacts_dir, "weights")
     sly.fs.mkdir(local_artifacts_dir)
@@ -349,6 +325,13 @@ def upload_model(output_dir):
     shutil.move(f"{output_dir}/log.txt", f"{local_artifacts_dir}/log.txt")
     shutil.move(f"{output_dir}/config.yml", f"{local_artifacts_dir}/config.yml")
 
+    # Save link to app ui
+    app_url = f"/apps/sessions/{g.TASK_ID}"
+    app_link_path = os.path.join(local_artifacts_dir, "open_app.lnk")
+    with open(app_link_path, "w") as text_file:
+        print(app_url, file=text_file)
+
+    # Upload artifacts
     local_files = sly.fs.list_files_recursively(local_artifacts_dir)
     total_size = sum([sly.fs.get_file_size(file_path) for file_path in local_files])
     with progress_bar_upload_artifacts(
@@ -360,18 +343,27 @@ def upload_model(output_dir):
         out_path = g.api.file.upload_directory(
             sly.env.team_id(),
             local_artifacts_dir,
-            team_files_dir,
+            remote_artifacts_dir,
             progress_size_cb=artifacts_pbar,
         )
 
-    checkpoint_infos = g.api.file.list(
-        g.TEAM_ID, os.path.join(team_files_dir, "checkpoints"), False, "fileinfo"
+    # Upload train metadata
+    g.rtdetr_artifacts.generate_metadata(
+        app_name=g.rtdetr_artifacts.app_name,
+        task_id=g.TASK_ID,
+        artifacts_folder=remote_artifacts_dir,
+        weights_folder=remote_weights_path,
+        weights_ext=g.rtdetr_artifacts.weights_ext,
+        project_name=g.project_info.name,
+        task_type="object detection",
+        config_path=remote_config_path,
     )
-    generate_train_info(local_artifacts_dir, team_files_dir, checkpoint_infos)
-    file_info = g.api.file.get_info_by_path(g.TEAM_ID, os.path.join(team_files_dir, "config.yml"))
 
+    file_info = g.api.file.get_info_by_path(
+        g.TEAM_ID, os.path.join(remote_artifacts_dir, "open_app.lnk")
+    )
     sly.logger.info("Training artifacts uploaded successfully")
-    sly.output.set_directory(team_files_dir)
+    sly.output.set_directory(remote_artifacts_dir)
     return out_path, file_info
 
 
