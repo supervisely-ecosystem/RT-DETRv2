@@ -1,6 +1,12 @@
 import numpy as np
-import supervisely as sly
 import yaml
+
+import supervisely as sly
+import supervisely_integration.train.globals as g
+import supervisely_integration.train.ui.output as output_ui
+import supervisely_integration.train.ui.schedulers as schedulers
+import supervisely_integration.train.ui.utils as utils_ui
+import supervisely_integration.train.utils as utils
 from supervisely.app.widgets import (
     BindedInputNumber,
     Button,
@@ -18,12 +24,6 @@ from supervisely.app.widgets import (
     Tabs,
     Text,
 )
-
-import supervisely_integration.train.globals as g
-import supervisely_integration.train.ui.output as output_ui
-import supervisely_integration.train.ui.schedulers as schedulers
-import supervisely_integration.train.ui.utils as utils_ui
-import supervisely_integration.train.utils as utils
 
 # region advanced widgets
 advanced_mode_checkbox = Checkbox("Advanced mode")
@@ -100,13 +100,13 @@ optimizer_field = Field(
     title="Select optimizer",
     description="Choose the optimizer to use for training",
 )
-learning_rate_input = InputNumber(value=0.0002, step=0.0001)
+learning_rate_input = InputNumber(value=0.0002, step=0.00005)
 learning_rate_field = Field(
     learning_rate_input,
     title="Learning rate",
     description="The learning rate to use for the optimizer",
 )
-wight_decay_input = InputNumber(value=0.0001, step=0.0001)
+wight_decay_input = InputNumber(value=0.0001, step=0.00001)
 wight_decay_field = Field(
     wight_decay_input,
     title="Weight decay",
@@ -133,7 +133,7 @@ beta2_field = Field(
 )
 
 clip_gradient_norm_checkbox = Checkbox("Clip gradient norm")
-clip_gradient_norm_input = InputNumber(value=0.1, step=0.1)
+clip_gradient_norm_input = InputNumber(value=0.1, step=0.01)
 clip_gradient_norm_field = Field(
     Container([clip_gradient_norm_checkbox, clip_gradient_norm_input]),
     title="Clip gradient norm",
@@ -192,7 +192,7 @@ warmup_iterations_field = Field(
 )
 warmup.add_input("warmup_iters", warmup_iterations_input, warmup_iterations_field)
 
-warmup_ratio = InputNumber(0.001, step=1e-4)
+warmup_ratio = InputNumber(0.001, step=0.0001)
 warmup_ratio_field = Field(
     warmup_ratio,
     "Warmup ratio",
@@ -336,7 +336,6 @@ def on_preview_scheduler():
     total_images = g.project_info.items_count
 
     from supervisely.app.widgets import TrainValSplits
-
     from supervisely_integration.train.ui.splits import trainval_splits
 
     split_widget: TrainValSplits = trainval_splits
