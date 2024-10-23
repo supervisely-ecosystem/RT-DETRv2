@@ -1,18 +1,8 @@
 import numpy as np
-import supervisely as sly
 import torch
-from torch.optim.lr_scheduler import (
-    CosineAnnealingLR,
-    CosineAnnealingWarmRestarts,
-    ExponentialLR,
-    LinearLR,
-    LRScheduler,
-    MultiStepLR,
-    OneCycleLR,
-    PolynomialLR,
-    ReduceLROnPlateau,
-    StepLR,
-)
+from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, MultiStepLR, OneCycleLR
+
+import supervisely as sly
 
 
 def pred_2_annotation(pred, map_label2name, img_size_hw, topk=None):
@@ -72,40 +62,22 @@ def collect_per_class_metrics(coco_evaluator, base_ds):
 
 
 def is_by_epoch(lr_scheduler):
-    if isinstance(
-        lr_scheduler,
-        (
-            OneCycleLR,
-            CosineAnnealingLR,
-            CosineAnnealingWarmRestarts,
-            LinearLR,
-            PolynomialLR,
-            ExponentialLR,
-        ),
-    ):
+    if isinstance(lr_scheduler, (OneCycleLR, CosineAnnealingLR, LinearLR)):
         return False
-    elif isinstance(lr_scheduler, (MultiStepLR, StepLR, ReduceLROnPlateau)):
+    elif isinstance(lr_scheduler, (MultiStepLR)):
         return True
     else:
         raise NotImplementedError(f"Unsupported lr_scheduler: {lr_scheduler}")
 
 
 def name2cls(name):
-    if name == "StepLR":
-        return StepLR
-    elif name == "MultiStepLR":
-        return MultiStepLR
-    elif name == "ExponentialLR":
-        return ExponentialLR
-    elif name == "ReduceOnPlateauLR":
-        return ReduceLROnPlateau
+    if name == "OneCycleLR":
+        return OneCycleLR
     elif name == "CosineAnnealingLR":
         return CosineAnnealingLR
-    elif name == "CosineRestartLR":
-        return CosineAnnealingWarmRestarts
+    elif name == "MultiStepLR":
+        return MultiStepLR
     elif name == "LinearLR":
         return LinearLR
-    elif name == "PolyLR":
-        return PolynomialLR
     else:
         raise NotImplementedError(f"Unsupported lr_scheduler: {name}")

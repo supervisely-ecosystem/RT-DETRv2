@@ -50,13 +50,12 @@ PRETRAINED_MODELS = [
 OPTIMIZERS = ["Adam", "AdamW", "SGD"]
 SCHEDULERS = [
     "Without scheduler",
-    "StepLR",
-    "MultiStepLR",
-    "ExponentialLR",
-    "ReduceLROnPlateauLR",
     "CosineAnnealingLR",
-    "CosineRestartLR",
+    "LinearLR",
+    "MultiStepLR",
+    "OneCycleLR",
 ]
+
 # endregion
 
 # region envvars

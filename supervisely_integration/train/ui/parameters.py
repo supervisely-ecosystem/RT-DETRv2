@@ -165,17 +165,7 @@ scheduler_clear_btn = Button("Clear", button_size="small", plain=True)
 scheduler_preview_info = Text("", status="info")
 
 
-disabled_schedulers = ["ReduceOnPlateauLR", "CosineAnnealingLR", "CosineRestartLR", "PolyLR"]
-
-
-select_scheduler_items = []
-
-for val, label in schedulers.schedulers:
-    if val in disabled_schedulers:
-        select_scheduler_items.append(Select.Item(val, label, disabled=True))
-    else:
-        select_scheduler_items.append(Select.Item(val, label))
-
+select_scheduler_items = [Select.Item(val, label) for val, label in schedulers.schedulers]
 select_scheduler = Select(items=select_scheduler_items)
 select_scheduler_field = Field(
     select_scheduler,
@@ -205,15 +195,10 @@ learning_rate_scheduler_tab = Container(
         select_scheduler_field,
         Container(
             [
-                schedulers.step_scheduler.create_container(hide=True),
                 schedulers.multi_steps_scheduler.create_container(hide=True),
-                schedulers.exp_scheduler.create_container(hide=True),
-                schedulers.reduce_plateau_scheduler.create_container(hide=True),
                 schedulers.cosineannealing_scheduler.create_container(hide=True),
-                schedulers.cosinerestart_scheduler.create_container(hide=True),
                 schedulers.linear_scheduler.create_container(hide=True),
-                schedulers.poly_scheduler.create_container(hide=True),
-                # onecycle_scheduler.create_container(hide=True),
+                schedulers.onecycle_scheduler.create_container(hide=True),
             ],
             gap=0,
         ),
@@ -392,9 +377,11 @@ def on_preview_scheduler():
         lr_scheduler, lr_warmup, dummy_optim, dataloader_len, total_epochs
     )
 
-    name = (
-        f"{select_scheduler.get_value()} warmup" if use_lr_warmup else select_scheduler.get_value()
-    )
+    scheduler_name = select_scheduler.get_value()
+    if scheduler_name == "empty":
+        scheduler_name = "Without scheduler"
+
+    name = f"{scheduler_name} warmup" if use_lr_warmup else scheduler_name
     scheduler_preview_chart.add_series(f"{name}", x, lrs)
     scheduler_preview_chart.show()
     scheduler_preview_info.set(
@@ -518,8 +505,13 @@ def read_parameters(train_items_cnt: int):
             "checkpoint_step": checkpoints_interval_input.value,
             "clip_max_norm": clip_max_norm,
         }
+
+        total_steps = general_params["epoches"] * np.ceil(
+            train_items_cnt / train_batch_size_input.value
+        )
+
         optimizer_params = read_optimizer_parameters()
-        scheduler_params, scheduler_cls_params = read_scheduler_parameters()
+        scheduler_params, scheduler_cls_params = read_scheduler_parameters(total_steps)
 
         sly.logger.debug(f"General parameters: {general_params}")
         sly.logger.debug(f"Optimizer parameters: {optimizer_params}")
@@ -563,6 +555,7 @@ def read_parameters(train_items_cnt: int):
             val_batch_size_input.value
         )
 
+        # LR scheduler
         if scheduler_params["type"] == "Without scheduler":
             custom_config["lr_scheduler"] = None
         else:
@@ -575,18 +568,6 @@ def read_parameters(train_items_cnt: int):
                 "start_factor": 0.001,
                 "end_factor": 1.0,
             }
-
-        # TODO: set imgaug
-        if False:
-            ops = custom_config["train_dataloader"]["dataset"]["transforms"]["ops"]
-            for i, op in enumerate(ops):
-                if op["type"] == "Resize":
-                    resize_idx = i
-                    break
-            imgaug_op = {"type": "ImgAug", "config_path": "imgaug.json"}
-            custom_config["train_dataloader"]["dataset"]["transforms"]["ops"] = [imgaug_op] + ops[
-                resize_idx:
-            ]
 
     return custom_config
 
@@ -615,7 +596,7 @@ def read_optimizer_parameters():
     return parameters
 
 
-def read_scheduler_parameters():
+def read_scheduler_parameters(total_steps: int):
     scheduler = select_scheduler.get_value()
     if scheduler == "empty":
         scheduler = "Without scheduler"
@@ -636,12 +617,17 @@ def read_scheduler_parameters():
     scheduler_widgets = schedulers.schedulers_params[scheduler]._widgets
     if scheduler_widgets is not None:
         for key, widget in scheduler_widgets.items():
-            if isinstance(widget, (InputNumber, Input)):
+            if isinstance(widget, (InputNumber, Input, Select)):
                 scheduler_cls_params[key] = widget.get_value()
             elif isinstance(widget, Checkbox):
                 scheduler_cls_params[key] = widget.is_checked()
             elif isinstance(widget, Switch):
                 if not key == "by_epoch":
                     scheduler_cls_params[key] = widget.is_switched()
+
+    if scheduler_cls_params["type"] == "OneCycleLR":
+        scheduler_cls_params["total_steps"] = int(total_steps)
+    elif scheduler_cls_params["type"] == "LinearLR":
+        scheduler_cls_params["total_iters"] = int(total_steps)
 
     return parameters, scheduler_cls_params

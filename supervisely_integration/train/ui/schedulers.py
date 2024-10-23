@@ -1,7 +1,14 @@
 from typing import List
 
-from supervisely.app.widgets import Container, Empty, Field, Input, InputNumber, Switch
-
+from supervisely.app.widgets import (
+    Container,
+    Empty,
+    Field,
+    Input,
+    InputNumber,
+    SelectString,
+    Switch,
+)
 from supervisely_integration.train.ui.utils import (
     OrderedWidgetWrapper,
     create_linked_getter,
@@ -13,29 +20,6 @@ schedulers = [("empty", "Without scheduler")]
 
 by_epoch_input = Switch(True)
 by_epoch_field = Field(by_epoch_input, "By epoch")
-
-# Step scheduler
-step_scheduler = OrderedWidgetWrapper("StepLR")
-step_scheduler.add_input(
-    "by_epoch",
-    by_epoch_input,
-    by_epoch_field,
-    get_switch_value,
-    set_switch_value,
-)
-
-step_input = InputNumber(3, 1, step=1)
-step_field = Field(step_input, "LR sheduler step")
-step_scheduler.add_input(
-    "step_size",
-    step_input,
-    wraped_widget=step_field,
-)
-
-step_gamma_input = InputNumber(0.1, 0, step=1e-5, size="small")
-step_gamma_field = Field(step_gamma_input, "Gamma")
-step_scheduler.add_input("gamma", step_gamma_input, step_gamma_field)
-schedulers.append((repr(step_scheduler), "Step LR"))
 
 
 # Multistep
@@ -75,58 +59,6 @@ multi_steps_gamma_input = InputNumber(0.1, 0, step=1e-5, size="small")
 multi_steps_gamma_field = Field(multi_steps_gamma_input, "Gamma")
 multi_steps_scheduler.add_input("gamma", multi_steps_gamma_input, multi_steps_gamma_field)
 schedulers.append((repr(multi_steps_scheduler), "Multistep LR"))
-
-# exponential
-exp_scheduler = OrderedWidgetWrapper("ExponentialLR")
-exp_scheduler.add_input(
-    "by_epoch",
-    by_epoch_input,
-    by_epoch_field,
-    get_switch_value,
-    set_switch_value,
-)
-
-exp_gamma_input = InputNumber(0.1, 0, step=1e-5, size="small")
-exp_gamma_field = Field(exp_gamma_input, "Gamma")
-exp_scheduler.add_input("gamma", exp_gamma_input, exp_gamma_field)
-schedulers.append((repr(exp_scheduler), "Exponential LR"))
-
-
-# reduce on plateau
-reduce_plateau_scheduler = OrderedWidgetWrapper("ReduceOnPlateauLR")
-reduce_plateau_scheduler.add_input(
-    "by_epoch",
-    by_epoch_input,
-    by_epoch_field,
-    get_switch_value,
-    set_switch_value,
-)
-
-reduce_plateau_factor_input = InputNumber(0.1, 0, step=1e-5, size="small")
-reduce_plateau_factor_field = Field(
-    reduce_plateau_factor_input,
-    "Factor",
-    "Factor by which the learning rate will be reduced. new_param = param * factor",
-)
-reduce_plateau_scheduler.add_input(
-    "factor",
-    reduce_plateau_factor_input,
-    reduce_plateau_factor_field,
-)
-
-reduce_plateau_patience_input = InputNumber(10, 2, step=1, size="small")
-reduce_plateau_patience_field = Field(
-    reduce_plateau_patience_input,
-    "Patience",
-    "Number of epochs with no improvement after which learning rate will be reduced",
-)
-reduce_plateau_scheduler.add_input(
-    "patience",
-    reduce_plateau_patience_input,
-    reduce_plateau_patience_field,
-)
-
-schedulers.append((repr(reduce_plateau_scheduler), "ReduceOnPlateau LR"))
 
 # CosineAnnealingLR
 cosineannealing_scheduler = OrderedWidgetWrapper("CosineAnnealingLR")
@@ -178,83 +110,8 @@ cosineannealing_scheduler.add_input(
     ),
 )
 
-cosineannealing_scheduler.add_input(
-    "eta_min_ratio",
-    etamin_ratio_input,
-    etamin_ratio_field,
-    custom_value_getter=create_linked_getter(
-        etamin_input,
-        etamin_ratio_input,
-        etamin_switch_input,
-        False,
-    ),
-)
 schedulers.append((repr(cosineannealing_scheduler), "Cosine Annealing LR"))
 
-
-# CosineRestartLR
-cosinerestart_scheduler = OrderedWidgetWrapper("CosineRestartLR")
-cosinerestart_scheduler.add_input(
-    "by_epoch",
-    by_epoch_input,
-    by_epoch_field,
-    get_switch_value,
-    set_switch_value,
-)
-
-cosinerestart_preiods_input = Input("1")
-cosinerestart_preiods_field = Field(
-    cosinerestart_preiods_input,
-    "Periods",
-    "Periods for each cosine anneling cycle. Many int step values splitted by comma",
-)
-cosinerestart_scheduler.add_input(
-    "periods",
-    cosinerestart_preiods_input,
-    wraped_widget=cosinerestart_preiods_field,
-    custom_value_getter=get_multisteps,
-    custom_value_setter=set_multisteps,
-)
-
-cosinerestart_restart_weights_input = Input("1")
-cosinerestart_restart_weights_field = Field(
-    cosinerestart_restart_weights_input,
-    "Restart weights",
-    "Periods for each cosine anneling cycle. Many int step values splitted by comma",
-)
-
-cosinerestart_scheduler.add_input(
-    "restart_weights",
-    cosinerestart_restart_weights_input,
-    wraped_widget=cosinerestart_restart_weights_field,
-    custom_value_getter=get_multisteps,
-    custom_value_setter=set_multisteps,
-)
-
-cosinerestart_scheduler.add_input(
-    "eta_min",
-    etamin_input,
-    etamin_field,
-    custom_value_getter=create_linked_getter(
-        etamin_input,
-        etamin_ratio_input,
-        etamin_switch_input,
-        True,
-    ),
-)
-
-cosinerestart_scheduler.add_input(
-    "eta_min_ratio",
-    etamin_ratio_input,
-    etamin_ratio_field,
-    custom_value_getter=create_linked_getter(
-        etamin_input,
-        etamin_ratio_input,
-        etamin_switch_input,
-        False,
-    ),
-)
-schedulers.append((repr(cosinerestart_scheduler), "Cosine Restart LR"))
 
 # LinearLR
 linear_scheduler = OrderedWidgetWrapper("LinearLR")
@@ -288,10 +145,9 @@ linear_end_factor_field = Field(
 linear_scheduler.add_input("end_factor", linear_end_factor_input, linear_end_factor_field)
 schedulers.append((repr(linear_scheduler), "Linear LR"))
 
-# PolyLR
-
-poly_scheduler = OrderedWidgetWrapper("PolyLR")
-poly_scheduler.add_input(
+# OneCycleLR
+onecycle_scheduler = OrderedWidgetWrapper("OneCycleLR")
+onecycle_scheduler.add_input(
     "by_epoch",
     by_epoch_input,
     by_epoch_field,
@@ -299,32 +155,99 @@ poly_scheduler.add_input(
     set_switch_value,
 )
 
-poly_eta_input = InputNumber(0, 0, step=1e-6, size="small")
-poly_eta_field = Field(poly_eta_input, "Min LR", "Minimum learning rate at the end of scheduling")
-poly_scheduler.add_input(
-    "eta_min",
-    poly_eta_input,
-    poly_eta_field,
+# TODO: теоретически этот параметр может быть списком. Надо ли?
+onecycle_eta_input = InputNumber(1, 0, step=1e-6, size="small")
+onecycle_eta_field = Field(
+    onecycle_eta_input, "Max LR", "Upper parameter value boundaries in the cycle"
+)
+onecycle_scheduler.add_input(
+    "max_lr",
+    onecycle_eta_input,
+    onecycle_eta_field,
 )
 
-poly_power_input = InputNumber(1, 1e-3, step=1e-1, size="small")
-poly_power_field = Field(poly_power_input, "Power", "The power of the polynomial")
-poly_scheduler.add_input(
-    "power",
-    poly_power_input,
-    poly_power_field,
+# TODO: определяется по формуле total_steps = epochs * steps_per_epoch или ручками;
+# может по умолчанию предпосчитать epochs * steps_per_epoch?
+onecycle_total_steps_input = InputNumber(100, 1, step=1, size="small")
+onecycle_total_steps_field = Field(
+    onecycle_total_steps_input, "Total steps", "The total number of steps in the cycle"
 )
-schedulers.append((repr(poly_scheduler), "Polynomial LR"))
+onecycle_scheduler.add_input(
+    "total_steps",
+    onecycle_total_steps_input,
+    onecycle_total_steps_field,
+)
+
+onecycle_pct_start_input = InputNumber(0.3, 0, step=0.001)
+onecycle_pct_start_field = Field(
+    onecycle_pct_start_input,
+    "Start percentage",
+    "The percentage of the cycle (in number of steps) spent increasing the learning rate.",
+)
+onecycle_scheduler.add_input(
+    "pct_start",
+    onecycle_pct_start_input,
+    onecycle_pct_start_field,
+)
+
+onecycle_anneal_strategy_input = SelectString(["cos", "linear"])
+onecycle_anneal_strategy_field = Field(onecycle_anneal_strategy_input, "Anneal strategy")
+onecycle_scheduler.add_input(
+    "anneal_strategy",
+    onecycle_anneal_strategy_input,
+    onecycle_anneal_strategy_field,
+    custom_value_getter=lambda w: w.get_value(),
+    custom_value_setter=lambda w, v: w.set_value(v),
+)
+
+onecycle_div_factor_input = InputNumber(25, 1e-4, step=1e-3)
+onecycle_div_factor_field = Field(
+    onecycle_div_factor_input,
+    "Div factor",
+    "Determines the initial learning rate via initial_param = max_lr/div_factor",
+)
+onecycle_scheduler.add_input(
+    "div_factor",
+    onecycle_div_factor_input,
+    onecycle_div_factor_field,
+)
+
+onecycle_findiv_factor_input = InputNumber(1e-4, 1e-6, step=1e-6)
+onecycle_findiv_factor_field = Field(
+    onecycle_findiv_factor_input,
+    "Final div factor",
+    "Determines the minimum learning rate via min_lr = initial_param/final_div_factor",
+)
+onecycle_scheduler.add_input(
+    "final_div_factor",
+    onecycle_findiv_factor_input,
+    onecycle_findiv_factor_field,
+)
+
+
+onecycle_three_phase_input = Switch(True)
+onecycle_three_phase_field = Field(
+    onecycle_three_phase_input,
+    "Use three phase",
+    (
+        "If `True`, use a third phase of the schedule to"
+        "annihilate the learning rate according to `final_div_factor`"
+        "instead of modifying the second phase"
+    ),
+)
+onecycle_scheduler.add_input(
+    "three_phase",
+    onecycle_three_phase_input,
+    onecycle_three_phase_field,
+    get_switch_value,
+    set_switch_value,
+)
+schedulers.append((repr(onecycle_scheduler), "OneCycleLR"))
 
 schedulers_params = {
     "Without scheduler": Empty(),
-    repr(step_scheduler): step_scheduler,
     repr(multi_steps_scheduler): multi_steps_scheduler,
-    repr(exp_scheduler): exp_scheduler,
     repr(cosineannealing_scheduler): cosineannealing_scheduler,
-    repr(reduce_plateau_scheduler): reduce_plateau_scheduler,
-    repr(cosinerestart_scheduler): cosinerestart_scheduler,
     repr(linear_scheduler): linear_scheduler,
-    repr(poly_scheduler): poly_scheduler,
-    # repr(onecycle_scheduler): onecycle_scheduler,
+    repr(onecycle_scheduler): onecycle_scheduler,
 }
