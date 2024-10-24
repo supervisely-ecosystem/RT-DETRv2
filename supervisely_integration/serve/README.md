@@ -21,7 +21,9 @@
 
 # Overview
 
-Serve RT-DETR model as a Supervisely Application. Learn more about RT-DETR and available models [here](https://github.com/lyuwenyu/RT-DETR).
+Serve RT-DETR model as a Supervisely Application. RT-DETR is a real-time object detection model that combines the advantages of DETR and YOLO. It is based on the idea of DETR, which uses transformer to directly predict object queries, and the idea of YOLO, which uses anchor boxes to predict object locations. RT-DETR is able to achieve real-time inference speed and high accuracy on object detection tasks.
+
+Learn more about RT-DETR and available models [here](https://github.com/lyuwenyu/RT-DETR).
 
 # Model Zoo
 
@@ -41,6 +43,20 @@ Notes
 - `url`<sup>`*`</sup> is the url of pretrained weights convert from paddle model for save energy. *It may have slight differences between this table and paper*
 
 # How to Run
+
+0. Start the application from an app's context menu or the Ecosystem.
+
+1. Select pre-trained model or custom model trained inside Supervisely platform, and a runtime for inference.
+
+<img src="https://github.com/user-attachments/assets/cb862358-4c1f-4357-8d97-21bb96dca1f7" />
+
+2. Select device and press the `Serve` button, then wait for the model to deploy.
+
+<img src="https://github.com/user-attachments/assets/3259f249-1328-4c96-bc18-c3d9155b8512" />
+
+3. You will see a message once the model has been successfully deployed.
+
+<img src="https://github.com/user-attachments/assets/37a0fc45-4b9e-48b5-9b5e-1178c2169556" />
 
 # Acknowledgment
 

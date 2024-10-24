@@ -166,8 +166,6 @@ onecycle_scheduler.add_input(
     onecycle_eta_field,
 )
 
-# TODO: определяется по формуле total_steps = epochs * steps_per_epoch или ручками;
-# может по умолчанию предпосчитать epochs * steps_per_epoch?
 onecycle_total_steps_input = InputNumber(100, 1, step=1, size="small")
 onecycle_total_steps_field = Field(
     onecycle_total_steps_input, "Total steps", "The total number of steps in the cycle"
@@ -212,7 +210,7 @@ onecycle_scheduler.add_input(
     onecycle_div_factor_field,
 )
 
-onecycle_findiv_factor_input = InputNumber(1e-4, 1e-6, step=1e-6)
+onecycle_findiv_factor_input = InputNumber(10000, 1e-6, step=1)
 onecycle_findiv_factor_field = Field(
     onecycle_findiv_factor_input,
     "Final div factor",
@@ -230,8 +228,8 @@ onecycle_three_phase_field = Field(
     onecycle_three_phase_input,
     "Use three phase",
     (
-        "If `True`, use a third phase of the schedule to"
-        "annihilate the learning rate according to `final_div_factor`"
+        "If turned on, use a third phase of the schedule to "
+        "annihilate the learning rate according to `final_div_factor` "
         "instead of modifying the second phase"
     ),
 )
