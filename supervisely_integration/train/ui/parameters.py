@@ -229,8 +229,7 @@ parameters_tabs = Tabs(
 )
 
 # Model Benchmark to be implemented
-run_model_benchmark_checkbox = Checkbox(content="Run Model Benchmark evaluation", checked=False)
-run_model_benchmark_checkbox.disable()
+run_model_benchmark_checkbox = Checkbox(content="Run Model Benchmark evaluation", checked=True)
 
 # run_speedtest_checkbox = Checkbox(content="Run speed test", checked=True)
 model_benchmark_f = Field(
@@ -240,7 +239,7 @@ model_benchmark_f = Field(
             # run_speedtest_checkbox,
         ]
     ),
-    title="Model Evaluation Benchmark (To be implemented)",
+    title="Model Evaluation Benchmark",
     description=f"Generate evalutaion dashboard with visualizations and detailed analysis of the model performance after training. The best checkpoint will be used for evaluation. You can also run speed test to evaluate model inference speed.",
 )
 docs_link = '<a href="https://docs.supervisely.com/neural-networks/model-evaluation-benchmark/" target="_blank">documentation</a>'
@@ -361,7 +360,6 @@ def on_preview_scheduler():
 
     custom_config = read_parameters(train_count)
     lr_scheduler = custom_config.get("lr_scheduler")
-    scheduler_by_epoch = custom_config.get("scheduler_by_epoch", True)
     dummy_optim = SGD([torch.nn.Parameter(torch.tensor([5.0]))], start_lr)
     if lr_scheduler is not None:
         lr_scheduler = instantiate(lr_scheduler, optimizer=dummy_optim)
@@ -375,7 +373,7 @@ def on_preview_scheduler():
         lr_warmup = None
 
     x, lrs = visualize_scheduler.test_schedulers(
-        lr_scheduler, lr_warmup, dummy_optim, dataloader_len, total_epochs, scheduler_by_epoch
+        lr_scheduler, lr_warmup, dummy_optim, dataloader_len, total_epochs
     )
 
     scheduler_name = select_scheduler.get_value()
@@ -437,6 +435,7 @@ def select_params():
                 warmup_iterations_input,
                 warmup_ratio,
                 parameters_tabs,
+                run_model_benchmark_checkbox,
             ],
             True,
         )
@@ -480,6 +479,7 @@ def select_params():
                 warmup_iterations_input,
                 warmup_ratio,
                 parameters_tabs,
+                run_model_benchmark_checkbox,
             ],
             False,
         )
@@ -512,11 +512,11 @@ def read_parameters(train_items_cnt: int):
         )
 
         optimizer_params = read_optimizer_parameters()
-        scheduler_params, scheduler_cls_params, by_epoch = read_scheduler_parameters(total_steps)
+        scheduler_params, scheduler_cls_params = read_scheduler_parameters(total_steps)
 
         sly.logger.debug(f"General parameters: {general_params}")
         sly.logger.debug(f"Optimizer parameters: {optimizer_params}")
-        sly.logger.debug(f"Scheduler parameters: {scheduler_cls_params}. By epoch: {by_epoch}")
+        sly.logger.debug(f"Scheduler parameters: {scheduler_cls_params}")
 
         custom_config.update(general_params)
         custom_config["optimizer"]["type"] = optimizer_params["optimizer"]
@@ -569,7 +569,6 @@ def read_parameters(train_items_cnt: int):
                 "start_factor": 0.001,
                 "end_factor": 1.0,
             }
-        custom_config["scheduler_by_epoch"] = by_epoch
 
     return custom_config
 
@@ -603,7 +602,6 @@ def read_scheduler_parameters(total_steps: int):
     if scheduler == "empty":
         scheduler = "Without scheduler"
 
-    by_epoch = True
     parameters = {
         "type": scheduler,
         "enable_warmup": enable_warmup_input.is_switched(),
@@ -611,7 +609,7 @@ def read_scheduler_parameters(total_steps: int):
     }
 
     if scheduler == "Without scheduler":
-        return parameters, {}, by_epoch
+        return parameters, {}
 
     scheduler_cls_params = {
         "type": scheduler,
@@ -627,12 +625,14 @@ def read_scheduler_parameters(total_steps: int):
             elif isinstance(widget, Switch):
                 if not key == "by_epoch":
                     scheduler_cls_params[key] = widget.is_switched()
-                else:
-                    by_epoch = widget.is_switched()
 
     if scheduler_cls_params["type"] == "OneCycleLR":
         scheduler_cls_params["total_steps"] = int(total_steps)
     elif scheduler_cls_params["type"] == "LinearLR":
         scheduler_cls_params["total_iters"] = int(total_steps)
+    elif scheduler_cls_params["type"] == "MultiStepLR":
+        scheduler_cls_params["milestones"] = [
+            int(step.strip()) for step in scheduler_cls_params["milestones"].split(",")
+        ]
 
-    return parameters, scheduler_cls_params, by_epoch
+    return parameters, scheduler_cls_params

@@ -18,11 +18,7 @@ from supervisely_integration.train.ui.utils import (
 
 schedulers = [("empty", "Without scheduler")]
 
-by_epoch_input = Switch(True)
-by_epoch_field = Field(by_epoch_input, "By epoch")
 
-
-# Multistep
 def get_multisteps(input_w: Input) -> List[int]:
     steps: str = input_w.get_value()
     return [int(st.strip()) for st in steps.split(",")]
@@ -33,13 +29,6 @@ def set_multisteps(input_w: Input, value: List[int]):
 
 
 multi_steps_scheduler = OrderedWidgetWrapper("MultiStepLR")
-multi_steps_scheduler.add_input(
-    "by_epoch",
-    by_epoch_input,
-    by_epoch_field,
-    get_switch_value,
-    set_switch_value,
-)
 
 multi_steps_input = Input("16,22")
 multi_steps_field = Field(
@@ -62,13 +51,6 @@ schedulers.append((repr(multi_steps_scheduler), "Multistep LR"))
 
 # CosineAnnealingLR
 cosineannealing_scheduler = OrderedWidgetWrapper("CosineAnnealingLR")
-cosineannealing_scheduler.add_input(
-    "by_epoch",
-    by_epoch_input,
-    by_epoch_field,
-    get_switch_value,
-    set_switch_value,
-)
 
 cosineannealing_tmax_input = InputNumber(1, 1, step=1, size="small")
 cosineannealing_tmax_field = Field(
@@ -115,13 +97,6 @@ schedulers.append((repr(cosineannealing_scheduler), "Cosine Annealing LR"))
 
 # LinearLR
 linear_scheduler = OrderedWidgetWrapper("LinearLR")
-linear_scheduler.add_input(
-    "by_epoch",
-    by_epoch_input,
-    by_epoch_field,
-    get_switch_value,
-    set_switch_value,
-)
 
 linear_start_factor_input = InputNumber(0.333, 1e-4, step=1e-4)
 linear_start_factor_field = Field(
@@ -129,7 +104,7 @@ linear_start_factor_field = Field(
     "Start factor",
     description=(
         "The number we multiply learning rate in the "
-        "first epoch. The multiplication factor changes towards end_factor "
+        "first epoch. The multiplication factor changes towards end factor "
         "in the following epochs"
     ),
 )
@@ -147,13 +122,6 @@ schedulers.append((repr(linear_scheduler), "Linear LR"))
 
 # OneCycleLR
 onecycle_scheduler = OrderedWidgetWrapper("OneCycleLR")
-onecycle_scheduler.add_input(
-    "by_epoch",
-    by_epoch_input,
-    by_epoch_field,
-    get_switch_value,
-    set_switch_value,
-)
 
 # TODO: теоретически этот параметр может быть списком. Надо ли?
 onecycle_eta_input = InputNumber(1, 0, step=1e-6, size="small")
