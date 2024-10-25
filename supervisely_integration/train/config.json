@@ -7,7 +7,7 @@
 	"categories": ["neural network", "images", "object detection", "train"],
 	"icon_cover": true,
 	"description": "Train RT-DETR model on your data",
-	"docker_image": "supervisely/rt-detr:1.0.1",
+	"docker_image": "supervisely/rt-detr:1.0.2",
 	"instance_version": "6.11.22",
 	"task_location": "workspace_tasks",
 	"need_gpu": true,
