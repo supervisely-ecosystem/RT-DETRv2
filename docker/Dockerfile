@@ -1,4 +1,4 @@
-FROM supervisely/base-py-sdk:6.73.210
+FROM supervisely/base-py-sdk:6.73.216
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update
 RUN apt-get install -y curl
@@ -25,7 +25,7 @@ RUN curl -L -o /app/repo/models/rtdetr_r18vd_coco_objects365.pth https://github.
 RUN curl -L -o /app/repo/models/rtdetr_r50vd_coco_objects365.pth https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r50vd_2x_coco_objects365_from_paddle.pth
 RUN curl -L -o /app/repo/models/rtdetr_r101vd_coco_objects365.pth https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r101vd_2x_coco_objects365_from_paddle.pth
 
-RUN python3 -m pip install supervisely==6.73.210
-RUN python3 -m pip install supervisely[model-benchmark]==6.73.210
+RUN python3 -m pip install supervisely==6.73.216
+RUN python3 -m pip install supervisely[model-benchmark]==6.73.216
 
-LABEL python_sdk_version=6.73.210
+LABEL python_sdk_version=6.73.216

@@ -3,15 +3,15 @@ from functools import partial
 from typing import Callable, Optional
 from urllib.request import urlopen
 
-import supervisely as sly
 import torch
 from checkpoints import checkpoints
 from src.core import YAMLConfig
 from src.misc.sly_logger import LOGS, Logs
 from src.solver import DetSolver
-from supervisely.app.widgets import Button, Field, Progress
 
+import supervisely as sly
 import supervisely_integration.train.globals as g
+from supervisely.app.widgets import Button, Field, Progress
 
 
 def train(
