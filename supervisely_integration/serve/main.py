@@ -9,9 +9,12 @@ if sly.is_development():
     load_dotenv("local.env")
     load_dotenv(os.path.expanduser("~/supervisely.env"))
 
+source_path = __file__
+settings_path = os.path.join(os.path.dirname(source_path), "inference_settings.yaml")
+
 model = RTDETR(
     use_gui=True,
-    custom_inference_settings={"confidence_thresh": 0.4},
+    custom_inference_settings=settings_path,
 )
 
 if True:

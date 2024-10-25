@@ -96,7 +96,7 @@ class PyTorchInference:
                     classes = [mscoco_category2name[i] for i in res["labels"].cpu().numpy()]
                 boxes = res["boxes"].cpu().numpy()
                 scores = res["scores"].cpu().numpy()
-                conf_tresh = settings.get("confidence_thresh", DEFAULT_CONF)
+                conf_tresh = settings.get("confidence_threshold", DEFAULT_CONF)
                 predictions.append(format_prediction(classes, boxes, scores, conf_tresh))
         benchmark = {
             "preprocess": preprocess_timer.get_time(),
@@ -153,7 +153,7 @@ class ONNXInference:
                 w, h = orig_sizes[i]
                 boxes_orig = boxes / np.array(self.img_size * 2) * np.array([w, h, w, h])
                 classes = [self.class_names[label] for label in labels]
-                conf_tresh = settings.get("confidence_thresh", DEFAULT_CONF)
+                conf_tresh = settings.get("confidence_threshold", DEFAULT_CONF)
                 predictions.append(format_prediction(classes, boxes_orig, scores, conf_tresh))
         benchmark = {
             "preprocess": preprocess_timer.get_time(),
