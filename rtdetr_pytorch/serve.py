@@ -23,6 +23,7 @@ from src.solver import DetSolver
 from torchvision.transforms import ToTensor
 
 import supervisely as sly
+import supervisely_integration.serve.workflow as w
 from supervisely.app.widgets import (
     Container,
     CustomModelsSelector,
@@ -174,11 +175,14 @@ class ONNXInference:
 
 
 class RTDETR(sly.nn.inference.ObjectDetection):
+    team_id = sly.env.team_id()
+    in_train = False
+
     def initialize_custom_gui(self) -> Widget:
         """Create custom GUI layout for model selection. This method is called once when the application is started."""
         models = get_models()
         self.pretrained_models_table = PretrainedModelsSelector(models)
-        team_id = sly.env.team_id()
+        team_id = self.team_id
 
         custom_models = RTDETRArtifacts(team_id).get_list()
         self.custom_models_table = CustomModelsSelector(
@@ -212,6 +216,12 @@ class RTDETR(sly.nn.inference.ObjectDetection):
             "runtime": runtime,
             **model_params,
         }
+
+        # -------------------------------------- Add Workflow Input -------------------------------------- #
+        if not self.in_train:
+            w.workflow_input(self.api, model_params)
+        # ----------------------------------------------- - ---------------------------------------------- #
+
         return load_model_args
 
     def load_model(

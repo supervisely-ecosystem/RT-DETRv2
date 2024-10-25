@@ -59,7 +59,7 @@ SCHEDULERS = [
 # endregion
 
 # region envvars
-TASK_ID = 54346  # sly.env.task_id()
+TASK_ID = sly.env.task_id()
 TEAM_ID = sly.env.team_id()
 WORKSPACE_ID = sly.env.workspace_id()
 PROJECT_ID = sly.env.project_id()
@@ -92,6 +92,7 @@ widgets = None
 model_mode = None
 best_checkpoint_path = None
 latest_checkpoint_name = "last.pth"
+latest_checkpoint_path = None
 
 app = None
 

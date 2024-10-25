@@ -4,16 +4,17 @@ by lyuwenyu
 
 import datetime
 import json
+import os
 import shutil
 import time
 
 import torch
 from src.data import get_coco_api_from_dataset
 from src.misc import dist
-from supervisely.app.widgets import Button, Field, Progress
 from utils import is_by_epoch
 
 import supervisely_integration.train.globals as g
+from supervisely.app.widgets import Button, Field, Progress
 
 from .det_engine import evaluate, train_one_epoch
 from .solver import BaseSolver
@@ -141,6 +142,19 @@ class DetSolver(BaseSolver):
                 shutil.copy(file, best_checkpoint_path)
                 g.best_checkpoint_path = best_checkpoint_path
                 break
+
+        # Get latest checkpoint
+        checkpoints = [
+            f
+            for f in os.listdir(self.output_dir)
+            if f.endswith(".pth") and f"{self.output_dir}/{f}" is not g.best_checkpoint_path
+        ]
+        latest_checkpoint = sorted(checkpoints)[-1]
+        shutil.move(
+            self.output_dir / latest_checkpoint,
+            self.output_dir / g.latest_checkpoint_name,
+        )
+        g.latest_checkpoint_path = self.output_dir / g.latest_checkpoint_name
 
         total_time = time.time() - start_time
         total_time_str = str(datetime.timedelta(seconds=int(total_time)))

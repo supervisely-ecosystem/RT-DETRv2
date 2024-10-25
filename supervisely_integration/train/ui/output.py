@@ -10,9 +10,11 @@ from pycocotools.coco import COCO
 import rtdetr_pytorch.train as train_cli
 import supervisely as sly
 import supervisely_integration.train.globals as g
+import supervisely_integration.train.ui.classes as classes_ui
 import supervisely_integration.train.ui.input as input_ui
 import supervisely_integration.train.ui.parameters as parameters_ui
 import supervisely_integration.train.ui.splits as splits_ui
+import supervisely_integration.train.workflow as w
 from supervisely.app.widgets import (
     Button,
     Card,
@@ -23,8 +25,11 @@ from supervisely.app.widgets import (
     FolderThumbnail,
     LineChart,
     Progress,
+    ReportThumbnail,
+    SlyTqdm,
 )
 from supervisely.io.fs import get_file_name, get_file_name_with_ext
+from supervisely_integration.train.ui.model_benchmark import run_model_benchmark
 from supervisely_integration.train.ui.project_cached import download_project
 
 # TODO: Fix import, now it's causing error
@@ -88,6 +93,14 @@ progress_bar_epochs = Progress(hide_on_finish=False)
 progress_bar_iters = Progress(hide_on_finish=False)
 progress_bar_upload_artifacts = Progress()
 
+# Model benchmark
+model_benchmark_pbar = SlyTqdm()
+model_benchmark_pbar_secondary = Progress(hide_on_finish=False)
+creating_report_f = Field(Empty(), "", "Creating report on model...")
+creating_report_f.hide()
+model_benchmark_report = ReportThumbnail()
+model_benchmark_report.hide()
+
 output_folder = FolderThumbnail()
 output_folder.hide()
 
@@ -101,12 +114,16 @@ card = Card(
         [
             success_msg,
             output_folder,
+            model_benchmark_report,
+            creating_report_f,
             progress_bar_download_project,
             progress_bar_prepare_project,
             progress_bar_download_model,
             progress_bar_epochs,
             progress_bar_iters,
             progress_bar_upload_artifacts,
+            model_benchmark_pbar,
+            model_benchmark_pbar_secondary,
             btn_container,
             charts_grid_f,
         ]
@@ -196,8 +213,52 @@ def run_training():
     progress_bar_epochs.hide()
     progress_bar_iters.hide()
 
-    out_path, file_info = upload_model(cfg.output_dir)
-    print(out_path)
+    # Upload artifacts
+    remote_artifacts_dir, file_info = upload_model(cfg.output_dir)
+
+    # Model Benchmark
+    dataset_infos = g.api.dataset.get_list(g.PROJECT_ID)
+    ds_name_to_id = {ds.name: ds.id for ds in dataset_infos}
+    selected_classes = classes_ui.train_classes_selector.get_selected_classes()
+    train_set, val_set = g.splits
+
+    # paths
+    remote_weights_path = g.rtdetr_artifacts.get_weights_path(remote_artifacts_dir)
+    remote_config_path = g.rtdetr_artifacts.get_config_path(remote_artifacts_dir)
+    local_artifacts_dir = os.path.join(cfg.output_dir, "upload")
+    local_checkpoints_dir = os.path.join(local_artifacts_dir, "weights")
+
+    model_benchmark_done = False
+    if parameters_ui.run_model_benchmark_checkbox.is_checked():
+        model_benchmark_done = run_model_benchmark(
+            api=g.api,
+            root_source_path=g.CURRENT_DIR,
+            local_artifacts_dir=local_artifacts_dir,
+            remote_weights_dir=remote_weights_path,
+            remote_config_path=remote_config_path,
+            project_info=g.project_info,
+            dataset_infos=dataset_infos,
+            ds_name_to_id=ds_name_to_id,
+            train_val_split=splits_ui.trainval_splits,
+            train_set=train_set,
+            val_set=val_set,
+            selected_classes=selected_classes,
+            use_speedtest=parameters_ui.run_speedtest_checkbox.is_checked(),
+            model_benchmark_report=model_benchmark_report,
+            creating_report_f=creating_report_f,
+            model_benchmark_pbar=model_benchmark_pbar,
+            model_benchmark_pbar_secondary=model_benchmark_pbar_secondary,
+        )
+
+    if not model_benchmark_done:
+        benchmark_report_template = None
+    w.workflow_output(
+        g.api,
+        "RT-DETR",  # get_file_name(g.latest_checkpoint_path),
+        remote_artifacts_dir,
+        get_file_name(g.best_checkpoint_path),
+        benchmark_report_template,
+    )
 
     # hide buttons
     start_train_btn.hide()
@@ -266,12 +327,19 @@ def prepare_config(custom_config: Dict[str, Any]):
 
 
 def train():
+    file_info = None
     if g.model_mode == g.MODEL_MODES[0]:
         model = g.train_mode.pretrained[0]
         finetune = g.train_mode.finetune
     else:
         model = g.train_mode.custom
+        file_info = g.api.file.get_info_by_path(g.TEAM_ID, model)
         finetune = True
+
+    # ---------------------------------- Init And Set Workflow Input --------------------------------- #
+    w.workflow_input(g.api, g.project_info, file_info)
+    # ----------------------------------------------- - ---------------------------------------------- #
+
     cfg = train_cli.train(
         model,
         finetune,
@@ -305,17 +373,8 @@ def upload_model(output_dir):
     sly.fs.mkdir(local_checkpoints_dir)
     sly.logger.info(f"Local artifacts dir: {local_artifacts_dir}")
 
-    checkpoints = [
-        f
-        for f in os.listdir(output_dir)
-        if f.endswith(".pth") and f"{output_dir}/{f}" is not g.best_checkpoint_path
-    ]
-
     # Move last checkpoint to checkpoints folder
-    latest_checkpoint = sorted(checkpoints)[-1]
-    shutil.move(
-        f"{output_dir}/{latest_checkpoint}", f"{local_checkpoints_dir}/{g.latest_checkpoint_name}"
-    )
+    shutil.move(g.latest_checkpoint_path, f"{local_checkpoints_dir}/{g.latest_checkpoint_name}")
 
     # Move best checkpoint to checkpoints folder
     best_checkpoint_file_name = get_file_name(g.best_checkpoint_path)

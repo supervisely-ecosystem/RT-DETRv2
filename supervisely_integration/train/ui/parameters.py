@@ -228,15 +228,15 @@ parameters_tabs = Tabs(
     ],
 )
 
-# Model Benchmark to be implemented
+# Model Benchmark
 run_model_benchmark_checkbox = Checkbox(content="Run Model Benchmark evaluation", checked=True)
+run_speedtest_checkbox = Checkbox(content="Run speed test", checked=True)
 
-# run_speedtest_checkbox = Checkbox(content="Run speed test", checked=True)
 model_benchmark_f = Field(
     Container(
         widgets=[
             run_model_benchmark_checkbox,
-            # run_speedtest_checkbox,
+            run_speedtest_checkbox,
         ]
     ),
     title="Model Evaluation Benchmark",
@@ -247,12 +247,14 @@ model_benchmark_learn_more = Text(
     f"Learn more about Model Benchmark in the {docs_link}.", status="info"
 )
 
+
 content = Container(
     [
         advanced_mode_field,
         advanced_mode_editor,
         parameters_tabs,
         model_benchmark_f,
+        model_benchmark_learn_more,
         select_params_button,
     ],
 )
@@ -264,6 +266,14 @@ card = Card(
     lock_message="Select augmentations to unlock",
 )
 card.lock()
+
+
+@run_model_benchmark_checkbox.value_changed
+def change_model_benchmark(value):
+    if value:
+        run_speedtest_checkbox.show()
+    else:
+        run_speedtest_checkbox.hide()
 
 
 @advanced_mode_checkbox.value_changed
@@ -436,6 +446,7 @@ def select_params():
                 warmup_ratio,
                 parameters_tabs,
                 run_model_benchmark_checkbox,
+                run_speedtest_checkbox,
             ],
             True,
         )
@@ -480,6 +491,7 @@ def select_params():
                 warmup_ratio,
                 parameters_tabs,
                 run_model_benchmark_checkbox,
+                run_speedtest_checkbox,
             ],
             False,
         )
