@@ -26,8 +26,6 @@ class DetSolver(BaseSolver):
         self,
         progress_bar_epochs: Progress,
         progress_bar_iters: Progress,
-        stop_button: Button,
-        charts_grid: Field,
     ):
         print("Start training")
         self.train()
@@ -44,12 +42,13 @@ class DetSolver(BaseSolver):
         }
 
         start_time = time.time()
+        progress_bar_epochs.show()
+        progress_bar_iters.show()
         with progress_bar_epochs(message=f"Epochs", total=args.epoches) as epochs_pbar:
             for epoch in range(self.last_epoch + 1, args.epoches):
                 if dist.is_dist_available_and_initialized():
                     self.train_dataloader.sampler.set_epoch(epoch)
 
-                charts_grid.show()
                 train_stats = train_one_epoch(
                     self.model,
                     self.criterion,
@@ -128,33 +127,31 @@ class DetSolver(BaseSolver):
                     #             torch.save(coco_evaluator.coco_eval["bbox"].eval,
                     #                     self.output_dir / "eval" / name)
                 epochs_pbar.update(1)
-                stop_button.enable()
-                if g.STOP_TRAINING:
-                    break
         epochs_pbar.close()
-        stop_button.disable()
+        progress_bar_epochs.hide()
+        progress_bar_iters.hide()
 
-        # Save the best checkpoint
-        best_epoch_idx = best_stat["epoch"]
-        best_checkpoint_path = self.output_dir / f"best_{best_epoch_idx}.pth"
-        for file in self.output_dir.glob("checkpoint*.pth"):
-            if file.stem.endswith(f"{best_epoch_idx:04}"):
-                shutil.copy(file, best_checkpoint_path)
-                g.best_checkpoint_path = best_checkpoint_path
-                break
+        # # Save the best checkpoint
+        # best_epoch_idx = best_stat["epoch"]
+        # best_checkpoint_path = self.output_dir / f"best_{best_epoch_idx}.pth"
+        # for file in self.output_dir.glob("checkpoint*.pth"):
+        #     if file.stem.endswith(f"{best_epoch_idx:04}"):
+        #         shutil.copy(file, best_checkpoint_path)
+        #         g.best_checkpoint_path = best_checkpoint_path
+        #         break
 
-        # Get latest checkpoint
-        checkpoints = [
-            f
-            for f in os.listdir(self.output_dir)
-            if f.endswith(".pth") and f"{self.output_dir}/{f}" is not g.best_checkpoint_path
-        ]
-        latest_checkpoint = sorted(checkpoints)[-1]
-        shutil.move(
-            self.output_dir / latest_checkpoint,
-            self.output_dir / g.latest_checkpoint_name,
-        )
-        g.latest_checkpoint_path = self.output_dir / g.latest_checkpoint_name
+        # # Get latest checkpoint
+        # checkpoints = [
+        #     f
+        #     for f in os.listdir(self.output_dir)
+        #     if f.endswith(".pth") and f"{self.output_dir}/{f}" is not g.best_checkpoint_path
+        # ]
+        # latest_checkpoint = sorted(checkpoints)[-1]
+        # shutil.move(
+        #     self.output_dir / latest_checkpoint,
+        #     self.output_dir / g.latest_checkpoint_name,
+        # )
+        # g.latest_checkpoint_path = self.output_dir / g.latest_checkpoint_name
 
         total_time = time.time() - start_time
         total_time_str = str(datetime.timedelta(seconds=int(total_time)))
