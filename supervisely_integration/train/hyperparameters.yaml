@@ -1,22 +1,11 @@
 general:
   num_epochs: 20 # Total number of training epochs
-  finetune: true # Finetune a pre-trained model
 
 data: # Section for data-related parameters
   input_size: [640, 640] # Input image size (width, height)
   train_batch_size: 2 # Batch size for training
   val_batch_size: 1 # Batch size for validation
   val_interval: 1 # Interval for running validation
-
-logging:
-  enable: true # Enable logging
-  log_interval: 1 # Interval for logging metrics
-  save_logs: true # Save logs to file
-  log_metrics: # Metrics to log
-    - "accuracy"
-    - "loss"
-    - "memory"
-    - "iou"
 
 checkpoint:
   interval: 1 # Interval for saving checkpoints
@@ -38,9 +27,8 @@ lr_scheduler:
   type: null # Type of learning rate scheduler
   by_epoch: true # Schedule learning rate by epochs rather than steps
   warmup:
-    warmup_enabled: true # Enable warmup phase for learning rate
-    warmup_steps: 1 # Number of warmup steps
-    warmup_ratio: 0.001 # Starting learning rate ratio for warmup
-
-evaluation:
-  enable_eval: true # Enable model evaluation during training
+    enabled: true # Enable warmup phase for learning rate
+    steps: 1 # Number of warmup steps
+    ratio: 0.001 # Starting learning rate ratio for warmup
+    start_factor: 0.001 # Starting learning rate factor for warmup
+    end_factor: 1.0 # Ending learning rate factor for warmup

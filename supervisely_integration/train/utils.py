@@ -26,12 +26,89 @@ def get_num_workers(batch_size: int):
     return num_workers
 
 
-def read_parameters(hyperparameters: dict, default_config_path: str):
+def read_optimizer_parameters(optimizer_parameters: dict):
+    optimizer = optimizer_parameters["type"]
+
+    parameters = {
+        "optimizer": optimizer,
+        "learning_rate": optimizer_parameters["type"],
+        "weight_decay": optimizer_parameters["weight_decay"],
+        "clip_gradient_norm": optimizer_parameters["clip_grad_norm"],
+        "clip_gradient_norm_value": optimizer_parameters["grad_norm_value"],
+    }
+
+    if optimizer in ["Adam", "AdamW"]:
+        parameters.update(
+            {
+                "beta1": optimizer_parameters["betas"]["beta1"],
+                "beta2": optimizer_parameters["betas"]["beta2"],
+            }
+        )
+    elif optimizer == "SGD":
+        parameters.update({"momentum": optimizer_parameters["momentum"]})
+
+    return parameters
+
+
+def read_scheduler_parameters(scheduler_parameters: dict, total_steps: int):
+    scheduler = scheduler_parameters.get("type", "Without scheduler")
+    parameters = {"type": scheduler}
+    warmup_parameters = {}
+
+    if scheduler_parameters.get("warmup", {}).get("enabled", False):
+        warmup_parameters = {
+            "type": scheduler,
+            "enabled": scheduler_parameters["warmup"]["enabled"],
+            "steps": scheduler_parameters["warmup"]["steps"],
+            "ratio": scheduler_parameters["warmup"]["ratio"],
+            "start_factor": scheduler_parameters["warmup"]["start_factor"],
+            "end_factor": scheduler_parameters["warmup"]["end_factor"],
+        }
+
+    if scheduler == "MultiStepLR":
+        parameters.update(
+            {
+                "milestones": scheduler_parameters["milestones"],
+                "gamma": scheduler_parameters["gamma"],
+            }
+        )
+    elif scheduler == "CosineAnnealingLR":
+        parameters.update(
+            {"T_max": scheduler_parameters["T_max"], "eta_min": scheduler_parameters["eta_min"]}
+        )
+    elif scheduler == "LinearLR":
+        parameters.update(
+            {
+                "start_factor": scheduler_parameters["start_factor"],
+                "end_factor": scheduler_parameters["end_factor"],
+                "total_iters": scheduler_parameters["total_iters"],
+            }
+        )
+    elif scheduler == "OneCycleLR":
+        parameters.update(
+            {
+                "max_lr": scheduler_parameters["max_lr"],
+                "pct_start": scheduler_parameters["pct_start"],
+                "anneal_strategy": scheduler_parameters["anneal_strategy"],  # Fixed typo
+                "div_factor": scheduler_parameters["div_factor"],
+                "final_div_factor": scheduler_parameters["final_div_factor"],
+                "three_phase": scheduler_parameters["three_phase"],
+                "total_steps": total_steps,
+            }
+        )
+    elif scheduler != "Without scheduler":
+        raise ValueError(f"Scheduler '{scheduler}' is not supported")
+
+    return parameters, warmup_parameters
+
+
+def read_parameters(hyperparameters: dict, default_config_path: str, train_items_cnt: int):
     sly.logger.debug("Reading training parameters...")
     with open(default_config_path, "r") as f:
         custom_config = f.read()
     custom_config = yaml.safe_load(custom_config)
 
+    # Read from hyperparameters
     general_params = {
         "epoches": hyperparameters["general"]["n_epochs"],
         "val_step": hyperparameters["general"]["val_interval"],
@@ -42,8 +119,12 @@ def read_parameters(hyperparameters: dict, default_config_path: str):
     train_batch_size = hyperparameters["general"]["train_batch_size"]
     val_batch_size = hyperparameters["general"]["val_batch_size"]
 
-    optimizer_params = {**hyperparameters["optimizer"]}
-    scheduler_params = {**hyperparameters["lr_scheduler"]}
+    total_steps = general_params["epoches"] * np.ceil(train_items_cnt / train_batch_size)
+
+    optimizer_params = read_optimizer_parameters(hyperparameters["optimizer"])
+    scheduler_params, scheduler_warmup_params = read_scheduler_parameters(
+        hyperparameters["scheduler"], total_steps
+    )
 
     sly.logger.debug(f"General parameters: {general_params}")
     sly.logger.debug(f"Optimizer parameters: {optimizer_params}")
@@ -51,7 +132,7 @@ def read_parameters(hyperparameters: dict, default_config_path: str):
 
     custom_config.update(general_params)
     custom_config["optimizer"]["type"] = optimizer_params["type"]
-    custom_config["optimizer"]["lr"] = optimizer_params["lr"]
+    custom_config["optimizer"]["lr"] = optimizer_params["learning_rate"]
     custom_config["optimizer"]["weight_decay"] = optimizer_params["weight_decay"]
     if optimizer_params.get("momentum"):
         custom_config["optimizer"]["momentum"] = optimizer_params["momentum"]
@@ -62,7 +143,7 @@ def read_parameters(hyperparameters: dict, default_config_path: str):
         ]
 
     # Set input_size
-    w, h = hyperparameters["general"]["input_image_size"]
+    w, h = hyperparameters["general"]["input_size"]
     for op in custom_config["train_dataloader"]["dataset"]["transforms"]["ops"]:
         if op["type"] == "Resize":
             op["size"] = [w, h]
@@ -84,20 +165,18 @@ def read_parameters(hyperparameters: dict, default_config_path: str):
     custom_config["val_dataloader"]["num_workers"] = get_num_workers(val_batch_size)
 
     # LR scheduler
-    if (
-        scheduler_params["scheduler"] == "Without scheduler"
-        or scheduler_params["scheduler"] == "empty"
-    ):
+    scheduler_type = scheduler_params["type"]
+    if scheduler_type == "Without scheduler" or scheduler_type == "empty" or scheduler_type is None:
         custom_config["lr_scheduler"] = None
     else:
         custom_config["lr_scheduler"] = {**scheduler_params}
 
-    if scheduler_params["enable_warmup"]: #
+    if scheduler_warmup_params["enable"]:
         custom_config["lr_warmup"] = {
-            "type": "LinearLR",
-            "total_iters": scheduler_params["warmup_iterations"],
-            "start_factor": 0.001,
-            "end_factor": 1.0,
+            "type": scheduler_type,
+            "total_iters": scheduler_warmup_params["steps"],
+            "start_factor": scheduler_warmup_params["start_factor"],
+            "end_factor": scheduler_warmup_params["end_factor"],
         }
 
     return custom_config

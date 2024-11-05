@@ -30,8 +30,8 @@ config_paths_dir = os.path.join(rtdetr_pytorch_path, "configs", "rtdetr")
 default_config_path = os.path.join(config_paths_dir, "placeholder.yml")
 
 app_options = {
-    # "save_best_checkpoint": True,
-    # "save_last_checkpoint": True,
+    "save_best_checkpoint": True,
+    "save_last_checkpoint": True,
     "supported_train_modes": ["finetune", "scratch"],
     "supported_optimizers": ["Adam", "AdamW", "SGD"],
     "supported_schedulers": [
@@ -41,6 +41,22 @@ app_options = {
         "MultiStepLR",
         "OneCycleLR",
     ],
+    "logging": {
+        "enable": True,  # Enable logging
+        "interval": 1,  # Interval for logging metrics
+        "save_to_file": True,  # Save logs to file
+        "metrics": [  # Metrics to log
+            "accuracy",
+            "loss",
+            "mAP",
+            "AP",
+            "AR",
+            "memory",
+        ],
+    },
+    "evaluation": {
+        "enable": True,  # Enable model evaluation during training
+    },
 }
 
 app_config = {
