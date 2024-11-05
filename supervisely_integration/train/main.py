@@ -30,6 +30,7 @@ config_paths_dir = os.path.join(rtdetr_pytorch_path, "configs", "rtdetr")
 default_config_path = os.path.join(config_paths_dir, "placeholder.yml")
 
 app_options = {
+    "use_coco_annotation": True,
     "save_best_checkpoint": True,
     "save_last_checkpoint": True,
     "supported_train_modes": ["finetune", "scratch"],
@@ -74,7 +75,9 @@ hyperparameters_path = os.path.join(os.path.dirname(__file__), "hyperparameters.
 
 current_file_dir = os.path.dirname(os.path.abspath(__file__))
 output_dir = os.path.join(current_file_dir, "output")
-train = TrainApp(output_dir, models_path, hyperparameters_path, app_options)
+train = TrainApp(models_path, hyperparameters_path, app_options, output_dir)
+
+train
 
 
 @train.start
@@ -82,6 +85,12 @@ def start_training():
     print("-----------------")
     print("Start training")
     print("-----------------")
+
+    # Step 1. convert to COCO format
+    # sly.xxx.convert_to_coco()
+    # Step 2. prepare config.yml (hyperparameters + custom config)
+    # Step 3. train
+
     import rtdetr_pytorch.train as train_cli
 
     custom_config_path = os.path.join(config_paths_dir, "custom.yml")
