@@ -17,6 +17,7 @@ import utils
 from src.data import CocoEvaluator
 from src.misc import MetricLogger, SmoothedValue, reduce_dict
 from src.misc.sly_logger import LOGS
+
 from supervisely.app.widgets import Progress
 
 
@@ -104,6 +105,15 @@ def train_one_epoch(
 
             metric_logger.update(loss=loss_value, **loss_dict_reduced)
             metric_logger.update(lr=optimizer.param_groups[0]["lr"])
+
+            # import wandb
+
+            # from supervisely.train import train_logger
+
+            # # wandb.log({
+            # #     "Train/loss":
+            # #     })
+            # train_logger.log({"Train/loss": loss_value.item()})
 
             # Update supervisely logs
             LOGS.loss = loss_value.item()

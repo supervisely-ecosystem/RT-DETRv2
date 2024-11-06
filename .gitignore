@@ -175,5 +175,6 @@ temp/
 /imgaug.json
 imgaug.json
 supervisely_integration/train/data
+supervisely_integration/train/output
 supervisely
 app_data

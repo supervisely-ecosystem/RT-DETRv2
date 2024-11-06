@@ -31,37 +31,3 @@ optimizer:
 remap_mscoco_category: false
 save_ema: false
 save_optimizer: false
-# general:
-#   num_epochs: 20 # Total number of training epochs
-
-# data: # Section for data-related parameters
-#   input_size: [640, 640] # Input image size (width, height)
-#   train_batch_size: 2 # Batch size for training
-#   val_batch_size: 1 # Batch size for validation
-#   val_interval: 1 # Interval for running validation
-
-# checkpoint:
-#   interval: 1 # Interval for saving checkpoints
-#   keep_checkpoints: true # Whether to keep saved checkpoints
-#   max_checkpoints: 3 # Maximum number of checkpoints to retain
-#   save_last: true # Save the last checkpoint after training
-#   save_best: true # Save the best-performing checkpoint based on validation
-#   save_optimizer_state: false # Save the optimizer state in checkpoints
-
-# optimizer:
-#   frozen_stages_override: false # Override frozen stages if applicable
-#   type: "AdamW" # Type of optimizer to use
-#   learning_rate: 0.0001 # Initial learning rate
-#   weight_decay: 0.0001 # Weight decay (L2 regularization factor)
-#   clip_grad_norm: true # Enable gradient clipping
-#   grad_norm_value: 0.1 # Maximum norm for gradient clipping
-
-# lr_scheduler:
-#   type: null # Type of learning rate scheduler
-#   by_epoch: true # Schedule learning rate by epochs rather than steps
-#   warmup:
-#     enabled: true # Enable warmup phase for learning rate
-#     steps: 1 # Number of warmup steps
-#     ratio: 0.001 # Starting learning rate ratio for warmup
-#     start_factor: 0.001 # Starting learning rate factor for warmup
-#     end_factor: 1.0 # Ending learning rate factor for warmup
