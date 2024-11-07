@@ -14,10 +14,10 @@ cwd = os.getcwd()
 rtdetr_pytorch_path = os.path.join(cwd, "rtdetr_pytorch")
 sys.path.insert(0, rtdetr_pytorch_path)
 from dotenv import load_dotenv
+from models import get_models
 
 import supervisely as sly
 import supervisely_integration.train.utils as utils
-from models import get_models
 from supervisely.nn.training.train_app import TrainApp
 
 load_dotenv(os.path.expanduser("~/supervisely.env"))
@@ -83,12 +83,14 @@ hyperparameters_path = os.path.join(os.path.dirname(__file__), "hyperparameters.
 
 current_file_dir = os.path.dirname(os.path.abspath(__file__))
 work_dir = os.path.join(current_file_dir, "output")
-train = TrainApp(models_path, hyperparameters_path, app_options, work_dir)
+train = TrainApp("rt-detr", models_path, hyperparameters_path, app_options, work_dir)
+
+# train.register_inference_class(RTDETR)  # optional
+
 
 # train.init_logger(logger="supervisely")
 
 # from src.serve import RTDETR
-# train.register_inference_class(RTDETR)  # optional
 # def init_logger(self, logger):
 # from sly.train import train_logger
 #
@@ -101,16 +103,6 @@ def start_training():
     print("Start training")
     print("-----------------")
 
-    # Step 1. convert to COCO format
-    # sly.xxx.convert_to_coco()
-    # Step 2. prepare config.yml (hyperparameters + custom config)
-    # Step 3. train
-
-    # in TrainApp
-    # Step 4. Add logger
-
-    # Step 5. Automatically do model benchmark
-
     import rtdetr_pytorch.train as train_cli
 
     # Step 1. Convert and prepare Project
@@ -121,12 +113,30 @@ def start_training():
     custom_config_path = prepare_config(train, converted_project_dir)
 
     # Step 3. Train
-    finetune = True
-    cfg = train_cli.train(
-        finetune, custom_config_path, train.progress_bar_epochs, train.progress_bar_iters
+    cfg = train_cli.train(train, custom_config_path)
+
+    # Step 4. Move everything you want to upload to output dir
+    # cfg.output_dir contain all train generated files
+    output_models_dir = os.path.join(cfg.output_dir, "weights")
+    os.makedirs(output_models_dir, exist_ok=True)
+    for file in os.listdir(cfg.output_dir):
+        if file.endswith(".pth"):
+            shutil.move(os.path.join(cfg.output_dir, file), os.path.join(output_models_dir, file))
+
+    # Move custom config to output dir
+    shutil.copy(
+        custom_config_path, os.path.join(cfg.output_dir, get_file_name_with_ext(custom_config_path))
     )
 
-    return
+    # experiment_info = {
+    #     # "model_source": train.model_source,
+    #     "model_name": train.model_parameters["Model"],
+    #     "best_checkpoint": best_checkpoint_path,
+    #     "last_checkpoint": last_checkpoint_path,
+    #     "config_path": custom_config_path,
+    # }
+
+    return cfg.output_dir
 
 
 def convert2yolov8(project: sly.Project, converted_project_dir: str, selected_classes: List[str]):

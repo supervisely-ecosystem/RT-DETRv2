@@ -21,7 +21,8 @@
 			"env": {
 				"PYTHONPATH": "${workspaceFolder}:${PYTHONPATH}",
 				"LOG_LEVEL": "DEBUG",
-				"DEBUG_APP_DIR": "app_data"
+				"DEBUG_APP_DIR": "app_data",
+				"APP_NAME": "Train RT-DETR"
 			}
 		},
 		{

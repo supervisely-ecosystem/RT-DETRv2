@@ -7,20 +7,21 @@ from src.solver import DetSolver
 
 import supervisely as sly
 from supervisely.app.widgets import Progress
+from supervisely.nn.training.train_app import TrainApp
 
 
 def train(
-    finetune: bool,
+    train: TrainApp,
     config_path: str,
-    progress_bar_epochs: Progress,
-    progress_bar_iters: Progress,
 ):
+
+    path_to_model = train.model_path
     cfg = YAMLConfig(
         config_path,
-        tuning=finetune,
+        tuning=path_to_model,
     )
     solver = DetSolver(cfg)
-    solver.fit(progress_bar_epochs, progress_bar_iters)
+    solver.fit(train.progress_bar_epochs, train.progress_bar_iters)
 
     return cfg
 

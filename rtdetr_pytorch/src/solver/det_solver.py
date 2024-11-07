@@ -131,27 +131,26 @@ class DetSolver(BaseSolver):
         progress_bar_epochs.hide()
         progress_bar_iters.hide()
 
-        # # Save the best checkpoint
-        # best_epoch_idx = best_stat["epoch"]
-        # best_checkpoint_path = self.output_dir / f"best_{best_epoch_idx}.pth"
-        # for file in self.output_dir.glob("checkpoint*.pth"):
-        #     if file.stem.endswith(f"{best_epoch_idx:04}"):
-        #         shutil.copy(file, best_checkpoint_path)
-        #         g.best_checkpoint_path = best_checkpoint_path
-        #         break
+        # Checkpoints
+        # Save the best checkpoint
+        best_epoch_idx = best_stat["epoch"]
+        best_checkpoint_path = self.output_dir / f"best_{best_epoch_idx}.pth"
+        for file in self.output_dir.glob("checkpoint*.pth"):
+            if file.stem.endswith(f"{best_epoch_idx:04}"):
+                shutil.move(file, best_checkpoint_path)
+                break
 
-        # # Get latest checkpoint
-        # checkpoints = [
-        #     f
-        #     for f in os.listdir(self.output_dir)
-        #     if f.endswith(".pth") and f"{self.output_dir}/{f}" is not g.best_checkpoint_path
-        # ]
-        # latest_checkpoint = sorted(checkpoints)[-1]
-        # shutil.move(
-        #     self.output_dir / latest_checkpoint,
-        #     self.output_dir / g.latest_checkpoint_name,
-        # )
-        # g.latest_checkpoint_path = self.output_dir / g.latest_checkpoint_name
+        # Get latest checkpoint
+        checkpoints = [
+            f
+            for f in os.listdir(self.output_dir)
+            if f.endswith(".pth") and f"{self.output_dir}/{f}" is not best_checkpoint_path
+        ]
+
+        latest_checkpoint_name = "last.pth"
+        latest_checkpoint = sorted(checkpoints)[-1]
+        latest_checkpoint_path = self.output_dir / latest_checkpoint_name
+        shutil.move(self.output_dir / latest_checkpoint, latest_checkpoint_path)
 
         total_time = time.time() - start_time
         total_time_str = str(datetime.timedelta(seconds=int(total_time)))
