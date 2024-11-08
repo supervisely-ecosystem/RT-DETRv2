@@ -13,11 +13,11 @@ from typing import Iterable
 
 import torch
 import torch.amp
-import utils
 from src.data import CocoEvaluator
 from src.misc import MetricLogger, SmoothedValue, reduce_dict
 from src.misc.sly_logger import LOGS
 
+import rtdetr_pytorch.utils as utils
 from supervisely.app.widgets import Progress
 
 

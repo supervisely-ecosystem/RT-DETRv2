@@ -21,9 +21,9 @@ def train(
         tuning=path_to_model,
     )
     solver = DetSolver(cfg)
-    solver.fit(train.progress_bar_epochs, train.progress_bar_iters)
+    best_checkpoint_path = solver.fit(train.progress_bar_epochs, train.progress_bar_iters)
 
-    return cfg
+    return cfg, best_checkpoint_path
 
 
 def setup_callbacks(

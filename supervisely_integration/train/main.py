@@ -8,6 +8,8 @@ import yaml
 from pycocotools.coco import COCO
 
 from supervisely.io.fs import get_file_name, get_file_name_with_ext
+from supervisely.nn.task_type import TaskType
+from supervisely_integration.train.serve import RTDETRModelMB
 
 cwd = os.getcwd()
 
@@ -31,13 +33,13 @@ team_id = sly.env.team_id()
 workspace_id = sly.env.workspace_id()
 project_id = sly.env.project_id()
 
-# Path to configs
-# cwd = os.getcwd()
-# rtdetr_pytorch_path = os.path.join(cwd, "rtdetr_pytorch")
 config_paths_dir = os.path.join(rtdetr_pytorch_path, "configs", "rtdetr")
 default_config_path = os.path.join(config_paths_dir, "placeholder.yml")
 
 app_options = {
+    "gpu_selector": True,
+    "multi_gpu_training": True,
+    "data_format": ["COCO", "VOC", "YOLO"],  # etc
     "use_coco_annotation": True,
     "save_best_checkpoint": True,
     "save_last_checkpoint": True,
@@ -85,7 +87,8 @@ current_file_dir = os.path.dirname(os.path.abspath(__file__))
 work_dir = os.path.join(current_file_dir, "output")
 train = TrainApp("rt-detr", models_path, hyperparameters_path, app_options, work_dir)
 
-# train.register_inference_class(RTDETR)  # optional
+inference_settings = {"confidence_threshold": 0.4}
+train.register_inference_class(RTDETRModelMB, inference_settings)
 
 
 # train.init_logger(logger="supervisely")
@@ -105,17 +108,19 @@ def start_training():
 
     import rtdetr_pytorch.train as train_cli
 
+    # Step 0. Clean output dit
     # Step 1. Convert and prepare Project
     converted_project_dir = os.path.join(train.work_dir, "converted_project")
-    convert2yolov8(train.sly_project, converted_project_dir, train.classes)
+    convert2coco(train.sly_project, converted_project_dir, train.classes)
 
     # Step 2. Prepare config and read hyperparameters
     custom_config_path = prepare_config(train, converted_project_dir)
 
     # Step 3. Train
-    cfg = train_cli.train(train, custom_config_path)
+    cfg, best_checkpoint_path = train_cli.train(train, custom_config_path)
 
-    # Step 4. Move everything you want to upload to output dir
+    # Step 4. Optional.
+    # Move everything you want to upload to output dir
     # cfg.output_dir contain all train generated files
     output_models_dir = os.path.join(cfg.output_dir, "weights")
     os.makedirs(output_models_dir, exist_ok=True)
@@ -123,23 +128,27 @@ def start_training():
         if file.endswith(".pth"):
             shutil.move(os.path.join(cfg.output_dir, file), os.path.join(output_models_dir, file))
 
-    # Move custom config to output dir
-    shutil.copy(
-        custom_config_path, os.path.join(cfg.output_dir, get_file_name_with_ext(custom_config_path))
+    if train.model_source == "Pretrained models":
+        model_name = train.model_parameters["Model"]
+    else:
+        model_name = train.model_parameters["model_name"]
+
+    best_checkpoint_path = os.path.join(
+        output_models_dir, get_file_name_with_ext(best_checkpoint_path)
     )
 
-    # experiment_info = {
-    #     # "model_source": train.model_source,
-    #     "model_name": train.model_parameters["Model"],
-    #     "best_checkpoint": best_checkpoint_path,
-    #     "last_checkpoint": last_checkpoint_path,
-    #     "config_path": custom_config_path,
-    # }
+    experiment_info = {
+        "model_name": model_name,
+        "task_type": TaskType.OBJECT_DETECTION,
+        "model_files": {"config": custom_config_path},
+        "checkpoints": output_models_dir,  # or ["output_dir/checkpoints/epoch_10.pt", ...]
+        "best_checkpoint": best_checkpoint_path,
+    }
 
-    return cfg.output_dir
+    return experiment_info
 
 
-def convert2yolov8(project: sly.Project, converted_project_dir: str, selected_classes: List[str]):
+def convert2coco(project: sly.Project, converted_project_dir: str, selected_classes: List[str]):
     sly.logger.info("Converting project to COCO format")
     for dataset in project.datasets:
         dataset: sly.Dataset

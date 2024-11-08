@@ -11,9 +11,11 @@ import time
 import torch
 from src.data import get_coco_api_from_dataset
 from src.misc import dist
-from utils import is_by_epoch
 
 import supervisely_integration.train.globals as g
+
+# from utils import is_by_epoch
+from rtdetr_pytorch.utils import is_by_epoch
 from supervisely.app.widgets import Button, Field, Progress
 
 from .det_engine import evaluate, train_one_epoch
@@ -134,7 +136,7 @@ class DetSolver(BaseSolver):
         # Checkpoints
         # Save the best checkpoint
         best_epoch_idx = best_stat["epoch"]
-        best_checkpoint_path = self.output_dir / f"best_{best_epoch_idx}.pth"
+        best_checkpoint_path = os.path.join(self.output_dir, f"best_{best_epoch_idx}.pth")
         for file in self.output_dir.glob("checkpoint*.pth"):
             if file.stem.endswith(f"{best_epoch_idx:04}"):
                 shutil.move(file, best_checkpoint_path)
@@ -155,6 +157,7 @@ class DetSolver(BaseSolver):
         total_time = time.time() - start_time
         total_time_str = str(datetime.timedelta(seconds=int(total_time)))
         print("Training time {}".format(total_time_str))
+        return best_checkpoint_path
 
     def val(
         self,

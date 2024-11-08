@@ -363,7 +363,8 @@ class RTDETR(sly.nn.inference.ObjectDetection):
         self.model_name = meta["model"]
         self.dataset_name = meta["project_name"]
         self.class_names = meta["classes"]
-        self.img_size = config["val_dataloader"]["dataset"]["transforms"]["ops"][0]["size"]
+        # self.img_size = config["val_dataloader"]["dataset"]["transforms"]["ops"][0]["size"]
+        self.img_size = config["RTDETRTransformer"]["eval_spatial_size"]
         self._load_obj_classes(self.class_names)
 
     def _load_obj_classes(self, class_names: List[str]):

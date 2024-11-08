@@ -13,7 +13,7 @@ ema:
   decay: 0.9999
   type: ModelEMA
   warmups: 2000
-epoches: 1
+epoches: 5
 lr_scheduler: null
 lr_warmup:
   end_factor: 1.0
