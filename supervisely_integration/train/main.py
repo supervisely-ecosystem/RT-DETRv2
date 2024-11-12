@@ -90,7 +90,6 @@ train = TrainApp("rt-detr", models_path, hyperparameters_path, app_options, work
 inference_settings = {"confidence_threshold": 0.4}
 train.register_inference_class(RTDETRModelMB, inference_settings)
 
-
 # train.init_logger(logger="supervisely")
 
 # from src.serve import RTDETR
@@ -129,9 +128,9 @@ def start_training():
             shutil.move(os.path.join(cfg.output_dir, file), os.path.join(output_models_dir, file))
 
     if train.model_source == "Pretrained models":
-        model_name = train.model_parameters["Model"]
+        model_name = train.model_info["Model"]
     else:
-        model_name = train.model_parameters["model_name"]
+        model_name = train.model_info["model_name"]
 
     best_checkpoint_path = os.path.join(
         output_models_dir, get_file_name_with_ext(best_checkpoint_path)
@@ -227,16 +226,15 @@ def prepare_config(train: TrainApp, converted_project_dir: str):
     val_ann_path = os.path.join(val_ds_dir, "ann", "coco_anno.json")
 
     # Detect config from model parameters
-    model_parameters = train.model_parameters
+    model_info = train.model_info
     if train.model_source == "Pretrained models":
-        selected_model_name = model_parameters["Model"]
+        selected_model_name = model_info["Model"]  # or model_parameters["meta"]["model_name"]
         arch = selected_model_name.split("_coco")[0]
         config_name = f"{arch}_6x_coco"
         custom_config_path = os.path.join(config_paths_dir, f"{config_name}.yml")
     else:
-        selected_model_name = model_parameters.get("checkpoint_name")
-        config_name = get_file_name(model_parameters.get("config_url"))
-        custom_config_path = train.model_config_path
+        config_name = get_file_name_with_ext(model_info["config"])
+        custom_config_path = train.model_files["config"]
 
     # Read custom config
     with open(custom_config_path, "r") as f:
