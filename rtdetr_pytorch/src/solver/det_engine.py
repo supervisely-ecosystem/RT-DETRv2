@@ -6,8 +6,6 @@ by lyuwenyu
 """
 
 import math
-import os
-import pathlib
 import sys
 from typing import Iterable
 
@@ -18,7 +16,7 @@ from src.misc import MetricLogger, SmoothedValue, reduce_dict
 from src.misc.sly_logger import LOGS
 
 import rtdetr_pytorch.utils as utils
-from supervisely.app.widgets import Progress
+from supervisely.nn.training.train_logger import train_logger
 
 
 def train_one_epoch(
@@ -34,8 +32,6 @@ def train_one_epoch(
     model.train()
     criterion.train()
 
-    progress_bar_iters: Progress = kwargs.get("progress_bar_iters")
-
     metric_logger = MetricLogger(delimiter="  ")
     metric_logger.add_meter("lr", SmoothedValue(window_size=1, fmt="{value:.6f}"))
     # metric_logger.add_meter('class_error', SmoothedValue(window_size=1, fmt='{value:.2f}'))
@@ -49,84 +45,82 @@ def train_one_epoch(
     lr_warmup = kwargs.get("lr_warmup", None)
     lr_scheduler = kwargs.get("lr_scheduler", None)
 
-    with progress_bar_iters(message=f"Iterations", total=len(data_loader)) as iters_pbar:
-        for samples, targets in metric_logger.log_every(data_loader, print_freq, header):
-            samples = samples.to(device)
-            targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
+    for samples, targets in metric_logger.log_every(data_loader, print_freq, header):
+        samples = samples.to(device)
+        targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
-            if scaler is not None:
-                with torch.autocast(device_type=str(device), cache_enabled=True):
-                    outputs = model(samples, targets)
-
-                with torch.autocast(device_type=str(device), enabled=False):
-                    loss_dict = criterion(outputs, targets)
-
-                loss = sum(loss_dict.values())
-                scaler.scale(loss).backward()
-
-                if max_norm > 0:
-                    scaler.unscale_(optimizer)
-                    grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
-
-                scaler.step(optimizer)
-                scaler.update()
-                optimizer.zero_grad()
-
-            else:
+        if scaler is not None:
+            with torch.autocast(device_type=str(device), cache_enabled=True):
                 outputs = model(samples, targets)
+
+            with torch.autocast(device_type=str(device), enabled=False):
                 loss_dict = criterion(outputs, targets)
 
-                loss = sum(loss_dict.values())
-                optimizer.zero_grad()
-                loss.backward()
+            loss = sum(loss_dict.values())
+            scaler.scale(loss).backward()
 
-                if max_norm > 0:
-                    grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
+            if max_norm > 0:
+                scaler.unscale_(optimizer)
+                grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
 
-                optimizer.step()
+            scaler.step(optimizer)
+            scaler.update()
+            optimizer.zero_grad()
 
-            # ema
-            if ema is not None:
-                ema.update(model)
+        else:
+            outputs = model(samples, targets)
+            loss_dict = criterion(outputs, targets)
 
-            # lr scheduler
-            if lr_warmup is not None:
-                lr_warmup.step()
-            if lr_scheduler is not None and not utils.is_by_epoch(lr_scheduler):
-                lr_scheduler.step()
+            loss = sum(loss_dict.values())
+            optimizer.zero_grad()
+            loss.backward()
 
-            loss_dict_reduced = reduce_dict(loss_dict)
-            loss_value = sum(loss_dict_reduced.values())
+            if max_norm > 0:
+                grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
 
-            if not math.isfinite(loss_value):
-                print("Loss is {}, stopping training".format(loss_value))
-                print(loss_dict_reduced)
-                sys.exit(1)
+            optimizer.step()
 
-            metric_logger.update(loss=loss_value, **loss_dict_reduced)
-            metric_logger.update(lr=optimizer.param_groups[0]["lr"])
+        # ema
+        if ema is not None:
+            ema.update(model)
 
-            # import wandb
+        # lr scheduler
+        if lr_warmup is not None:
+            lr_warmup.step()
+        if lr_scheduler is not None and not utils.is_by_epoch(lr_scheduler):
+            lr_scheduler.step()
 
-            # from supervisely.train import train_logger
+        loss_dict_reduced = reduce_dict(loss_dict)
+        loss_value = sum(loss_dict_reduced.values())
 
-            # # wandb.log({
-            # #     "Train/loss":
-            # #     })
-            # train_logger.log({"Train/loss": loss_value.item()})
+        if not math.isfinite(loss_value):
+            print("Loss is {}, stopping training".format(loss_value))
+            print(loss_dict_reduced)
+            sys.exit(1)
 
-            # Update supervisely logs
-            LOGS.loss = loss_value.item()
-            LOGS.grad_norm = grad_norm.item() if grad_norm is not None else None
-            lrs = {}
-            for i, param_group in enumerate(optimizer.param_groups):
-                lrs[f"lr{i}"] = param_group["lr"]
-            LOGS.lrs = lrs
-            if torch.cuda.is_available():
-                MB = 1024.0 * 1024.0
-                LOGS.cuda_memory = torch.cuda.max_memory_allocated() / MB
-            LOGS.iter_idx += 1
-            iters_pbar.update(1)
+        metric_logger.update(loss=loss_value, **loss_dict_reduced)
+        metric_logger.update(lr=optimizer.param_groups[0]["lr"])
+
+        # Update supervisely logs
+        LOGS.loss = loss_value.item()
+        LOGS.grad_norm = grad_norm.item() if grad_norm is not None else None
+        lrs = {}
+        for i, param_group in enumerate(optimizer.param_groups):
+            lrs[f"lr{i}"] = param_group["lr"]
+        LOGS.lrs = lrs
+        if torch.cuda.is_available():
+            MB = 1024.0 * 1024.0
+            LOGS.cuda_memory = torch.cuda.max_memory_allocated() / MB
+        LOGS.iter_idx += 1
+
+        train_stats = {
+            "Train/loss": loss_value.item(),
+            "Train/lr": optimizer.param_groups[0]["lr"],
+            "Train/grad_norm": grad_norm.item() if grad_norm is not None else None,
+            "CUDA Memory": torch.cuda.max_memory_allocated() / 1024.0 * 1024.0,
+        }
+        train_logger.log_step(train_stats)
+        train_logger.on_step_end()
 
     # Draw training loss
     LOGS.log_train_iter()

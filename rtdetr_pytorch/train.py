@@ -10,12 +10,9 @@ from supervisely.app.widgets import Progress
 from supervisely.nn.training.train_app import TrainApp
 
 
-def train(
-    train: TrainApp,
-    config_path: str,
-):
+def train(train: TrainApp, config_path: str):
 
-    path_to_model = train.model_path
+    path_to_model = train.model_files["checkpoint"]
     cfg = YAMLConfig(
         config_path,
         tuning=path_to_model,

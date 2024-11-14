@@ -17,6 +17,7 @@ import supervisely_integration.train.globals as g
 # from utils import is_by_epoch
 from rtdetr_pytorch.utils import is_by_epoch
 from supervisely.app.widgets import Button, Field, Progress
+from supervisely.nn.training.train_logger import train_logger
 
 from .det_engine import evaluate, train_one_epoch
 from .solver import BaseSolver
@@ -44,95 +45,95 @@ class DetSolver(BaseSolver):
         }
 
         start_time = time.time()
-        progress_bar_epochs.show()
-        progress_bar_iters.show()
-        with progress_bar_epochs(message=f"Epochs", total=args.epoches) as epochs_pbar:
-            for epoch in range(self.last_epoch + 1, args.epoches):
-                if dist.is_dist_available_and_initialized():
-                    self.train_dataloader.sampler.set_epoch(epoch)
 
-                train_stats = train_one_epoch(
-                    self.model,
+        train_logger.train_started(total_epochs=args.epoches)
+        for epoch in range(self.last_epoch + 1, args.epoches):
+            if dist.is_dist_available_and_initialized():
+                self.train_dataloader.sampler.set_epoch(epoch)
+
+            train_logger.epoch_started(total_steps=len(self.train_dataloader))
+            train_stats = train_one_epoch(
+                self.model,
+                self.criterion,
+                self.train_dataloader,
+                self.optimizer,
+                self.device,
+                epoch,
+                args.clip_max_norm,
+                print_freq=args.log_step,
+                ema=self.ema,
+                scaler=self.scaler,
+                lr_warmup=self.lr_warmup,
+                lr_scheduler=self.lr_scheduler,
+            )
+
+            if self.lr_scheduler is not None and is_by_epoch(self.lr_scheduler):
+                self.lr_scheduler.step()
+
+            if epoch % args.checkpoint_step == 0 or epoch == args.epoches - 1:
+                if self.output_dir:
+                    checkpoint_path = self.output_dir / f"checkpoint{epoch:04}.pth"
+                    state_dict = self.state_dict(epoch)
+                    if not args.save_optimizer and "optimizer" in state_dict:
+                        state_dict.pop("optimizer")
+                    if not args.save_ema and "ema" in state_dict:
+                        state_dict.pop("ema")
+                    dist.save_on_master(state_dict, checkpoint_path)
+
+            if epoch % args.val_step == 0 or epoch == args.epoches - 1:
+                module = self.ema.module if self.ema else self.model
+                test_stats, coco_evaluator = evaluate(
+                    module,
                     self.criterion,
-                    self.train_dataloader,
-                    self.optimizer,
+                    self.postprocessor,
+                    self.val_dataloader,
+                    base_ds,
                     self.device,
-                    epoch,
-                    args.clip_max_norm,
-                    print_freq=args.log_step,
-                    ema=self.ema,
-                    scaler=self.scaler,
-                    lr_warmup=self.lr_warmup,
-                    lr_scheduler=self.lr_scheduler,
-                    progress_bar_iters=progress_bar_iters,
+                    self.output_dir,
                 )
 
-                if self.lr_scheduler is not None and is_by_epoch(self.lr_scheduler):
-                    self.lr_scheduler.step()
+                # TODO
+                for k in test_stats.keys():
+                    if k in best_stat:
+                        best_stat["epoch"] = (
+                            epoch if test_stats[k][0] > best_stat[k] else best_stat["epoch"]
+                        )
+                        best_stat[k] = max(best_stat[k], test_stats[k][0])
+                    else:
+                        best_stat["epoch"] = epoch
+                        best_stat[k] = test_stats[k][0]
+                print("best_stat: ", best_stat)
+            else:
+                test_stats = {}
+                coco_evaluator = None
 
-                if epoch % args.checkpoint_step == 0 or epoch == args.epoches - 1:
-                    if self.output_dir:
-                        checkpoint_path = self.output_dir / f"checkpoint{epoch:04}.pth"
-                        state_dict = self.state_dict(epoch)
-                        if not args.save_optimizer and "optimizer" in state_dict:
-                            state_dict.pop("optimizer")
-                        if not args.save_ema and "ema" in state_dict:
-                            state_dict.pop("ema")
-                        dist.save_on_master(state_dict, checkpoint_path)
+            log_stats = {
+                **{f"train_{k}": v for k, v in train_stats.items()},
+                **{f"test_{k}": v for k, v in test_stats.items()},
+                "epoch": epoch,
+                "n_parameters": n_parameters,
+            }
 
-                if epoch % args.val_step == 0 or epoch == args.epoches - 1:
-                    module = self.ema.module if self.ema else self.model
-                    test_stats, coco_evaluator = evaluate(
-                        module,
-                        self.criterion,
-                        self.postprocessor,
-                        self.val_dataloader,
-                        base_ds,
-                        self.device,
-                        self.output_dir,
-                    )
+            val_stats = {"Val/mAP": test_stats["coco_eval_bbox"][0]}
+            train_logger.log_epoch(val_stats)
+            train_logger.epoch_finished()
 
-                    # TODO
-                    for k in test_stats.keys():
-                        if k in best_stat:
-                            best_stat["epoch"] = (
-                                epoch if test_stats[k][0] > best_stat[k] else best_stat["epoch"]
-                            )
-                            best_stat[k] = max(best_stat[k], test_stats[k][0])
-                        else:
-                            best_stat["epoch"] = epoch
-                            best_stat[k] = test_stats[k][0]
-                    print("best_stat: ", best_stat)
-                else:
-                    test_stats = {}
-                    coco_evaluator = None
+            if self.output_dir and dist.is_main_process():
+                with (self.output_dir / "log.txt").open("a") as f:
+                    f.write(json.dumps(log_stats) + "\n")
 
-                log_stats = {
-                    **{f"train_{k}": v for k, v in train_stats.items()},
-                    **{f"test_{k}": v for k, v in test_stats.items()},
-                    "epoch": epoch,
-                    "n_parameters": n_parameters,
-                }
+                # for evaluation logs
+                # if coco_evaluator is not None:
+                #     (self.output_dir / 'eval').mkdir(exist_ok=True)
+                #     if "bbox" in coco_evaluator.coco_eval:
+                #         filenames = ['latest.pth']
+                #         if epoch % 50 == 0:
+                #             filenames.append(f'{epoch:03}.pth')
+                #         for name in filenames:
+                #             torch.save(coco_evaluator.coco_eval["bbox"].eval,
+                #                     self.output_dir / "eval" / name)
 
-                if self.output_dir and dist.is_main_process():
-                    with (self.output_dir / "log.txt").open("a") as f:
-                        f.write(json.dumps(log_stats) + "\n")
-
-                    # for evaluation logs
-                    # if coco_evaluator is not None:
-                    #     (self.output_dir / 'eval').mkdir(exist_ok=True)
-                    #     if "bbox" in coco_evaluator.coco_eval:
-                    #         filenames = ['latest.pth']
-                    #         if epoch % 50 == 0:
-                    #             filenames.append(f'{epoch:03}.pth')
-                    #         for name in filenames:
-                    #             torch.save(coco_evaluator.coco_eval["bbox"].eval,
-                    #                     self.output_dir / "eval" / name)
-                epochs_pbar.update(1)
-        epochs_pbar.close()
-        progress_bar_epochs.hide()
-        progress_bar_iters.hide()
-
+        train_logger.train_finished()
         # Checkpoints
         # Save the best checkpoint
         best_epoch_idx = best_stat["epoch"]
@@ -179,7 +180,5 @@ class DetSolver(BaseSolver):
 
         if self.output_dir:
             dist.save_on_master(coco_evaluator.coco_eval["bbox"].eval, self.output_dir / "eval.pth")
-
-        return
 
         return

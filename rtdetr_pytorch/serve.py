@@ -37,6 +37,7 @@ from supervisely.io.fs import get_file_name
 from supervisely.nn.artifacts.rtdetr import RTDETR as RTDETRArtifacts
 from supervisely.nn.inference import CheckpointInfo, Timer
 from supervisely.nn.prediction_dto import PredictionBBox
+from supervisely.nn.utils import ModelSource
 
 DEFAULT_CONF = 0.4
 
@@ -189,7 +190,7 @@ class RTDETR(sly.nn.inference.ObjectDetection):
             team_id, train_infos=custom_models, show_custom_checkpoint_path=True
         )
         self.model_source_tabs = RadioTabs(
-            titles=["Pretrained models", "Custom models"],
+            titles=[ModelSource.PRETRAINED, ModelSource.CUSTOM],
             descriptions=[
                 "Publicly available models",
                 "Models trained by you in Supervisely",
@@ -205,9 +206,9 @@ class RTDETR(sly.nn.inference.ObjectDetection):
         model_source = self.model_source_tabs.get_active_tab()
         device = self.gui.get_device()
         runtime = self.runtime_select.get_value()
-        if model_source == "Pretrained models":
+        if model_source == ModelSource.PRETRAINED:
             model_params = self.pretrained_models_table.get_selected_model_params()
-        elif model_source == "Custom models":
+        elif model_source == ModelSource.CUSTOM:
             model_params = self.custom_models_table.get_selected_model_params()
         else:
             raise NotImplementedError()
@@ -259,12 +260,12 @@ class RTDETR(sly.nn.inference.ObjectDetection):
         self.model_source = model_source
 
         # 1. download
-        if model_source == "Pretrained models":
+        if model_source == ModelSource.PRETRAINED:
             checkpoint_path, config_path = self._download_pretrained_model(
                 checkpoint_name, checkpoint_url
             )
             self._load_meta_pretained_model(checkpoint_name)
-        elif model_source == "Custom models":
+        elif model_source == ModelSource.CUSTOM:
             checkpoint_path, config_path = self._download_custom_model(
                 checkpoint_name, checkpoint_url, config_url
             )
@@ -291,9 +292,9 @@ class RTDETR(sly.nn.inference.ObjectDetection):
             raise NotImplementedError()
 
         # 3. load meta
-        if self.model_source == "Pretrained models":
+        if self.model_source == ModelSource.PRETRAINED:
             self._load_meta_pretained_model(checkpoint_name)
-        elif self.model_source == "Custom models":
+        elif self.model_source == ModelSource.CUSTOM:
             self._load_meta_custom_model(config_path)
 
         self.checkpoint_info = CheckpointInfo(
