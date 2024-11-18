@@ -18,7 +18,7 @@ def train(train: TrainApp, config_path: str):
         tuning=path_to_model,
     )
     solver = DetSolver(cfg)
-    best_checkpoint_path = solver.fit(train.progress_bar_epochs, train.progress_bar_iters)
+    best_checkpoint_path = solver.fit()
 
     return cfg, best_checkpoint_path
 

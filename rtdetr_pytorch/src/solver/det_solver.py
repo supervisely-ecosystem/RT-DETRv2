@@ -12,11 +12,8 @@ import torch
 from src.data import get_coco_api_from_dataset
 from src.misc import dist
 
-import supervisely_integration.train.globals as g
-
 # from utils import is_by_epoch
 from rtdetr_pytorch.utils import is_by_epoch
-from supervisely.app.widgets import Button, Field, Progress
 from supervisely.nn.training.train_logger import train_logger
 
 from .det_engine import evaluate, train_one_epoch
@@ -25,11 +22,7 @@ from .solver import BaseSolver
 
 class DetSolver(BaseSolver):
 
-    def fit(
-        self,
-        progress_bar_epochs: Progress,
-        progress_bar_iters: Progress,
-    ):
+    def fit(self):
         print("Start training")
         self.train()
 
@@ -40,9 +33,7 @@ class DetSolver(BaseSolver):
 
         base_ds = get_coco_api_from_dataset(self.val_dataloader.dataset)
         # best_stat = {'coco_eval_bbox': 0, 'coco_eval_masks': 0, 'epoch': -1, }
-        best_stat = {
-            "epoch": -1,
-        }
+        best_stat = {"epoch": -1}
 
         start_time = time.time()
 

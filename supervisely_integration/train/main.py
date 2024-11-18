@@ -1,4 +1,3 @@
-import json
 import os
 import shutil
 import sys
@@ -7,10 +6,8 @@ from typing import List
 import yaml
 from pycocotools.coco import COCO
 
-from supervisely.app.widgets import Progress
-from supervisely.io.fs import get_file_name, get_file_name_with_ext
+from supervisely.io.fs import get_file_name_with_ext
 from supervisely.nn.task_type import TaskType
-from supervisely.nn.training.train_logger import TensorboardLogger
 from supervisely.nn.utils import ModelSource
 from supervisely_integration.train.serve import RTDETRModelMB
 
@@ -30,53 +27,20 @@ load_dotenv("local.env")
 
 api: sly.Api = sly.Api.from_env()
 
-
 task_id = 534523  # sly.env.task_id()
 team_id = sly.env.team_id()
 workspace_id = sly.env.workspace_id()
 project_id = sly.env.project_id()
 
+
 config_paths_dir = os.path.join(rtdetr_pytorch_path, "configs", "rtdetr")
 default_config_path = os.path.join(config_paths_dir, "placeholder.yml")
-
-app_options = {
-    "gpu_selector": True,
-    "multi_gpu_training": True,
-    "data_format": ["COCO", "VOC", "YOLO"],  # etc
-    "use_coco_annotation": True,
-    "save_best_checkpoint": True,
-    "save_last_checkpoint": True,
-    "supported_train_modes": ["finetune", "scratch"],
-    "supported_optimizers": ["Adam", "AdamW", "SGD"],
-    "supported_schedulers": [
-        "Without scheduler",
-        "CosineAnnealingLR",
-        "LinearLR",
-        "MultiStepLR",
-        "OneCycleLR",
-    ],
-    "logging": {
-        "enable": True,  # Enable logging
-        "interval": 1,  # Interval for logging metrics
-        "save_to_file": True,  # Save logs to file
-        "metrics": [  # Metrics to log
-            "accuracy",
-            "Train/loss",
-            "mAP",
-            "AP",
-            "AR",
-            "memory",
-        ],
-    },
-    "evaluation": {
-        "enable": True,  # Enable model evaluation during training
-    },
-}
 
 models = get_models()
 models_path = os.path.join(os.path.dirname(__file__), "models.json")
 hyperparameters_path = os.path.join(os.path.dirname(__file__), "hyperparameters.yaml")
 
+app_options = {}
 
 current_file_dir = os.path.dirname(os.path.abspath(__file__))
 work_dir = os.path.join(current_file_dir, "output")
@@ -85,25 +49,33 @@ train = TrainApp("rt-detr", models_path, hyperparameters_path, app_options, work
 inference_settings = {"confidence_threshold": 0.4}
 train.register_inference_class(RTDETRModelMB, inference_settings)
 
-
 # with open(hyperparameters_path, "r") as f:
 #     hyper_params = f.read()
 
 # app_config = {
-#     "input": {
-#         "project_id": 42201,
-#         "train_dataset_id": 99198,
-#         "val_dataset_id": 99199,
+#     "input": {"project_id": 42201},
+#     "train_val_splits": {
+#         "method": "datasets",  # "random", "tags", "datasets"
+#         # random
+#         # "split": "train",  # "train", "val"
+#         # "percent": 50,
+#         # tags
+#         # "train_tag": "cat",
+#         # "val_tag": "dog",
+#         # "untagged_action": "ignore",  # "train", "val", "ignore"
+#         # # datasets
+#         "train_datasets": [101769, 101770],
+#         "val_datasets": [101775, 101776],
 #     },
 #     "classes": ["cat", "dog"],
 #     "model": {
 #         # Pretrain
-#         # "source": "Pretrained models",
-#         # "model_name": "rtdetr_r50vd_coco_objects365",
+#         "source": "Pretrained models",
+#         "model_name": "rtdetr_r50vd_coco_objects365",
 #         # Custom
-#         "source": "Custom models",
-#         "task_id": "debug-session",
-#         "checkpoint": "checkpoint0011.pth",
+#         # "source": "Custom models",
+#         # "task_id": "debug-session",
+#         # "checkpoint": "checkpoint0011.pth",
 #     },
 #     "hyperparameters": hyper_params,
 #     "options": {
@@ -138,7 +110,6 @@ def start_training():
     cfg, best_checkpoint_path = train_cli.train(train, custom_config_path)
 
     # Step 4. Optional.
-    # Move everything you want to upload to output dir
     # cfg.output_dir contain all train generated files
     output_models_dir = os.path.join(cfg.output_dir, "weights")
     os.makedirs(output_models_dir, exist_ok=True)
@@ -252,7 +223,7 @@ def prepare_config(train: TrainApp, converted_project_dir: str):
         config_name = f"{arch}_6x_coco"
         custom_config_path = os.path.join(config_paths_dir, f"{config_name}.yml")
     else:
-        config_name = get_file_name_with_ext(train.model_files["config"])
+        config_name = "custom.yml"
         custom_config_path = train.model_files["config"]
 
     # Read custom config
@@ -260,7 +231,16 @@ def prepare_config(train: TrainApp, converted_project_dir: str):
         custom_config = yaml.safe_load(f)
 
     # Fill custom config
-    custom_config["__include__"] = [f"{config_name}.yml"]
+    if train.model_source == ModelSource.PRETRAINED:
+        custom_config["__include__"] = [f"{config_name}.yml"]
+    else:
+        custom_config["__include__"] = [
+            "../dataset/coco_detection.yml",
+            "../runtime.yml",
+            "./include/dataloader.yml",
+            "./include/optimizer.yml",
+            "./include/rtdetr_r50vd.yml",
+        ]
     custom_config["remap_mscoco_category"] = False
     custom_config["num_classes"] = train.num_classes
     if "train_dataloader" not in custom_config:
@@ -285,7 +265,7 @@ def prepare_config(train: TrainApp, converted_project_dir: str):
         custom_config["val_dataloader"]["dataset"]["ann_file"] = val_ann_path
 
     # Merge with hyperparameters
-    hyperparameters = train.hyperparameters
+    hyperparameters = train.hyperparameters_json
     custom_config.update(hyperparameters)
 
     custom_config_path = os.path.join(config_paths_dir, "custom.yml")
@@ -295,6 +275,3 @@ def prepare_config(train: TrainApp, converted_project_dir: str):
     # Copy to output dir also
 
     return custom_config_path
-
-
-# train.register_train_function(start_training)

@@ -1,3 +1,5 @@
+epoches: 5
+checkpoint_step: 5
 HybridEncoder:
   eval_spatial_size:
     - 640
@@ -6,21 +8,17 @@ RTDETRTransformer:
   eval_spatial_size:
     - 640
     - 640
-
-checkpoint_step: 1
 clip_max_norm: -1
 ema:
   decay: 0.9999
   type: ModelEMA
   warmups: 2000
-epoches: 5
 lr_scheduler: null
 lr_warmup:
   end_factor: 1.0
   start_factor: 0.001
   total_iters: 25
   type: LinearLR
-
 optimizer:
   betas:
     - 0.9
