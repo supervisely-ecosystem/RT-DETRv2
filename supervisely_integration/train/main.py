@@ -61,7 +61,7 @@ if file is not None:
     train.gui.load_from_config(app_config)
 
 
-utils.load_from_config(train, hyperparameters_path)
+# utils.load_from_config(train, hyperparameters_path)
 
 
 @train.start
