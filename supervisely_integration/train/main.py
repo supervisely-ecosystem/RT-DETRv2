@@ -61,21 +61,15 @@ if file is not None:
     train.gui.load_from_config(app_config)
 
 
-# utils.load_from_config(train, hyperparameters_path)
+utils.load_from_config(train, hyperparameters_path)
 
 
 @train.start
 def start_training():
-    print("-----------------")
-    print("Start training")
-    print("-----------------")
-
     import rtdetr_pytorch.train as train_cli
 
-    # Step 0. Clean output dit
     # Step 1. Convert and prepare Project
-    converted_project_dir = os.path.join(train.work_dir, "converted_project")
-    convert2coco(train.sly_project, converted_project_dir, train.classes)
+    converted_project_dir = prepare_project(train.sly_project, train.work_dir, train.classes)
 
     # Step 2. Prepare config and read hyperparameters
     custom_config_path = prepare_config(train, converted_project_dir)
@@ -83,32 +77,16 @@ def start_training():
     # Step 3. Train
     cfg, best_checkpoint_path = train_cli.train(train, custom_config_path)
 
-    # Step 4. Optional.
-    # cfg.output_dir contain all train generated files
-    output_models_dir = os.path.join(cfg.output_dir, "weights")
-    os.makedirs(output_models_dir, exist_ok=True)
-    for file in os.listdir(cfg.output_dir):
-        if file.endswith(".pth"):
-            shutil.move(os.path.join(cfg.output_dir, file), os.path.join(output_models_dir, file))
-
-    if train.model_source == ModelSource.PRETRAINED:
-        model_name = train.model_info["Model"]
-    else:
-        model_name = train.model_info["model_name"]
-
-    best_checkpoint_path = os.path.join(
-        output_models_dir, get_file_name_with_ext(best_checkpoint_path)
-    )
-
-    experiment_info = {
-        "model_name": model_name,
-        "task_type": TaskType.OBJECT_DETECTION,
-        "model_files": {"config": custom_config_path},
-        "checkpoints": output_models_dir,  # or ["output_dir/checkpoints/epoch_10.pt", ...]
-        "best_checkpoint": best_checkpoint_path,
-    }
+    # Step 4. Organize outputs and gather experiment information
+    experiment_info = finalize_training(cfg, best_checkpoint_path, custom_config_path, train)
 
     return experiment_info
+
+
+def prepare_project(sly_project, work_dir, classes):
+    converted_project_dir = os.path.join(work_dir, "converted_project")
+    convert2coco(sly_project, converted_project_dir, classes)
+    return converted_project_dir
 
 
 def convert2coco(project: sly.Project, converted_project_dir: str, selected_classes: List[str]):
@@ -249,3 +227,38 @@ def prepare_config(train: TrainApp, converted_project_dir: str):
     # Copy to output dir also
 
     return custom_config_path
+
+
+def finalize_training(cfg, best_checkpoint_path, custom_config_path, train):
+    output_models_dir = os.path.join(cfg.output_dir, "weights")
+    os.makedirs(output_models_dir, exist_ok=True)
+
+    # Move checkpoint files
+    for file in os.listdir(cfg.output_dir):
+        if file.endswith(".pth"):
+            shutil.move(os.path.join(cfg.output_dir, file), os.path.join(output_models_dir, file))
+            if not os.path.exists(best_checkpoint_path):
+                best_checkpoint_path = os.path.join(output_models_dir, file)
+
+    # Resolve model name
+    if train.model_source == ModelSource.PRETRAINED:
+        model_name = train.model_info["Model"]
+    else:
+        model_name = train.model_info["model_name"]
+
+    # Update best checkpoint path
+    if os.path.exists(best_checkpoint_path):
+        best_checkpoint_path = os.path.join(
+            output_models_dir, get_file_name_with_ext(best_checkpoint_path)
+        )
+
+    # Gather experiment info
+    experiment_info = {
+        "model_name": model_name,
+        "task_type": TaskType.OBJECT_DETECTION,
+        "model_files": {"config": custom_config_path},
+        "checkpoints": output_models_dir,
+        "best_checkpoint": best_checkpoint_path,
+    }
+
+    return experiment_info
