@@ -7,6 +7,7 @@ import yaml
 from pycocotools.coco import COCO
 
 from supervisely.io.fs import get_file_name_with_ext
+from supervisely.io.json import load_json_file
 from supervisely.nn.task_type import TaskType
 from supervisely.nn.utils import ModelSource
 from supervisely_integration.train.serve import RTDETRModelMB
@@ -31,6 +32,7 @@ task_id = 534523  # sly.env.task_id()
 team_id = sly.env.team_id()
 workspace_id = sly.env.workspace_id()
 project_id = sly.env.project_id()
+file = sly.env.file(raise_not_found=False)
 
 
 config_paths_dir = os.path.join(rtdetr_pytorch_path, "configs", "rtdetr")
@@ -49,45 +51,17 @@ train = TrainApp("rt-detr", models_path, hyperparameters_path, app_options, work
 inference_settings = {"confidence_threshold": 0.4}
 train.register_inference_class(RTDETRModelMB, inference_settings)
 
-# with open(hyperparameters_path, "r") as f:
-#     hyper_params = f.read()
 
-# app_config = {
-#     "input": {"project_id": 42201},
-#     "train_val_splits": {
-#         "method": "datasets",  # "random", "tags", "datasets"
-#         # random
-#         # "split": "train",  # "train", "val"
-#         # "percent": 50,
-#         # tags
-#         # "train_tag": "cat",
-#         # "val_tag": "dog",
-#         # "untagged_action": "ignore",  # "train", "val", "ignore"
-#         # # datasets
-#         "train_datasets": [101769, 101770],
-#         "val_datasets": [101775, 101776],
-#     },
-#     "classes": ["cat", "dog"],
-#     "model": {
-#         # Pretrain
-#         "source": "Pretrained models",
-#         "model_name": "rtdetr_r50vd_coco_objects365",
-#         # Custom
-#         # "source": "Custom models",
-#         # "task_id": "debug-session",
-#         # "checkpoint": "checkpoint0011.pth",
-#     },
-#     "hyperparameters": hyper_params,
-#     "options": {
-#         "model_benchmark": {
-#             "enable": True,
-#             "speed_test": True,
-#         },
-#         "cache_project": True,
-#     },
-# }
+if file is not None:
+    if not file.endswith(".json"):
+        raise ValueError("Invalid file format. Please provide a JSON file.")
+    local_file_path = os.path.join(work_dir, "app_config.json")
+    api.file.download(file, local_file_path)
+    app_config = load_json_file(local_file_path)
+    train.gui.load_from_config(app_config)
 
-# train.gui.load_from_config(app_config)
+
+# utils.load_from_config(train, hyperparameters_path)
 
 
 @train.start
