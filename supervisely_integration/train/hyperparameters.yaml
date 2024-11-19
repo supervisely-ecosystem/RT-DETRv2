@@ -1,4 +1,4 @@
-epoches: 5
+epoches: 30
 checkpoint_step: 5
 HybridEncoder:
   eval_spatial_size:
