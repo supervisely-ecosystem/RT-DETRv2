@@ -7,7 +7,7 @@
 			"request": "launch",
 			"module": "uvicorn",
 			"args": [
-				"main:app",
+				"main:train.app",
 				"--host",
 				"0.0.0.0",
 				"--port",
@@ -21,7 +21,8 @@
 			"env": {
 				"PYTHONPATH": "${workspaceFolder}:${PYTHONPATH}",
 				"LOG_LEVEL": "DEBUG",
-				"DEBUG_APP_DIR": "app_data"
+				"DEBUG_APP_DIR": "app_data",
+				"APP_NAME": "Train RT-DETR"
 			}
 		},
 		{

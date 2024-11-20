@@ -63,7 +63,7 @@ def run_model_benchmark(
             model_dir=local_artifacts_dir + "/weights",
             use_gui=False,
             custom_inference_settings=os.path.join(
-                repo_root_path, "rtdetr_pytorch", "configs", "rtdetr", "custom.yml"
+                repo_root_path, "supervisely_integration", "serve", "inference_settings.yaml"
             ),
         )
         device = "cuda" if torch.cuda.is_available() else "cpu"

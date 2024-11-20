@@ -284,48 +284,6 @@ def stop_training():
     stop_train_btn.disable()
 
 
-def prepare_config(custom_config: Dict[str, Any]):
-    if g.model_mode == g.MODEL_MODES[0]:
-        model_name = g.train_mode.pretrained[0]
-        arch = model_name.split("_coco")[0]
-        config_name = f"{arch}_6x_coco"
-        sly.logger.info(f"Model name: {model_name}, arch: {arch}, config_name: {config_name}")
-    else:
-        model_name = get_file_name_with_ext(g.train_mode.custom)
-        config_name = "custom"
-        sly.logger.info(f"Model name: {model_name}, config_name: {config_name}")
-
-    if g.model_mode == g.MODEL_MODES[0]:
-        custom_config["__include__"] = [f"{config_name}.yml"]
-    else:
-        custom_config["__include__"] = [
-            "../dataset/coco_detection.yml",
-            "../runtime.yml",
-            "./include/dataloader.yml",
-            "./include/optimizer.yml",
-            "./include/rtdetr_r50vd.yml",
-        ]
-    custom_config["remap_mscoco_category"] = False
-    custom_config["num_classes"] = len(g.selected_classes)
-    custom_config["train_dataloader"]["dataset"]["img_folder"] = f"{g.train_dataset_path}/img"
-    custom_config["train_dataloader"]["dataset"][
-        "ann_file"
-    ] = f"{g.train_dataset_path}/coco_anno.json"
-    custom_config["val_dataloader"]["dataset"]["img_folder"] = f"{g.val_dataset_path}/img"
-    custom_config["val_dataloader"]["dataset"]["ann_file"] = f"{g.val_dataset_path}/coco_anno.json"
-    selected_classes = g.selected_classes
-    custom_config["sly_metadata"] = {
-        "classes": selected_classes,
-        "project_id": g.PROJECT_ID,
-        "project_name": g.project_info.name,
-        "model": model_name,
-    }
-
-    g.custom_config_path = os.path.join(g.CONFIG_PATHS_DIR, "custom.yml")
-    with open(g.custom_config_path, "w") as f:
-        yaml.dump(custom_config, f)
-
-
 def train():
     file_info = None
     if g.model_mode == g.MODEL_MODES[0]:
@@ -351,16 +309,6 @@ def train():
         charts_grid_f,
     )
     return cfg
-
-
-def save_config(cfg):
-    if "__include__" in cfg.yaml_cfg:
-        cfg.yaml_cfg.pop("__include__")
-
-    output_path = os.path.join(cfg.output_dir, "config.yml")
-
-    with open(output_path, "w") as f:
-        yaml.dump(cfg.yaml_cfg, f)
 
 
 def upload_model(output_dir):
@@ -504,53 +452,6 @@ def fix_widget_path(bugged_path: str) -> str:
         updated_path = path[7:]
     correct_path = "/".join(updated_path)
     return correct_path
-
-
-def get_coco_annotations(dataset: sly.Dataset, meta: sly.ProjectMeta, selected_classes: List[str]):
-    coco_anno = {"images": [], "categories": [], "annotations": []}
-    cat2id = {name: i for i, name in enumerate(selected_classes)}
-    img_id = 1
-    ann_id = 1
-    for name in dataset.get_items_names():
-        ann = dataset.get_ann(name, meta)
-        img_dict = {
-            "id": img_id,
-            "height": ann.img_size[0],
-            "width": ann.img_size[1],
-            "file_name": name,
-        }
-        coco_anno["images"].append(img_dict)
-
-        for label in ann.labels:
-            if isinstance(label.geometry, (sly.Bitmap, sly.Polygon)):
-                rect = label.geometry.to_bbox()
-            elif isinstance(label.geometry, sly.Rectangle):
-                rect = label.geometry
-            else:
-                continue
-            class_name = label.obj_class.name
-            if class_name not in selected_classes:
-                continue
-            x, y, x2, y2 = rect.left, rect.top, rect.right, rect.bottom
-            ann_dict = {
-                "id": ann_id,
-                "image_id": img_id,
-                "category_id": cat2id[class_name],
-                "bbox": [x, y, x2 - x, y2 - y],
-                "area": (x2 - x) * (y2 - y),
-                "iscrowd": 0,
-            }
-            coco_anno["annotations"].append(ann_dict)
-            ann_id += 1
-
-        img_id += 1
-
-    coco_anno["categories"] = [{"id": i, "name": name} for name, i in cat2id.items()]
-    # Test:
-    coco_api = COCO()
-    coco_api.dataset = coco_anno
-    coco_api.createIndex()
-    return coco_anno
 
 
 # parameters handlers

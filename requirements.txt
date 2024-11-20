@@ -1,0 +1,4 @@
+git+https://github.com/supervisely/supervisely.git@train-gui
+
+tensorboard
+tensorboardX
