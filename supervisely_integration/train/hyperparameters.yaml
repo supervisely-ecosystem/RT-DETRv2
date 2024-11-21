@@ -1,5 +1,5 @@
-epoches: 30
-batch_size: 8
+epoches: 50
+batch_size: 16
 eval_spatial_size: [640, 640]  # height, width
 
 checkpoint_freq: 5
@@ -16,12 +16,12 @@ clip_max_norm: 0.1
 
 lr_scheduler:
   type: MultiStepLR  # CosineAnnealingLR | OneCycleLR
-  milestones: [1000]
+  milestones: [35, 45]  # epochs
   gamma: 0.1
 
 lr_warmup_scheduler:
   type: LinearWarmup
-  warmup_duration: 2000
+  warmup_duration: 1000  # steps
 
 use_ema: True 
 ema:
