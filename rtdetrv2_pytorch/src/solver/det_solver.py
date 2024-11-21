@@ -59,13 +59,10 @@ class DetSolver(BaseSolver):
                 checkpoint_paths = [self.output_dir / 'last.pth']
                 # extra checkpoint before LR drop and every 100 epochs
                 if (epoch + 1) % args.checkpoint_freq == 0:
-                    checkpoint_paths.append(self.output_dir / f'checkpoint{epoch:04}.pth')
+                    checkpoint_paths.append(self.output_dir / f'checkpoint{epoch + 1:04}.pth')
                 for checkpoint_path in checkpoint_paths:
                     state_dict = self.state_dict()
-                    if not self.cfg.yaml_cfg['save_optimizer'] and "optimizer" in state_dict:
-                        state_dict.pop("optimizer")
-                    if not self.cfg.yaml_cfg['save_ema'] and "ema" in state_dict:
-                        state_dict.pop("model")  # keep ema as a model
+                    self._strip_state_dict(state_dict)
                     dist_utils.save_on_master(state_dict, checkpoint_path)
 
             module = self.ema.module if self.ema else self.model
@@ -92,7 +89,9 @@ class DetSolver(BaseSolver):
                     best_stat[k] = test_stats[k][0]
 
                 if best_stat['epoch'] == epoch and self.output_dir:
-                    dist_utils.save_on_master(self.state_dict(), self.output_dir / 'best.pth')
+                    state_dict = self.state_dict()
+                    self._strip_state_dict(state_dict)
+                    dist_utils.save_on_master(state_dict, self.output_dir / 'best.pth')
 
             print(f'best_stat: {best_stat}')
 
@@ -134,3 +133,9 @@ class DetSolver(BaseSolver):
             dist_utils.save_on_master(coco_evaluator.coco_eval["bbox"].eval, self.output_dir / "eval.pth")
         
         return
+
+    def _strip_state_dict(self, state_dict):
+        if not self.cfg.yaml_cfg['save_optimizer'] and "optimizer" in state_dict:
+            state_dict.pop("optimizer")
+        if not self.cfg.yaml_cfg['save_ema'] and "ema" in state_dict:
+            state_dict.pop("model")  # keep ema as a model
