@@ -4,7 +4,7 @@ train_dataloader:
     transforms:
       ops:
         - {type: RandomPhotometricDistort, p: 0.5}
-        - {type: RandomZoomOut, fill: 0}
+        - {type: RandomZoomOut, fill: 0, side_range: [1.0, 1.5], p: 0.5}
         - {type: RandomIoUCrop, p: 0.8}
         - {type: SanitizeBoundingBoxes, min_size: 1}
         - {type: RandomHorizontalFlip}

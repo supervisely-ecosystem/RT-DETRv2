@@ -61,7 +61,12 @@ class DetSolver(BaseSolver):
                 if (epoch + 1) % args.checkpoint_freq == 0:
                     checkpoint_paths.append(self.output_dir / f'checkpoint{epoch:04}.pth')
                 for checkpoint_path in checkpoint_paths:
-                    dist_utils.save_on_master(self.state_dict(), checkpoint_path)
+                    state_dict = self.state_dict()
+                    if not self.cfg.yaml_cfg['save_optimizer'] and "optimizer" in state_dict:
+                        state_dict.pop("optimizer")
+                    if not self.cfg.yaml_cfg['save_ema'] and "ema" in state_dict:
+                        state_dict.pop("model")  # keep ema as a model
+                    dist_utils.save_on_master(state_dict, checkpoint_path)
 
             module = self.ema.module if self.ema else self.model
             test_stats, coco_evaluator = evaluate(
