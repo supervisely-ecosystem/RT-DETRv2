@@ -1,264 +1,101 @@
-import os
-import shutil
 import sys
-from typing import List
-
+sys.path.insert(0, "rtdetrv2_pytorch")
 import yaml
-from pycocotools.coco import COCO
-
-from supervisely.io.fs import get_file_name_with_ext
-from supervisely.io.json import load_json_file
-from supervisely.nn.task_type import TaskType
-from supervisely.nn.utils import ModelSource
-from supervisely_integration.train.serve import RTDETRModelMB
-
-cwd = os.getcwd()
-
-rtdetr_pytorch_path = os.path.join(cwd, "rtdetr_pytorch")
-sys.path.insert(0, rtdetr_pytorch_path)
-from dotenv import load_dotenv
-from models import get_models
-
 import supervisely as sly
-import supervisely_integration.train.utils as utils
 from supervisely.nn.training.train_app import TrainApp
-
-load_dotenv(os.path.expanduser("~/supervisely.env"))
-load_dotenv("local.env")
-
-api: sly.Api = sly.Api.from_env()
-
-task_id = 534523  # sly.env.task_id()
-team_id = sly.env.team_id()
-workspace_id = sly.env.workspace_id()
-project_id = sly.env.project_id()
-file = sly.env.file(raise_not_found=False)
+# from supervisely_integration.train.serve import RTDETRModelMB
+from supervisely_integration.train.sly2coco import get_coco_annotations
+from supervisely_integration.train.utils import get_num_workers
+from rtdetrv2_pytorch.src.core import YAMLConfig
+from rtdetrv2_pytorch.src.solver import DetSolver
 
 
-config_paths_dir = os.path.join(rtdetr_pytorch_path, "configs", "rtdetr")
-default_config_path = os.path.join(config_paths_dir, "placeholder.yml")
+base_path = "supervisely_integration/train"
 
-models = get_models()
-models_path = os.path.join(os.path.dirname(__file__), "models.json")
-hyperparameters_path = os.path.join(os.path.dirname(__file__), "hyperparameters.yaml")
+_models = sly.json.load_json_file(f"{base_path}/models_v2.json")
 
-app_options = {}
+train = TrainApp(
+    "RT-DETRv2",
+    _models,
+    f"{base_path}/hyperparameters.yaml",
+    {},
+    sly.app.get_synced_data_dir(),
+)
 
-current_file_dir = os.path.dirname(os.path.abspath(__file__))
-work_dir = os.path.join(current_file_dir, "output")
-train = TrainApp("rt-detr", models_path, hyperparameters_path, app_options, work_dir)
-
-inference_settings = {"confidence_threshold": 0.4}
-train.register_inference_class(RTDETRModelMB, inference_settings)
-
-
-if file is not None:
-    if not file.endswith(".json"):
-        raise ValueError("Invalid file format. Please provide a JSON file.")
-    local_file_path = os.path.join(work_dir, "app_config.json")
-    api.file.download(file, local_file_path)
-    app_config = load_json_file(local_file_path)
-    train.gui.load_from_config(app_config)
-
-
-# utils.load_from_config(train, hyperparameters_path)
+# train.register_inference_class(RTDETRModelMB)
 
 
 @train.start
 def start_training():
-    import rtdetr_pytorch.train as train_cli
-
-    # Step 1. Convert and prepare Project
-    converted_project_dir = prepare_project(train.sly_project, train.work_dir, train.classes)
-
-    # Step 2. Prepare config and read hyperparameters
-    custom_config_path = prepare_config(train, converted_project_dir)
-
-    # Step 3. Train
-    cfg, best_checkpoint_path = train_cli.train(train, custom_config_path)
-
-    # Step 4. Organize outputs and gather experiment information
-    experiment_info = finalize_training(cfg, best_checkpoint_path, custom_config_path, train)
-
-    return experiment_info
-
-
-def prepare_project(sly_project, work_dir, classes):
-    converted_project_dir = os.path.join(work_dir, "converted_project")
-    convert2coco(sly_project, converted_project_dir, classes)
-    return converted_project_dir
-
-
-def convert2coco(project: sly.Project, converted_project_dir: str, selected_classes: List[str]):
-    sly.logger.info("Converting project to COCO format")
-    for dataset in project.datasets:
-        dataset: sly.Dataset
-        coco_anno = {"images": [], "categories": [], "annotations": []}
-        cat2id = {name: i for i, name in enumerate(selected_classes)}
-        img_id = 1
-        ann_id = 1
-        for name in dataset.get_items_names():
-            ann = dataset.get_ann(name, project.meta)
-            img_dict = {
-                "id": img_id,
-                "height": ann.img_size[0],
-                "width": ann.img_size[1],
-                "file_name": name,
-            }
-            coco_anno["images"].append(img_dict)
-
-            for label in ann.labels:
-                if isinstance(label.geometry, (sly.Bitmap, sly.Polygon)):
-                    rect = label.geometry.to_bbox()
-                elif isinstance(label.geometry, sly.Rectangle):
-                    rect = label.geometry
-                else:
-                    continue
-                class_name = label.obj_class.name
-                if class_name not in selected_classes:
-                    continue
-                x, y, x2, y2 = rect.left, rect.top, rect.right, rect.bottom
-                ann_dict = {
-                    "id": ann_id,
-                    "image_id": img_id,
-                    "category_id": cat2id[class_name],
-                    "bbox": [x, y, x2 - x, y2 - y],
-                    "area": (x2 - x) * (y2 - y),
-                    "iscrowd": 0,
-                }
-                coco_anno["annotations"].append(ann_dict)
-                ann_id += 1
-
-            img_id += 1
-
-        coco_anno["categories"] = [{"id": i, "name": name} for name, i in cat2id.items()]
-
-        # Test:
-        coco_api = COCO()
-        coco_api.dataset = coco_anno
-        coco_api.createIndex()
-
-        if dataset.name == "train":
-            converted_ds_dir = os.path.join(converted_project_dir, "train")
-        elif dataset.name == "val":
-            converted_ds_dir = os.path.join(converted_project_dir, "val")
-
-        converted_img_dir = os.path.join(converted_ds_dir, "img")
-        converted_ann_dir = os.path.join(converted_ds_dir, "ann")
-        converted_ann_path = os.path.join(converted_ann_dir, "coco_anno.json")
-        os.makedirs(converted_img_dir, exist_ok=True)
-        os.makedirs(converted_ann_dir, exist_ok=True)
-        sly.json.dump_json_file(coco_anno, converted_ann_path)
-
-        # Move items
-        for image_name, image_path, _ in dataset.items():
-            shutil.move(image_path, os.path.join(converted_img_dir, image_name))
-        sly.logger.info(f"Dataset: '{dataset.name}' converted to COCO format")
-
-
-def prepare_config(train: TrainApp, converted_project_dir: str):
-
-    # Train / Val paths
-    train_ds_dir = os.path.join(converted_project_dir, "train")
-    train_img_dir = os.path.join(train_ds_dir, "img")
-    train_ann_path = os.path.join(train_ds_dir, "ann", "coco_anno.json")
-
-    val_ds_dir = os.path.join(converted_project_dir, "val")
-    val_img_dir = os.path.join(val_ds_dir, "img")
-    val_ann_path = os.path.join(val_ds_dir, "ann", "coco_anno.json")
-
-    # Detect config from model parameters
-    model_info = train.model_info
-    if train.model_source == ModelSource.PRETRAINED:
-        selected_model_name = model_info["Model"]  # or model_parameters["meta"]["model_name"]
-        arch = selected_model_name.split("_coco")[0]
-        config_name = f"{arch}_6x_coco"
-        custom_config_path = os.path.join(config_paths_dir, f"{config_name}.yml")
-    else:
-        config_name = "custom.yml"
-        custom_config_path = train.model_files["config"]
-
-    # Read custom config
-    with open(custom_config_path, "r") as f:
-        custom_config = yaml.safe_load(f)
-
-    # Fill custom config
-    if train.model_source == ModelSource.PRETRAINED:
-        custom_config["__include__"] = [f"{config_name}.yml"]
-    else:
-        custom_config["__include__"] = [
-            "../dataset/coco_detection.yml",
-            "../runtime.yml",
-            "./include/dataloader.yml",
-            "./include/optimizer.yml",
-            "./include/rtdetr_r50vd.yml",
-        ]
-    custom_config["remap_mscoco_category"] = False
-    custom_config["num_classes"] = train.num_classes
-    if "train_dataloader" not in custom_config:
-        custom_config["train_dataloader"] = {
-            "dataset": {
-                "img_folder": train_img_dir,
-                "ann_file": train_ann_path,
-            }
-        }
-    else:
-        custom_config["train_dataloader"]["dataset"]["img_folder"] = train_img_dir
-        custom_config["train_dataloader"]["dataset"]["ann_file"] = train_ann_path
-    if "val_dataloader" not in custom_config:
-        custom_config["val_dataloader"] = {
-            "dataset": {
-                "img_folder": val_img_dir,
-                "ann_file": val_ann_path,
-            }
-        }
-    else:
-        custom_config["val_dataloader"]["dataset"]["img_folder"] = val_img_dir
-        custom_config["val_dataloader"]["dataset"]["ann_file"] = val_ann_path
-
-    # Merge with hyperparameters
-    hyperparameters = train.hyperparameters_json
-    custom_config.update(hyperparameters)
-
-    custom_config_path = os.path.join(config_paths_dir, "custom.yml")
-    with open(custom_config_path, "w") as f:
-        yaml.safe_dump(custom_config, f)
-
-    # Copy to output dir also
-
-    return custom_config_path
-
-
-def finalize_training(cfg, best_checkpoint_path, custom_config_path, train):
-    output_models_dir = os.path.join(cfg.output_dir, "weights")
-    os.makedirs(output_models_dir, exist_ok=True)
-
-    # Move checkpoint files
-    for file in os.listdir(cfg.output_dir):
-        if file.endswith(".pth"):
-            shutil.move(os.path.join(cfg.output_dir, file), os.path.join(output_models_dir, file))
-            if not os.path.exists(best_checkpoint_path):
-                best_checkpoint_path = os.path.join(output_models_dir, file)
-
-    # Resolve model name
-    if train.model_source == ModelSource.PRETRAINED:
-        model_name = train.model_info["Model"]
-    else:
-        model_name = train.model_info["model_name"]
-
-    # Update best checkpoint path
-    if os.path.exists(best_checkpoint_path):
-        best_checkpoint_path = os.path.join(
-            output_models_dir, get_file_name_with_ext(best_checkpoint_path)
-        )
+    checkpoint = train.model_files["checkpoint"]
+    train_ann_path, val_ann_path = convert_data()
+    custom_config = prepare_config()
+    custom_config_path = "rtdetrv2_pytorch/configs/rtdetrv2/custom_config.yml"
+    with open(custom_config_path, 'w') as f:
+        yaml.dump(custom_config, f)
+    cfg = YAMLConfig(
+        custom_config_path,
+        tuning=checkpoint,
+    )
+    output_dir = cfg.output_dir
+    tensorboard_logs = f"{output_dir}/summary"
+    model_config_path = f"{output_dir}/model_config.yml"
+    with open(model_config_path, 'w') as f:
+        yaml.dump(cfg.yaml_cfg, f)    
+    # train
+    # train.start_tensorboard(tensorboard_logs)
+    solver = DetSolver(cfg)
+    solver.fit()
+    best_ckpt = f"{output_dir}/best.pth"
+    last_ckpt = f"{output_dir}/last.pth"
+    model_name = train.model_name
 
     # Gather experiment info
     experiment_info = {
         "model_name": model_name,
-        "task_type": TaskType.OBJECT_DETECTION,
-        "model_files": {"config": custom_config_path},
-        "checkpoints": output_models_dir,
-        "best_checkpoint": best_checkpoint_path,
+        "model_files": {"config": model_config_path},
+        "checkpoints": output_dir,
+        "best_checkpoint": "best.pth",
     }
 
     return experiment_info
+
+
+def convert_data():
+    project = train.sly_project
+    meta = project.meta
+
+    train_dataset : sly.Dataset = project.datasets.get("train")
+    coco_anno = get_coco_annotations(train_dataset, meta, train.classes)
+    train_ann_path = f"{train_dataset.directory}/coco_anno.json"
+    sly.json.dump_json_file(coco_anno, train_ann_path, indent=None)
+
+    val_dataset : sly.Dataset = project.datasets.get("val")
+    coco_anno = get_coco_annotations(val_dataset, meta, train.classes)
+    val_ann_path = f"{val_dataset.directory}/coco_anno.json"
+    sly.json.dump_json_file(coco_anno, val_ann_path, indent=None)
+    return train_ann_path, val_ann_path
+
+
+def prepare_config():
+    custom_config = train.hyperparameters
+    custom_config["__include__"] = [train.model_files["config"]]
+    custom_config["remap_mscoco_category"] = False
+    custom_config["num_classes"] = train.num_classes
+    custom_config["print_freq"] = 50
+
+    custom_config.setdefault("train_dataloader", {}).setdefault("dataset", {})
+    custom_config["train_dataloader"]["dataset"]["img_folder"] = f"{train.train_dataset_dir}/img"
+    custom_config["train_dataloader"]["dataset"]["ann_file"] = f"{train.train_dataset_dir}/coco_anno.json"
+
+    custom_config.setdefault("val_dataloader", {}).setdefault("dataset", {})
+    custom_config["val_dataloader"]["dataset"]["img_folder"] = f"{train.val_dataset_dir}/img"
+    custom_config["val_dataloader"]["dataset"]["ann_file"] = f"{train.val_dataset_dir}/coco_anno.json"
+
+    if "batch_size" in custom_config:
+        custom_config["train_dataloader"]["total_batch_size"] = custom_config["batch_size"]
+        custom_config["val_dataloader"]["total_batch_size"] = custom_config["batch_size"] * 2
+        custom_config["train_dataloader"]["num_workers"] = get_num_workers(custom_config["batch_size"])
+        custom_config["val_dataloader"]["num_workers"] = get_num_workers(custom_config["batch_size"])
+        
+    return custom_config
