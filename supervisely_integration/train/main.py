@@ -12,14 +12,11 @@ from rtdetrv2_pytorch.src.solver import DetSolver
 
 base_path = "supervisely_integration/train"
 
-_models = sly.json.load_json_file(f"{base_path}/models_v2.json")
-
 train = TrainApp(
     "RT-DETRv2",
-    _models,
+    f"{base_path}/models_v2.json",
     f"{base_path}/hyperparameters.yaml",
-    {},
-    sly.app.get_synced_data_dir(),
+    f"{base_path}/app_options",
 )
 
 # train.register_inference_class(RTDETRModelMB)
@@ -43,13 +40,10 @@ def start_training():
     with open(model_config_path, 'w') as f:
         yaml.dump(cfg.yaml_cfg, f)    
     # train
-    # train.start_tensorboard(tensorboard_logs)
+    train.start_tensorboard(tensorboard_logs)
     solver = DetSolver(cfg)
     solver.fit()
-    best_ckpt = f"{output_dir}/best.pth"
-    last_ckpt = f"{output_dir}/last.pth"
     model_name = train.model_name
-
     # Gather experiment info
     experiment_info = {
         "model_name": model_name,
@@ -57,7 +51,6 @@ def start_training():
         "checkpoints": output_dir,
         "best_checkpoint": "best.pth",
     }
-
     return experiment_info
 
 
