@@ -1,2 +1,3 @@
 device_selector: false
 model_benchmark: true
+# train_logger: "tensorboard"
