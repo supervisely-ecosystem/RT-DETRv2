@@ -15,7 +15,7 @@
 				"--ws",
 				"websockets",
 				"--app-dir",
-				"supervisely_integration/train"
+				"supervisely_integration/train",
 			],
 			"justMyCode": false,
 			"env": {

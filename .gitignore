@@ -178,6 +178,7 @@ rtdetr_pytorch/dataset/
 rtdetrv2_pytorch/output/
 rtdetrv2_pytorch/dataset/
 rtdetrv2_pytorch/configs/rtdetrv2/custom_config.yml
+rtdetrv2_pytorch/configs/rtdetrv2/model_config.yml
 supervisely_integration/train/output
 supervisely_integration/train/data
 supervisely
