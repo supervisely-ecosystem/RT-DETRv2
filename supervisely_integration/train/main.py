@@ -3,25 +3,22 @@ import shutil
 import sys
 sys.path.insert(0, "rtdetrv2_pytorch")
 import yaml
+from multiprocessing import cpu_count
 import supervisely as sly
 from supervisely.nn.utils import ModelSource
 from supervisely.nn.training.train_app import TrainApp
-# from supervisely_integration.train.serve import RTDETRModelMB
 from supervisely_integration.train.sly2coco import get_coco_annotations
-from supervisely_integration.train.utils import get_num_workers
 from rtdetrv2_pytorch.src.core import YAMLConfig
 from rtdetrv2_pytorch.src.solver import DetSolver
 
 
 base_path = "supervisely_integration/train"
-
 train = TrainApp(
     "RT-DETRv2",
     f"{base_path}/models_v2.json",
     f"{base_path}/hyperparameters.yaml",
     f"{base_path}/app_options.yaml",
 )
-
 # train.register_inference_class(RTDETRModelMB)
 
 
@@ -96,10 +93,12 @@ def prepare_config():
     custom_config["val_dataloader"]["dataset"]["ann_file"] = f"{train.val_dataset_dir}/coco_anno.json"
 
     if "batch_size" in custom_config:
-        custom_config["train_dataloader"]["total_batch_size"] = custom_config["batch_size"]
-        custom_config["val_dataloader"]["total_batch_size"] = custom_config["batch_size"] * 2
-        custom_config["train_dataloader"]["num_workers"] = get_num_workers(custom_config["batch_size"])
-        custom_config["val_dataloader"]["num_workers"] = get_num_workers(custom_config["batch_size"])
+        batch_size = custom_config["batch_size"]
+        num_workers = min(batch_size, 8, cpu_count())
+        custom_config["train_dataloader"]["total_batch_size"] = batch_size
+        custom_config["val_dataloader"]["total_batch_size"] = batch_size * 2
+        custom_config["train_dataloader"]["num_workers"] = num_workers
+        custom_config["val_dataloader"]["num_workers"] = num_workers
         
     custom_config_path = f"{rtdetrv2_config_dir}/custom_config.yml"
     with open(custom_config_path, 'w') as f:
