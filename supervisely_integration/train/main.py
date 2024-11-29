@@ -15,7 +15,7 @@ from rtdetrv2_pytorch.src.solver import DetSolver
 base_path = "supervisely_integration/train"
 train = TrainApp(
     "RT-DETRv2",
-    f"{base_path}/models_v2.json",
+    f"supervisely_integration/models_v2.json",
     f"{base_path}/hyperparameters.yaml",
     f"{base_path}/app_options.yaml",
 )
