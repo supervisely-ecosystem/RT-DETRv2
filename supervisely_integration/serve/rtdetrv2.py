@@ -11,6 +11,7 @@ from PIL import Image
 
 import supervisely as sly
 from rtdetrv2_pytorch.src.core import YAMLConfig
+from supervisely.nn.utils import ModelSource
 
 if sly.is_development():
     load_dotenv("local.env")
@@ -32,13 +33,14 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
         config_path = model_files["config"]
         checkpoint_path = model_files["checkpoint"]
 
-        # del "__include__" and rewrite the config
-        with open(config_path, "r") as f:
-            config = yaml.safe_load(f)
-        if "__include__" in config:
-            config.pop("__include__")
-            with open(config_path, "w") as f:
-                yaml.dump(config, f)
+        if model_source == ModelSource.CUSTOM:
+            # del "__include__" and rewrite the config
+            with open(config_path, "r") as f:
+                config = yaml.safe_load(f)
+            if "__include__" in config:
+                config.pop("__include__")
+                with open(config_path, "w") as f:
+                    yaml.dump(config, f)
 
         cfg = YAMLConfig(config_path, resume=checkpoint_path)
         checkpoint = torch.load(checkpoint_path, map_location="cpu")

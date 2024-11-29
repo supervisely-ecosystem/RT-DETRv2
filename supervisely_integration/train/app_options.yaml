@@ -9,3 +9,6 @@ model_benchmark: true
 
 # Show logs in UI during training
 show_logs_in_gui: true
+
+# [Beta] Collapse GUI cards on selection
+collapsable: false
