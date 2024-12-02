@@ -7,13 +7,13 @@ import torch
 import torchvision.transforms as T
 import yaml
 from PIL import Image
+from torchvision.transforms import ToTensor
 
 import supervisely as sly
 from rtdetrv2_pytorch.src.core import YAMLConfig
 from rtdetrv2_pytorch.src.data.dataset.coco_dataset import mscoco_category2name
-from supervisely.nn.inference import CheckpointInfo, Timer, ModelSource, RuntimeType
+from supervisely.nn.inference import CheckpointInfo, ModelSource, RuntimeType, Timer
 from supervisely.nn.prediction_dto import PredictionBBox
-from torchvision.transforms import ToTensor
 
 SERVE_PATH = "supervisely_integration/serve"
 CONFIG_DIR = "rtdetrv2_pytorch/configs/rtdetrv2"
@@ -29,7 +29,7 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
     def load_model(
         self, model_source: str, model_files: dict, model_info: dict, device: str, runtime: str
     ):
-        config_path = f'{CONFIG_DIR}/{model_files["config"]}'
+        config_path = f'{CONFIG_DIR}/{model_files["config"]}'  # Incorrect path, use basename or update config in _load_model_headless
         checkpoint_path = model_files["checkpoint"]
         if model_source == ModelSource.CUSTOM:
             self._remove_include(config_path)
@@ -42,24 +42,27 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
                 checkpoint_url=model_info["meta"]["model_files"]["checkpoint"],
                 model_source=model_source,
             )
-        
+
         if runtime == RuntimeType.PYTORCH:
             self.cfg = YAMLConfig(config_path, resume=checkpoint_path)
-            checkpoint = torch.load(checkpoint_path, map_location='cpu')
-            state = checkpoint['ema']['module'] if 'ema' in checkpoint else checkpoint['model']
+            checkpoint = torch.load(checkpoint_path, map_location="cpu")
+            state = checkpoint["ema"]["module"] if "ema" in checkpoint else checkpoint["model"]
             self.model = self.cfg.model
             self.model.load_state_dict(state)
             self.model.deploy().to(device)
             self.postprocessor = self.cfg.postprocessor.deploy().to(device)
             h, w = 640, 640
-            self.transforms = T.Compose([
-                T.Resize((h, w)),
-                T.ToTensor(),
-            ])
+            self.transforms = T.Compose(
+                [
+                    T.Resize((h, w)),
+                    T.ToTensor(),
+                ]
+            )
         elif runtime == RuntimeType.ONNXRUNTIME:
             # when runtime is ONNX and weights is .pth
             import onnxruntime
             from convert_onnx import convert_onnx
+
             self.img_size = [640, 640]
             if self.device == "cpu":
                 providers = ["CPUExecutionProvider"]
@@ -77,10 +80,10 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
         elif self.runtime == RuntimeType.ONNXRUNTIME:
             return self._predict_onnx(images_np, settings)
 
-    @torch.no_grad()    
+    @torch.no_grad()
     def _predict_pytorch(
-            self, images_np: List[np.ndarray], settings: dict = None
-        ) -> Tuple[List[List[PredictionBBox]], dict]:
+        self, images_np: List[np.ndarray], settings: dict = None
+    ) -> Tuple[List[List[PredictionBBox]], dict]:
         # 1. Preprocess
         with Timer() as preprocess_timer:
             imgs_pil = [Image.fromarray(img) for img in images_np]

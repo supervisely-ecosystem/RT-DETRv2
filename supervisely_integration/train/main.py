@@ -1,16 +1,18 @@
 import os
 import shutil
 import sys
+
 sys.path.insert(0, "rtdetrv2_pytorch")
-import yaml
 from multiprocessing import cpu_count
+
+import yaml
+
 import supervisely as sly
-from supervisely.nn.utils import ModelSource
-from supervisely.nn.training.train_app import TrainApp
-from supervisely_integration.train.sly2coco import get_coco_annotations
 from rtdetrv2_pytorch.src.core import YAMLConfig
 from rtdetrv2_pytorch.src.solver import DetSolver
-
+from supervisely.nn.training.train_app import TrainApp
+from supervisely.nn.utils import ModelSource
+from supervisely_integration.train.sly2coco import get_coco_annotations
 
 base_path = "supervisely_integration/train"
 train = TrainApp(
@@ -19,7 +21,10 @@ train = TrainApp(
     f"{base_path}/hyperparameters.yaml",
     f"{base_path}/app_options.yaml",
 )
-# train.register_inference_class(RTDETRModelMB)
+
+from supervisely_integration.train.serve import RTDETRv2Benchmark
+
+train.register_inference_class(RTDETRv2Benchmark)
 
 
 @train.start
@@ -35,8 +40,8 @@ def start_training():
     os.makedirs(output_dir, exist_ok=True)
     # dump resolved config
     model_config_path = f"{output_dir}/model_config.yml"
-    with open(model_config_path, 'w') as f:
-        yaml.dump(cfg.yaml_cfg, f)    
+    with open(model_config_path, "w") as f:
+        yaml.dump(cfg.yaml_cfg, f)
     # train
     tensorboard_logs = f"{output_dir}/summary"
     train.start_tensorboard(tensorboard_logs)
@@ -57,12 +62,12 @@ def convert_data():
     project = train.sly_project
     meta = project.meta
 
-    train_dataset : sly.Dataset = project.datasets.get("train")
+    train_dataset: sly.Dataset = project.datasets.get("train")
     coco_anno = get_coco_annotations(train_dataset, meta, train.classes)
     train_ann_path = f"{train_dataset.directory}/coco_anno.json"
     sly.json.dump_json_file(coco_anno, train_ann_path, indent=None)
 
-    val_dataset : sly.Dataset = project.datasets.get("val")
+    val_dataset: sly.Dataset = project.datasets.get("val")
     coco_anno = get_coco_annotations(val_dataset, meta, train.classes)
     val_ann_path = f"{val_dataset.directory}/coco_anno.json"
     sly.json.dump_json_file(coco_anno, val_ann_path, indent=None)
@@ -86,11 +91,15 @@ def prepare_config():
 
     custom_config.setdefault("train_dataloader", {}).setdefault("dataset", {})
     custom_config["train_dataloader"]["dataset"]["img_folder"] = f"{train.train_dataset_dir}/img"
-    custom_config["train_dataloader"]["dataset"]["ann_file"] = f"{train.train_dataset_dir}/coco_anno.json"
+    custom_config["train_dataloader"]["dataset"][
+        "ann_file"
+    ] = f"{train.train_dataset_dir}/coco_anno.json"
 
     custom_config.setdefault("val_dataloader", {}).setdefault("dataset", {})
     custom_config["val_dataloader"]["dataset"]["img_folder"] = f"{train.val_dataset_dir}/img"
-    custom_config["val_dataloader"]["dataset"]["ann_file"] = f"{train.val_dataset_dir}/coco_anno.json"
+    custom_config["val_dataloader"]["dataset"][
+        "ann_file"
+    ] = f"{train.val_dataset_dir}/coco_anno.json"
 
     if "batch_size" in custom_config:
         batch_size = custom_config["batch_size"]
@@ -99,9 +108,9 @@ def prepare_config():
         custom_config["val_dataloader"]["total_batch_size"] = batch_size * 2
         custom_config["train_dataloader"]["num_workers"] = num_workers
         custom_config["val_dataloader"]["num_workers"] = num_workers
-        
+
     custom_config_path = f"{rtdetrv2_config_dir}/custom_config.yml"
-    with open(custom_config_path, 'w') as f:
+    with open(custom_config_path, "w") as f:
         yaml.dump(custom_config, f)
 
     return custom_config_path
