@@ -1,4 +1,4 @@
-git+https://github.com/supervisely/supervisely.git@train-gui
+git+https://github.com/supervisely/supervisely.git@serving-gui-template
 
 tensorboard
 tensorboardX
