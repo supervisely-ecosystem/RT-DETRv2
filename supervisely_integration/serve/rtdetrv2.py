@@ -27,7 +27,7 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
     # TODO: may be do it auto?
 
     def load_model(
-        self, model_source: str, model_files: dict, model_info: dict, device: str, runtime: str
+        self, model_files: dict, model_info: dict, model_source: str, device: str, runtime: str
     ):
         config_path = f'{CONFIG_DIR}/{model_files["config"]}'
         checkpoint_path = model_files["checkpoint"]
