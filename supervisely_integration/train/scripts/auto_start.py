@@ -9,7 +9,7 @@ load_dotenv("local.env")
 
 api: sly.Api = sly.Api.from_env()
 
-task_id = 68841
+task_id = 68843  # <---- Change this to your task_id
 method = "train_from_api"
 
 hyperparameters_path = os.path.join(os.path.dirname(__file__), "hyperparameters.yaml")
@@ -24,6 +24,7 @@ data = {
             "train_dataset_id": 101769,
             "val_dataset_id": 101770,
         },
+        "train_val_split": {"method": "random", "split": "train", "percent": 80},
         "classes": ["cat", "dog"],
         "model": {
             # Pretrain
