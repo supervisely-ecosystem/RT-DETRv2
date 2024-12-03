@@ -2,7 +2,7 @@
 
 <img src="https://github.com/user-attachments/assets/0d12aa66-a97e-485b-aa16-a70ca3c924fa"/>  
 
-# Serve RT-DETR
+# Serve RT-DETRv2
 
 <p align="center">
   <a href="#Overview">Overview</a> •

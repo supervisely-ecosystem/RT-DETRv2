@@ -1,5 +1,5 @@
-from rtdetr_pytorch.serve import RTDETR as RTDETRModel
+from supervisely_integration.serve.rtdetrv2 import RTDETRv2
 
 
-class RTDETRModelMB(RTDETRModel):
+class RTDETRv2Benchmark(RTDETRv2):
     in_train = True

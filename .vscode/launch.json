@@ -3,11 +3,11 @@
 	"configurations": [
 		{
 			"name": "Uvicorn Train",
-			"type": "python",
+			"type": "debugpy",
 			"request": "launch",
 			"module": "uvicorn",
 			"args": [
-				"main:app",
+				"main:train.app",
 				"--host",
 				"0.0.0.0",
 				"--port",
@@ -21,12 +21,13 @@
 			"env": {
 				"PYTHONPATH": "${workspaceFolder}:${PYTHONPATH}",
 				"LOG_LEVEL": "DEBUG",
-				"DEBUG_APP_DIR": "app_data"
+				"DEBUG_APP_DIR": "app_data",
+				"APP_NAME": "Train RT-DETRv2"
 			}
 		},
 		{
 			"name": "Uvicorn Serve",
-			"type": "python",
+			"type": "debugpy",
 			"request": "launch",
 			"module": "uvicorn",
 			"args": [
@@ -45,12 +46,13 @@
 				"PYTHONPATH": "${workspaceFolder}:${PYTHONPATH}",
 				"LOG_LEVEL": "DEBUG",
 				"DEBUG_APP_DIR": "app_data",
-				"DEBUG_WITH_SLY_NET": "1"
+				"DEBUG_WITH_SLY_NET": "1",
+				"APP_NAME": "Serve RT-DETRv2"
 			}
 		},
 		{
 			"name": "Python: Current File",
-			"type": "python",
+			"type": "debugpy",
 			"request": "launch",
 			"program": "${file}",
 			"console": "integratedTerminal",

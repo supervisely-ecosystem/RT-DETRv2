@@ -1,0 +1,14 @@
+# Add selector for selecting cuda device
+device_selector: false
+
+# Add options to run model benchmark after training
+model_benchmark: true
+
+# Enable this option when using supervisely train logger
+# train_logger: "tensorboard"
+
+# Show logs in UI during training
+show_logs_in_gui: true
+
+# [Beta] Collapse GUI cards on selection
+collapsable: false

@@ -1,0 +1,77 @@
+[
+    {
+        "Model": "RT-DETRv2-S",
+        "dataset": "COCO",
+        "AP_val": 48.1,
+        "Params(M)": 20,
+        "FPS(T4)": 217,
+        "meta": {
+            "task_type": "object detection",
+            "model_name": "RT-DETRv2-S",
+            "model_files": {
+                "checkpoint": "https://github.com/lyuwenyu/storage/releases/download/v0.2/rtdetrv2_r18vd_120e_coco_rerun_48.1.pth",
+                "config": "rtdetrv2_r18vd_120e_coco.yml"
+            }
+        }
+    },
+    {
+        "Model": "RT-DETRv2-M*",
+        "dataset": "COCO",
+        "AP_val": 49.9,
+        "Params(M)": 31,
+        "FPS(T4)": 161,
+        "meta": {
+            "task_type": "object detection",
+            "model_name": "RT-DETRv2-M*",
+            "model_files": {
+                "checkpoint": "https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetrv2_r34vd_120e_coco_ema.pth",
+                "config": "rtdetrv2_r34vd_120e_coco.yml"
+            }
+        }
+    },
+    {
+        "Model": "RT-DETRv2-M",
+        "dataset": "COCO",
+        "AP_val": 51.9,
+        "Params(M)": 36,
+        "FPS(T4)": 145,
+        "meta": {
+            "task_type": "object detection",
+            "model_name": "RT-DETRv2-M",
+            "model_files": {
+                "checkpoint": "https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetrv2_r50vd_m_7x_coco_ema.pth",
+                "config": "rtdetrv2_r50vd_m_7x_coco.yml"
+            }
+        }
+    },
+    {
+        "Model": "RT-DETRv2-L",
+        "dataset": "COCO",
+        "AP_val": 53.4,
+        "Params(M)": 42,
+        "FPS(T4)": 108,
+        "meta": {
+            "task_type": "object detection",
+            "model_name": "RT-DETRv2-L",
+            "model_files": {
+                "checkpoint": "https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetrv2_r50vd_6x_coco_ema.pth",
+                "config": "rtdetrv2_r50vd_6x_coco.yml"
+            }
+        }
+    },
+    {
+        "Model": "RT-DETRv2-X",
+        "dataset": "COCO",
+        "AP_val": 54.3,
+        "Params(M)": 76,
+        "FPS(T4)": 74,
+        "meta": {
+            "task_type": "object detection",
+            "model_name": "RT-DETRv2-X",
+            "model_files": {
+                "checkpoint": "https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetrv2_r101vd_6x_coco_from_paddle.pth",
+                "config": "rtdetrv2_r101vd_6x_coco.yml"
+            }
+        }
+    }
+]

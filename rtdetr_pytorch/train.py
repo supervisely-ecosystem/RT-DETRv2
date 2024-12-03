@@ -1,97 +1,26 @@
-import os
-from functools import partial
 from typing import Callable, Optional
-from urllib.request import urlopen
 
 import torch
-from checkpoints import checkpoints
 from src.core import YAMLConfig
 from src.misc.sly_logger import LOGS, Logs
 from src.solver import DetSolver
 
 import supervisely as sly
-import supervisely_integration.train.globals as g
-from supervisely.app.widgets import Button, Field, Progress
+from supervisely.app.widgets import Progress
+from supervisely.nn.training.train_app import TrainApp
 
 
-def train(
-    model: str,
-    finetune: bool,
-    config_path: str,
-    progress_download_model: Progress,
-    progress_bar_epochs: Progress,
-    progress_bar_iters: Progress,
-    stop_button: Button,
-    charts_grid: Field,
-):
-    def download_monitor(monitor, api: sly.Api, progress: sly.Progress):
-        value = monitor
-        if progress.total == 0:
-            progress.set(value, monitor.len, report=False)
-        else:
-            progress.set_current_value(value, report=False)
-        weights_pbar.update(progress.current)
+def train(train: TrainApp, config_path: str):
 
-    if finetune:
-        if g.model_mode == g.MODEL_MODES[0]:
-            checkpoint_url = checkpoints[model]
-            name = os.path.basename(checkpoint_url)
-            checkpoint_path = f"models/{name}"
-            if not os.path.exists(checkpoint_path):
-                os.makedirs("models", exist_ok=True)
-                # torch.hub.download_url_to_file(checkpoint_url, checkpoint_path)
-                with urlopen(checkpoint_url) as file:
-                    weights_size = file.length
-
-                progress = sly.Progress(
-                    message="",
-                    total_cnt=weights_size,
-                    is_size=True,
-                )
-                progress_cb = partial(download_monitor, api=g.api, progress=progress)
-                with progress_download_model(
-                    message="Downloading model weights...",
-                    total=weights_size,
-                    unit="bytes",
-                    unit_scale=True,
-                ) as weights_pbar:
-                    sly.fs.download(
-                        url=checkpoint_url,
-                        save_path=checkpoint_path,
-                        progress=progress_cb,
-                    )
-            tuning = checkpoint_path
-        else:
-            checkpoint_url = model
-            name = os.path.basename(checkpoint_url)
-            checkpoint_path = f"models/{name}"
-            checkpoint_info = g.api.file.get_info_by_path(g.TEAM_ID, checkpoint_url)
-            weights_size = checkpoint_info.sizeb
-            with progress_download_model(
-                message="Downloading model weights...",
-                total=weights_size,
-                unit="bytes",
-                unit_scale=True,
-            ) as weights_pbar:
-                if not os.path.exists(checkpoint_path):
-                    os.makedirs("models", exist_ok=True)
-                    g.api.file.download(
-                        g.TEAM_ID, checkpoint_url, checkpoint_path, progress_cb=weights_pbar.update
-                    )
-            tuning = checkpoint_path
-    else:
-        tuning = ""
-
+    path_to_model = train.model_files["checkpoint"]
     cfg = YAMLConfig(
         config_path,
-        # resume='',
-        tuning=tuning,
+        tuning=path_to_model,
     )
-
     solver = DetSolver(cfg)
-    solver.fit(progress_bar_epochs, progress_bar_iters, stop_button, charts_grid)
+    best_checkpoint_path = solver.fit()
 
-    return cfg
+    return cfg, best_checkpoint_path
 
 
 def setup_callbacks(
