@@ -90,7 +90,8 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
         with Timer() as preprocess_timer:
             imgs_pil = [Image.fromarray(img) for img in images_np]
             orig_target_sizes = torch.as_tensor([img.size for img in imgs_pil]).to(self.device)
-            samples = torch.stack(self.transforms(imgs_pil)).to(self.device)
+            transformed_imgs = [self.transforms(img) for img in imgs_pil]
+            samples = torch.stack(transformed_imgs).to(self.device)
         # 2. Inference
         with Timer() as inference_timer:
             outputs = self.model(samples)
