@@ -2,7 +2,7 @@
 	"type": "app",
 	"version": "2.0.0",
 	"name": "Train RT-DETRv2",
-	"entrypoint": "python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 --ws websockets --app-dir supervisely_integration/train",
+	"entrypoint": "python3 -m uvicorn main:train.app --host 0.0.0.0 --port 8000 --ws websockets --app-dir supervisely_integration/train",
 	"port": 8000,
 	"categories": ["neural network", "images", "object detection", "train"],
 	"icon": "https://github.com/user-attachments/assets/b4f91538-7f2b-46f5-baf9-16527fa7c1a7",
