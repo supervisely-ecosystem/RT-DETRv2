@@ -16,6 +16,8 @@ RUN pip3 install scipy
 # RUN pip3 install scipy==1.14.1
 RUN pip3 install imgaug==0.4.0
 RUN pip3 install PyYAML==6.0.2
+RUN pip3 install pycocotools scikit-learn plotly==5.22.0
+RUN pip3 install tensorboard
 
 RUN mkdir -p /app/repo/models
 RUN curl -L -o /app/repo/models/rtdetrv2_r18vd_120e_coco_rerun_48.1.pth https://github.com/lyuwenyu/storage/releases/download/v0.2/rtdetrv2_r18vd_120e_coco_rerun_48.1.pth
@@ -24,6 +26,5 @@ RUN curl -L -o /app/repo/models/rtdetrv2_r50vd_m_7x_coco_ema.pth https://github.
 RUN curl -L -o /app/repo/models/rtdetrv2_r50vd_6x_coco_ema.pth https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetrv2_r50vd_6x_coco_ema.pth
 RUN curl -L -o /app/repo/models/rtdetrv2_r101vd_6x_coco_from_paddle.pth https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetrv2_r101vd_6x_coco_from_paddle.pth
 
-RUN python3 -m pip install supervisely==6.73.244
-RUN python3 -m pip install supervisely[model-benchmark]==6.73.244
-RUN python3 -m pip install supervisely[training]==6.73.244
+RUN python3 -m pip install supervisely==6.73.245
+RUN python3 -m pip install supervisely[training]==6.73.245

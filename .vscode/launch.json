@@ -26,7 +26,7 @@
 			}
 		},
 		{
-			"name": "Uvicorn Serve RT-DETR v2",
+			"name": "Uvicorn Serve",
 			"type": "debugpy",
 			"request": "launch",
 			"module": "uvicorn",
