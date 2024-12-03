@@ -22,34 +22,7 @@
 				"PYTHONPATH": "${workspaceFolder}:${PYTHONPATH}",
 				"LOG_LEVEL": "DEBUG",
 				"DEBUG_APP_DIR": "app_data",
-				// "APP_NAME": "Train RT-DETR",
-				"TEAM_ID": "8",
-				"WORKSPACE_ID": "349",
-				"PROJECT_ID": "42201"
-			}
-		},
-		{
-			"name": "Uvicorn Serve RT-DETR v1",
-			"type": "debugpy",
-			"request": "launch",
-			"module": "uvicorn",
-			"args": [
-				"main:model.app",
-				"--host",
-				"0.0.0.0",
-				"--port",
-				"8000",
-				"--ws",
-				"websockets",
-				"--app-dir",
-				"supervisely_integration/serve"
-			],
-			"justMyCode": false,
-			"env": {
-				"PYTHONPATH": "${workspaceFolder}:${PYTHONPATH}",
-				"LOG_LEVEL": "DEBUG",
-				"DEBUG_APP_DIR": "app_data",
-				"DEBUG_WITH_SLY_NET": "1"
+				"APP_NAME": "Train RT-DETRv2"
 			}
 		},
 		{
@@ -73,7 +46,8 @@
 				"PYTHONPATH": "${workspaceFolder}:${PYTHONPATH}",
 				"LOG_LEVEL": "DEBUG",
 				"DEBUG_APP_DIR": "app_data",
-				"DEBUG_WITH_SLY_NET": "1"
+				"DEBUG_WITH_SLY_NET": "1",
+				"APP_NAME": "Serve RT-DETRv2"
 			}
 		},
 		{
