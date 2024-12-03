@@ -1,4 +1,4 @@
-from supervisely_integration.serve.main import RTDETRv2
+from supervisely_integration.serve.rtdetrv2 import RTDETRv2
 
 
 class RTDETRv2Benchmark(RTDETRv2):

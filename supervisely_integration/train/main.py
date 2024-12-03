@@ -12,6 +12,7 @@ from rtdetrv2_pytorch.src.core import YAMLConfig
 from rtdetrv2_pytorch.src.solver import DetSolver
 from supervisely.nn.training.train_app import TrainApp
 from supervisely.nn.utils import ModelSource
+from supervisely_integration.train.serve import RTDETRv2Benchmark
 from supervisely_integration.train.sly2coco import get_coco_annotations
 
 base_path = "supervisely_integration/train"
@@ -22,9 +23,19 @@ train = TrainApp(
     f"{base_path}/app_options.yaml",
 )
 
-from supervisely_integration.train.serve import RTDETRv2Benchmark
+inference_settings = {"confidence_threshold": 0.4}
+train.register_inference_class(RTDETRv2Benchmark, inference_settings)
 
-train.register_inference_class(RTDETRv2Benchmark)
+# For debug
+# app_state = {
+#     "input": {"project_id": 42201},
+#     "train_val_split": {"method": "random", "split": "train", "percent": 80},
+#     "classes": ["dog", "horse", "cat", "squirrel", "sheep"],
+#     "model": {"source": "Pretrained models", "model_name": "RT-DETRv2-S"},
+#     "hyperparameters": "epoches: 2\nbatch_size: 16\neval_spatial_size: [640, 640]  # height, width\n\ncheckpoint_freq: 5\nsave_optimizer: false\nsave_ema: false\n\noptimizer:\n  type: AdamW\n  lr: 0.0001\n  betas: [0.9, 0.999]\n  weight_decay: 0.0001\n\nclip_max_norm: 0.1\n\nlr_scheduler:\n  type: MultiStepLR  # CosineAnnealingLR | OneCycleLR\n  milestones: [35, 45]  # epochs\n  gamma: 0.1\n\nlr_warmup_scheduler:\n  type: LinearWarmup\n  warmup_duration: 1000  # steps\n\nuse_ema: True \nema:\n  type: ModelEMA\n  decay: 0.9999\n  warmups: 2000\n\nuse_amp: True\n",
+#     "options": {"model_benchmark": {"enable": True, "speed_test": True}, "cache_project": True},
+# }
+# train.gui.load_from_app_state(app_state)
 
 
 @train.start

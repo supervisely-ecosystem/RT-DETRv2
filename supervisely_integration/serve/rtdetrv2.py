@@ -12,6 +12,7 @@ from torchvision.transforms import ToTensor
 import supervisely as sly
 from rtdetrv2_pytorch.src.core import YAMLConfig
 from rtdetrv2_pytorch.src.data.dataset.coco_dataset import mscoco_category2name
+from supervisely.io.fs import get_file_name_with_ext
 from supervisely.nn.inference import CheckpointInfo, ModelSource, RuntimeType, Timer
 from supervisely.nn.prediction_dto import PredictionBBox
 
@@ -29,11 +30,12 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
     def load_model(
         self, model_files: dict, model_info: dict, model_source: str, device: str, runtime: str
     ):
-        config_path = f'{CONFIG_DIR}/{model_files["config"]}'  # Incorrect path, use basename or update config in _load_model_headless
         checkpoint_path = model_files["checkpoint"]
         if model_source == ModelSource.CUSTOM:
+            config_path = model_files["config"]
             self._remove_include(config_path)
         else:
+            config_path = f'{CONFIG_DIR}/{get_file_name_with_ext(model_files["config"])}'
             self.classes = list(mscoco_category2name.values())
             self.checkpoint_info = CheckpointInfo(
                 checkpoint_name=os.path.basename(checkpoint_path),
