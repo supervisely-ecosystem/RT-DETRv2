@@ -63,7 +63,7 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
         elif runtime == RuntimeType.ONNXRUNTIME:
             # when runtime is ONNX and weights is .pth
             import onnxruntime
-            from convert_onnx import convert_onnx
+            from export import export_onnx
 
             self.img_size = [640, 640]
             if self.device == "cpu":
@@ -71,7 +71,7 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
             else:
                 assert torch.cuda.is_available(), "CUDA is not available"
                 providers = ["CUDAExecutionProvider"]
-            onnx_model_path = convert_onnx(checkpoint_path, config_path)
+            onnx_model_path = export_onnx(checkpoint_path, config_path)
             self.onnx_session = onnxruntime.InferenceSession(onnx_model_path, providers=providers)
         else:
             raise ValueError(f"Unknown runtime: {runtime}")

@@ -70,13 +70,23 @@ def start_training():
 
 
 @train.export_onnx
-def export_onnx():
-    pass
+def export_onnx(experiment_info: dict):
+    from export import export_onnx
+    export_path = export_onnx(
+        experiment_info["best_checkpoint"],
+        experiment_info["model_files"]["config"]
+    )
+    return export_path
 
 
 @train.export_tensorrt
-def export_tensorrt():
-    pass
+def export_tensorrt(experiment_info: dict):
+    from export import export_tensorrt
+    export_path = export_tensorrt(
+        experiment_info["best_checkpoint"],
+        experiment_info["model_files"]["config"]
+    )
+    return export_path
 
 
 def convert_data():
