@@ -24,7 +24,7 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
     FRAMEWORK_NAME = "RT-DETRv2"
     MODELS = "supervisely_integration/models_v2.json"
     APP_OPTIONS = f"{SERVE_PATH}/app_options.yaml"
-    INFERENCE_SETTINGS = f"{SERVE_PATH}/inference_settings.json"
+    INFERENCE_SETTINGS = f"{SERVE_PATH}/inference_settings.yaml"
     # TODO: may be do it auto?
 
     def load_model(
