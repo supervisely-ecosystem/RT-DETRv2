@@ -4,6 +4,10 @@ device_selector: false
 # Add options to run model benchmark after training
 model_benchmark: true
 
+# Export model
+export_onnx_supported: true
+export_tensorrt_supported: true
+
 # Enable this option when using supervisely train logger
 # train_logger: "tensorboard"
 

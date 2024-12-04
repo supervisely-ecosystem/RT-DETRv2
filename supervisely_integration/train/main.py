@@ -69,6 +69,16 @@ def start_training():
     return experiment_info
 
 
+@train.export_onnx
+def export_onnx():
+    pass
+
+
+@train.export_tensorrt
+def export_tensorrt():
+    pass
+
+
 def convert_data():
     project = train.sly_project
     meta = project.meta
