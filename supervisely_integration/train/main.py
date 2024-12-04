@@ -14,6 +14,7 @@ from supervisely.nn.training.train_app import TrainApp
 from supervisely.nn.utils import ModelSource
 from supervisely_integration.train.serve import RTDETRv2Benchmark
 from supervisely_integration.train.sly2coco import get_coco_annotations
+from supervisely_integration.export import export_onnx, export_tensorrt
 
 base_path = "supervisely_integration/train"
 train = TrainApp(
@@ -70,21 +71,23 @@ def start_training():
 
 
 @train.export_onnx
-def export_onnx(experiment_info: dict):
-    from export import export_onnx
+def to_onnx(experiment_info: dict):
     export_path = export_onnx(
         experiment_info["best_checkpoint"],
-        experiment_info["model_files"]["config"]
+        experiment_info["model_files"]["config"],
     )
     return export_path
 
 
 @train.export_tensorrt
-def export_tensorrt(experiment_info: dict):
-    from export import export_tensorrt
-    export_path = export_tensorrt(
+def to_tensorrt(experiment_info: dict):
+    onnx_path = export_onnx(
         experiment_info["best_checkpoint"],
-        experiment_info["model_files"]["config"]
+        experiment_info["model_files"]["config"],
+    )
+    export_path = export_tensorrt(
+        onnx_path,
+        fp16=True,
     )
     return export_path
 
