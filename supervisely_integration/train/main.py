@@ -12,7 +12,7 @@ from rtdetrv2_pytorch.src.core import YAMLConfig
 from rtdetrv2_pytorch.src.solver import DetSolver
 from supervisely.nn.training.train_app import TrainApp
 from supervisely.nn.utils import ModelSource
-from supervisely_integration.train.serve import RTDETRv2Benchmark
+from supervisely_integration.serve.rtdetrv2 import RTDETRv2
 from supervisely_integration.train.sly2coco import get_coco_annotations
 from supervisely_integration.export import export_onnx, export_tensorrt
 
@@ -25,7 +25,7 @@ train = TrainApp(
 )
 
 inference_settings = {"confidence_threshold": 0.4}
-train.register_inference_class(RTDETRv2Benchmark, inference_settings)
+train.register_inference_class(RTDETRv2, inference_settings)
 
 # For debug
 # app_state = {
