@@ -1,2 +1,4 @@
 git+https://github.com/supervisely/supervisely.git@train-app-progress
 setuptools==69.5.1
+scikit-learn
+plotly==5.22.0
