@@ -12,6 +12,8 @@ from ..misc import dist_utils, profiler_utils
 from ._solver import BaseSolver
 from .det_engine import train_one_epoch, evaluate
 
+from supervisely.nn.training import train_logger
+
 
 class DetSolver(BaseSolver):
     
@@ -27,7 +29,8 @@ class DetSolver(BaseSolver):
 
         start_time = time.time()
         start_epcoch = self.last_epoch + 1
-        
+
+        train_logger.train_started(total_epochs=(args.epoches - start_epcoch))
         for epoch in range(start_epcoch, args.epoches):
 
             self.train_dataloader.set_epoch(epoch)
@@ -35,6 +38,7 @@ class DetSolver(BaseSolver):
             if dist_utils.is_dist_available_and_initialized():
                 self.train_dataloader.sampler.set_epoch(epoch)
             
+            train_logger.epoch_started(total_steps=len(self.train_dataloader))
             train_stats = train_one_epoch(
                 self.model, 
                 self.criterion, 
@@ -116,6 +120,10 @@ class DetSolver(BaseSolver):
                         for name in filenames:
                             torch.save(coco_evaluator.coco_eval["bbox"].eval,
                                     self.output_dir / "eval" / name)
+                            
+            train_logger.epoch_finished()
+
+        train_logger.train_finished()
 
         total_time = time.time() - start_time
         total_time_str = str(datetime.timedelta(seconds=int(total_time)))
