@@ -9,7 +9,7 @@
 	"icon_cover": true,
 	"poster": "https://github.com/user-attachments/assets/ae6ec55e-63eb-43d1-99de-f62650939c69",
 	"description": "Train RT-DETRv2 model on your data",
-	"docker_image": "supervisely/rt-detrv2:1.0.0",
+	"docker_image": "supervisely/rt-detrv2:1.0.1",
 	"instance_version": "6.12.12",
 	"task_location": "workspace_tasks",
 	"need_gpu": true,
