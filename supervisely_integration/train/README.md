@@ -21,24 +21,15 @@
 
 # Overview
 
-Train RT-DETR models in Supervisely on your custom data. All annotations will be converted to the bounding boxes automatically. Configure Train / Validation splits, model and training hyperparameters. Run on any agent (with GPU) in your team. Monitor progress, metrics, logs and other visualizations withing a single dashboard.
+Train RT-DETRv2 models in Supervisely on your custom data. RT-DETRv2, an improved Real-Time DEtection TRansformer (RT-DETR). RT-DETRv2 builds upon the previous state-of-the-art real-time detector, RT-DETR, and opens up a set of bag-of-freebies for flexibility and practicality, as well as optimizing the training strategy to achieve enhanced performance.
 
-# Model Zoo
-
-|     Model      |     Dataset     | Input Size | AP<sup>val</sup> | AP<sub>50</sub><sup>val</sup> | #Params(M) | FPS |                                                           checkpoint                                                           |
-|:--------------:|:---------------:|:----------:|:----------------:|:-----------------------------:|:----------:|:---:|:------------------------------------------------------------------------------------------------------------------------------:|
-|  rtdetr_r18vd  |      COCO       |    640     |       46.4       |             63.7              |     20     | 217 |    [url<sup>*</sup>](https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r18vd_dec3_6x_coco_from_paddle.pth)     |
-|  rtdetr_r34vd  |      COCO       |    640     |       48.9       |             66.8              |     31     | 161 |    [url<sup>*</sup>](https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r34vd_dec4_6x_coco_from_paddle.pth)     |
-| rtdetr_r50vd_m |      COCO       |    640     |       51.3       |             69.5              |     36     | 145 |      [url<sup>*</sup>](https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r50vd_m_6x_coco_from_paddle.pth)      |
-|  rtdetr_r50vd  |      COCO       |    640     |       53.1       |             71.2              |     42     | 108 |       [url<sup>*</sup>](https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r50vd_6x_coco_from_paddle.pth)       |
-| rtdetr_r101vd  |      COCO       |    640     |       54.3       |             72.8              |     76     | 74  |      [url<sup>*</sup>](https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r101vd_6x_coco_from_paddle.pth)       |
-|  rtdetr_18vd   | COCO+Objects365 |    640     |       49.0       |             66.5              |     20     | 217 | [url<sup>*</sup>](https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r18vd_5x_coco_objects365_from_paddle.pth)  |
-|  rtdetr_r50vd  | COCO+Objects365 |    640     |       55.2       |             73.4              |     42     | 108 | [url<sup>*</sup>](https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r50vd_2x_coco_objects365_from_paddle.pth)  |
-| rtdetr_r101vd  | COCO+Objects365 |    640     |       56.2       |             74.5              |     76     | 74  | [url<sup>*</sup>](https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetr_r101vd_2x_coco_objects365_from_paddle.pth) |
-
-Notes
-- `COCO + Objects365` in the table means finetuned model on `COCO` using pretrained weights trained on `Objects365`.
-- `url`<sup>`*`</sup> is the url of pretrained weights convert from paddle model for save energy. *It may have slight differences between this table and paper*
+|           Model            | Input shape | Dataset |                $AP^{val}$                |             $AP^{val}_{50}$              | Params(M) | FLOPs(G) | T4 TensorRT FP16(FPS) |
+|:--------------------------:|:-----------:|:-------:|:----------------------------------------:|:----------------------------------------:|:---------:|:--------:|:---------------------:|
+|      **RT-DETRv2-S**       |     640     |  COCO   | **48.1** <font color=green>(+1.6)</font> |                 **65.1**                 |    20     |    60    |          217          |
+| **RT-DETRv2-M**<sup>*<sup> |     640     |  COCO   | **49.9** <font color=green>(+1.0)</font> |                 **67.5**                 |    31     |    92    |          161          |
+|      **RT-DETRv2-M**       |     640     |  COCO   | **51.9** <font color=green>(+0.6)</font> |                 **69.9**                 |    36     |   100    |          145          |
+|      **RT-DETRv2-L**       |     640     |  COCO   | **53.4** <font color=green>(+0.3)</font> |                 **71.6**                 |    42     |   136    |          108          |
+|      **RT-DETRv2-X**       |     640     |  COCO   |                   54.3                   | **72.8** <font color=green>(+0.1)</font> |    76     |   259    |          74           |
 
 # How to Run
 
