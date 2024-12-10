@@ -31,7 +31,7 @@ RUN pip install --no-cache-dir \
     tensorboard \
     imgaug==0.4.0
 
-RUN pip install --no-cache-dir supervisely[training]==6.73.247
+RUN pip install --no-cache-dir supervisely[training]==6.73.251
 
 RUN mkdir -p ~/.cache/supervisely/checkpoints
 RUN curl -L -o ~/.cache/supervisely/checkpoints/rtdetrv2_r18vd_120e_coco_rerun_48.1.pth https://github.com/lyuwenyu/storage/releases/download/v0.2/rtdetrv2_r18vd_120e_coco_rerun_48.1.pth
