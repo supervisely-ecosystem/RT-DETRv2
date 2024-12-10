@@ -1,6 +1,6 @@
 <div align="center" markdown>
 
-<img src="https://github.com/user-attachments/assets/0d12aa66-a97e-485b-aa16-a70ca3c924fa"/>  
+<img src="https://github.com/user-attachments/assets/81ba6581-6194-40c7-ba74-a6e0fa16461a"/>  
 
 # Serve RT-DETRv2
 
