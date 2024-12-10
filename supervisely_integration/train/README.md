@@ -21,7 +21,7 @@
 
 # Overview
 
-Train RT-DETRv2 models in Supervisely on your custom data. RT-DETRv2, an improved Real-Time DEtection TRansformer (RT-DETR). RT-DETRv2 builds upon the previous state-of-the-art real-time detector, RT-DETR, and opens up a set of bag-of-freebies for flexibility and practicality, as well as optimizing the training strategy to achieve enhanced performance.
+Train RT-DETRv2 models in Supervisely on your custom data. RT-DETRv2 (Real-Time DEtection TRansformer) is fast and accurate object detection model that combines the advantages of DETR and YOLO. RT-DETRv2 builds upon the previous state-of-the-art real-time detector, RT-DETR, and opens up a set of bag-of-freebies for flexibility and practicality, as well as optimizing the training strategy to achieve enhanced performance.
 
 |           Model            | Input shape | Dataset |                $AP^{val}$                |             $AP^{val}_{50}$              | Params(M) | FLOPs(G) | T4 TensorRT FP16(FPS) |
 |:--------------------------:|:-----------:|:-------:|:----------------------------------------:|:----------------------------------------:|:---------:|:--------:|:---------------------:|
