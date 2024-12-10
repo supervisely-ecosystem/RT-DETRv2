@@ -33,39 +33,43 @@ Train RT-DETRv2 models in Supervisely on your custom data. RT-DETRv2, an improve
 
 # How to Run
 
-**Step 1.** Run the app from context menu of the project with annotations or from the Ecosystem
+**Step 0.** Run the app from context menu of the project with annotations or from the Ecosystem
 
-**Step 2.** Choose the pretrained or custom object detection model
+**Step 1.** Select if you want to use cached project or redownload it
 
-<img src="https://github.com/user-attachments/assets/c236ced3-9165-4d5c-a2f0-2fb29edee05c" width="100%" style='padding-top: 10px'>  
+<img src="https://github.com/user-attachments/assets/5d992899-e82f-449a-8817-8a261f033403" width="100%" style='padding-top: 10px'>  
 
-**Step 3.** Select the classes you want to train RT-DETR on
+**Step 2.** Select train / val split
 
-<img src="https://github.com/user-attachments/assets/f0b2c84d-e2a8-4314-af4e-5ec7f784ce1f" width="100%" style='padding-top: 10px'>  
+<img src="https://github.com/user-attachments/assets/71a682a6-b59a-4338-9697-b37d735a5f58" width="100%" style='padding-top: 10px'>  
 
-**Step 4.** Define the train/val splits
+**Step 3.** Select the classes you want to train RT-DETRv2 on
 
-<img src="https://github.com/user-attachments/assets/3a2ac582-0489-493d-b2ff-8a98c94dfa20" width="100%" style='padding-top: 10px'>  
+<img src="https://github.com/user-attachments/assets/0546e425-453e-4e1d-b47d-892e68da04e5" width="100%" style='padding-top: 10px'>  
 
-**Step 5.** Choose either ready-to-use augmentation template or provide custom pipeline
+**Step 4.** Select the model you want to train
 
-<img src="https://github.com/user-attachments/assets/a053fd89-4acc-44c0-af42-1ec0b84804a6" width="100%" style='padding-top: 10px'>  
+<img src="https://github.com/user-attachments/assets/d58dbe20-ba53-4525-9407-c037fff90655" width="100%" style='padding-top: 10px'>  
 
-**Step 6.** Configure the training parameters
+**Step 5.** Configure hyperaparameters and select whether you want to use model evaluation and convert checkpoints to ONNX and TensorRT
 
-<img src="https://github.com/user-attachments/assets/c5c715f0-836d-4613-a004-d139e2cf9706" width="100%" style='padding-top: 10px'>  
+<img src="https://github.com/user-attachments/assets/d82161c2-2ba5-42af-b651-e4bfc55aad3a" width="100%" style='padding-top: 10px'>  
 
-**Step 7.** Click `Train` button and observe the training progress, metrics charts and visualizations 
+**Step 6.** Enter experiment name and start training
 
-<img src="https://github.com/user-attachments/assets/703e182f-c84e-47de-8dc3-b01da8457580" width="100%" style='padding-top: 10px'>  
+<img src="https://github.com/user-attachments/assets/6eac9d70-bfd9-4105-949e-2394a13395a2" width="100%" style='padding-top: 10px'>  
+
+**Step 7.** Monitor training progress
+
+<img src="https://github.com/user-attachments/assets/d82216f6-0983-4717-8140-69b589d1b0fa" width="100%" style='padding-top: 10px'>  
 
 # Obtain saved checkpoints
 
-All the trained checkpoints, that are generated through the process of training models are stored in [Team Files](https://app.supervise.ly/files/) in the folder **RT-DETR**.
+All the trained checkpoints, that are generated through the process of training models are stored in [Team Files](https://app.supervise.ly/files/) in the **experiments** folder.
 
-You will see a folder thumbnail with a link to you saved checkpoints by the end of training process.
+You will see a folder thumbnail with a link to your saved checkpoints by the end of training process.
 
-<img src="https://github.com/user-attachments/assets/6dd036f4-41de-4eb9-a87a-3387fb849ff1" width="100%" style='padding-top: 10px'>  
+<img src="https://github.com/user-attachments/assets/31aab070-343b-4890-ac4b-0f1ca7efcee2" width="100%" style='padding-top: 10px'>  
 
 # Acknowledgment
 
