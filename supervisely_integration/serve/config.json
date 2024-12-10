@@ -7,7 +7,7 @@
 	"categories": ["neural network", "images", "object detection", "serve"],
 	"icon": "https://github.com/user-attachments/assets/304c71dc-86f2-49f1-a633-3f0315bdcfad",
 	"icon_cover": true,
-	"poster": "https://github.com/user-attachments/assets/81ba6581-6194-40c7-ba74-a6e0fa16461a",
+	"poster": "https://github.com/user-attachments/assets/af2c8f9c-8de7-4c78-9b4a-13a2627993be",
 	"description": "Deploy RT-DETRv2 as a REST API service",
 	"need_gpu": false,
 	"gpu": "preferred",
