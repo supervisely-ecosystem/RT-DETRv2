@@ -58,6 +58,7 @@ def start_training():
     model_config_path = f"{output_dir}/model_config.yml"
     with open(model_config_path, "w") as f:
         yaml.dump(cfg.yaml_cfg, f)
+    remove_include(model_config_path)
     # train
     tensorboard_logs = f"{output_dir}/summary"
     train.start_tensorboard(tensorboard_logs)
@@ -152,3 +153,13 @@ def prepare_config():
         yaml.dump(custom_config, f)
 
     return custom_config_path
+
+
+def remove_include(config_path: str):
+    # del "__include__" and rewrite the config
+    with open(config_path, "r") as f:
+        config = yaml.safe_load(f)
+    if "__include__" in config:
+        config.pop("__include__")
+        with open(config_path, "w") as f:
+            yaml.dump(config, f)
