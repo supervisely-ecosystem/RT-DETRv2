@@ -14,7 +14,7 @@ After you've trained a model in Supervisely, you can download the checkpoint fro
 
 ### 1. Set up environment
 
-**Manual installation**
+**Manual installation:**
 
 ```bash
 git clone https://github.com/supervisely-ecosystem/RT-DETRv2
@@ -22,7 +22,7 @@ cd RT-DETRv2
 pip install -r rtdetrv2_pytorch/requirements.txt
 ```
 
-**Using docker image (advanced)**
+**Using docker image (advanced):**
 
 We provide a pre-built docker image with all dependencies installed [DockerHub](https://hub.docker.com/r/supervisely/rt-detrv2/tags). The image includes installed packages for ONNXRuntime and TensorRT inference.
 
