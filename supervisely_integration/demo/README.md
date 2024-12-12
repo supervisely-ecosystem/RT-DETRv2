@@ -8,7 +8,7 @@ After you've trained a model in Supervisely, you can download the checkpoint fro
 
 1. Set up environment. Install [requirements] manually, or use our pre-built docker image [DockerHub](https://hub.docker.com/r/supervisely/rt-detrv2/tags). Clone [RT-DETRv2](https://github.com/supervisely-ecosystem/RT-DETRv2) repository with model implementation.
 2. Download your checkpoint and model files from Supervisely Platform.
-3. Run inference. Refer to our demo scripts: [demo_torch.py], [demo_onnx.py], [demo_trt.py]
+3. Run inference. Refer to our demo scripts: [demo_torch.py](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_torch.py), [demo_onnx.py], [demo_trt.py]
 
 
 ## Step-by-step guide:
@@ -25,7 +25,7 @@ pip install -r rtdetrv2_pytorch/requirements.txt
 
 **Using docker image (advanced)**
 
-We provide a pre-built docker image with all dependencies installed [DockerHub](https://hub.docker.com/r/supervisely/rt-detrv2/tags). The image includes dependencies for PyTorch, ONNXRuntime, and TensorRT inference.
+We provide a pre-built docker image with all dependencies installed [DockerHub](https://hub.docker.com/r/supervisely/rt-detrv2/tags). The image includes installed packages for ONNXRuntime and TensorRT inference.
 
 ```bash
 docker pull supervisely/rt-detrv2:1.0.2
@@ -55,6 +55,6 @@ Go to Team Files in Supervisely Platform and download the files:
 
 We provide several demo scripts to run inference with your checkpoint:
 
-- [demo_torch.py] - simple PyTorch inference
+- [demo_torch.py](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_torch.py) - simple PyTorch inference
 - [demo_onnx.py] - ONNXRuntime inference
 - [demo_trt.py] - TensorRT inference
