@@ -1,4 +1,3 @@
-
 # How to use your checkpoints outside Supervisely Platform
 
 After you've trained a model in Supervisely, you can download the checkpoint from Team Files and use it as a simple PyTorch model without Supervisely Platform.
@@ -6,9 +5,9 @@ After you've trained a model in Supervisely, you can download the checkpoint fro
 
 **Quick start:**
 
-1. Set up environment. Install [requirements] manually, or use our pre-built docker image [DockerHub](https://hub.docker.com/r/supervisely/rt-detrv2/tags). Clone [RT-DETRv2](https://github.com/supervisely-ecosystem/RT-DETRv2) repository with model implementation.
-2. Download your checkpoint and model files from Supervisely Platform.
-3. Run inference. Refer to our demo scripts: [demo_torch.py](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_torch.py), [demo_onnx.py], [demo_trt.py]
+1. **Set up environment**. Install [requirements](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/rtdetrv2_pytorch/requirements.txt) manually, or use our pre-built docker image [DockerHub](https://hub.docker.com/r/supervisely/rt-detrv2/tags). Clone [RT-DETRv2](https://github.com/supervisely-ecosystem/RT-DETRv2) repository with model implementation.
+2. **Download** your checkpoint and model files from Supervisely Platform.
+3. **Run inference**. Refer to our demo scripts: [demo_torch.py](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_torch.py), [demo_onnx.py], [demo_trt.py]
 
 
 ## Step-by-step guide:

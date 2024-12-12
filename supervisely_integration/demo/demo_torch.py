@@ -1,5 +1,4 @@
 from PIL import Image, ImageDraw
-import yaml
 import torch
 import torchvision.transforms as T
 from rtdetrv2_pytorch.src.core import YAMLConfig
@@ -11,16 +10,6 @@ checkpoint_path = "model/best.pth"
 config_path = "model/model_config.yml"
 model_meta_path = "model/model_meta.json"
 image_path = "img/coco_sample.jpg"
-
-
-def remove_include(config_path: str):
-    # del "__include__" and rewrite the config
-    with open(config_path, "r") as f:
-        config = yaml.safe_load(f)
-    if "__include__" in config:
-        config.pop("__include__")
-        with open(config_path, "w") as f:
-            yaml.dump(config, f)
 
 
 def draw(images, labels, boxes, scores, thrh = 0.6):
@@ -38,7 +27,6 @@ def draw(images, labels, boxes, scores, thrh = 0.6):
 if __name__ == "__main__":
 
     # load checkpoint
-    remove_include(config_path)
     cfg = YAMLConfig(config_path, resume=checkpoint_path)
     checkpoint = torch.load(checkpoint_path, map_location="cpu")
     state = checkpoint["ema"]["module"] if "ema" in checkpoint else checkpoint["model"]
