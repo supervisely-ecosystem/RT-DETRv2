@@ -37,31 +37,31 @@ Train RT-DETRv2 models in Supervisely on your custom data. RT-DETRv2 (Real-Time 
 
 **Step 1.** Select if you want to use cached project or redownload it
 
-<img src="https://github.com/user-attachments/assets/5d992899-e82f-449a-8817-8a261f033403" width="100%" style='padding-top: 10px'>  
+<img src="https://github.com/user-attachments/assets/8c2b5f4b-1abd-44f5-8f0e-d2890284d8ba" width="100%" style='padding-top: 10px'>  
 
 **Step 2.** Select train / val split
 
-<img src="https://github.com/user-attachments/assets/71a682a6-b59a-4338-9697-b37d735a5f58" width="100%" style='padding-top: 10px'>  
+<img src="https://github.com/user-attachments/assets/aec211b8-6eee-46a8-a70f-04bbf6ed4fa5" width="100%" style='padding-top: 10px'>  
 
 **Step 3.** Select the classes you want to train RT-DETRv2 on
 
-<img src="https://github.com/user-attachments/assets/0546e425-453e-4e1d-b47d-892e68da04e5" width="100%" style='padding-top: 10px'>  
+<img src="https://github.com/user-attachments/assets/55068763-268a-437e-8492-0368fba4fb13" width="100%" style='padding-top: 10px'>  
 
 **Step 4.** Select the model you want to train
 
-<img src="https://github.com/user-attachments/assets/d58dbe20-ba53-4525-9407-c037fff90655" width="100%" style='padding-top: 10px'>  
+<img src="https://github.com/user-attachments/assets/753f6f0f-a38f-4d61-accb-dc8ba41777c0" width="100%" style='padding-top: 10px'>  
 
 **Step 5.** Configure hyperaparameters and select whether you want to use model evaluation and convert checkpoints to ONNX and TensorRT
 
-<img src="https://github.com/user-attachments/assets/d82161c2-2ba5-42af-b651-e4bfc55aad3a" width="100%" style='padding-top: 10px'>  
+<img src="https://github.com/user-attachments/assets/59da4672-2f82-480f-b2c5-fb118878ff29" width="100%" style='padding-top: 10px'>  
 
 **Step 6.** Enter experiment name and start training
 
-<img src="https://github.com/user-attachments/assets/6eac9d70-bfd9-4105-949e-2394a13395a2" width="100%" style='padding-top: 10px'>  
+<img src="https://github.com/user-attachments/assets/252b085f-4597-494e-afaa-ae0a19f0e7ba" width="100%" style='padding-top: 10px'>  
 
 **Step 7.** Monitor training progress
 
-<img src="https://github.com/user-attachments/assets/d82216f6-0983-4717-8140-69b589d1b0fa" width="100%" style='padding-top: 10px'>  
+<img src="https://github.com/user-attachments/assets/0b157c66-b3a0-4bd2-ba93-c3c8e8ff72bb" width="100%" style='padding-top: 10px'>  
 
 # Obtain saved checkpoints
 
@@ -69,7 +69,7 @@ All the trained checkpoints, that are generated through the process of training 
 
 You will see a folder thumbnail with a link to your saved checkpoints by the end of training process.
 
-<img src="https://github.com/user-attachments/assets/31aab070-343b-4890-ac4b-0f1ca7efcee2" width="100%" style='padding-top: 10px'>  
+<img src="https://github.com/user-attachments/assets/c075107c-6493-401e-8276-14cdf6f61be6" width="100%" style='padding-top: 10px'>  
 
 # Acknowledgment
 
