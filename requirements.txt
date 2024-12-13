@@ -1,1 +1,0 @@
-git+https://github.com/supervisely/supervisely.git@semsegm-bm-comparison
