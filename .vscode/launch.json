@@ -1,6 +1,27 @@
 {
 	"version": "0.2.0",
 	"configurations": [
+
+		{
+            "name": "Local Deploy",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/supervisely_integration/serve/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+			"args": [
+				"--model",
+				"RT-DETRv2-S"
+			],
+			"env": {
+				"PYTHONPATH": "${workspaceFolder}:${PYTHONPATH}",
+				"LOG_LEVEL": "DEBUG",
+				"DEBUG_APP_DIR": "app_data",
+				"DEBUG_WITH_SLY_NET": "1",
+				"APP_NAME": "Serve RT-DETRv2",
+				"LOCAL_DEPLOY": "true"
+			}
+		},
 		{
 			"name": "Uvicorn Train",
 			"type": "debugpy",

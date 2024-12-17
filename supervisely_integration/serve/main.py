@@ -15,14 +15,21 @@ model = RTDETRv2(
 )
 model.serve()
 
+
 # docker run \
 #   --shm-size=1g \
 #   --runtime=nvidia \
 #   --cap-add NET_ADMIN \
 #   --env-file ~/supervisely.env \
 #   --env ENV=production \
-#   -v "./RT-DETRv2:/app" \
+#   --env SLY_APP_DATA_DIR=./app_data \
+#   --env TASK_ID=55555 \
+#   --env TEAM_ID=8 \
+#   --env WORKSPACE_ID=349 \
+#   --env LOCAL_DEPLOY=True
+#   -v ".:/app" \
+#   -v "supervisely:/app/supervisely" \
 #   -w /app \
 #   supervisely/rt-detrv2:1.0.3 \
-#   python3 -m uvicorn main:model.app --app-dir /app/RT-DETRv2/supervisely_integration/serve --host 0.0.0.0 --port 8000 --ws websockets -- \
-#   --model "RT-DETRv2-S" --predict "data/test" --output-dataset "Predictions/ds1" --workspace_id "349"
+#   python3 /app/supervisely_integration/serve/main.py --model "RT-DETRv2-S"
+#   python3 supervisely_integration/serve/main.py --model "RT-DETRv2-S"
