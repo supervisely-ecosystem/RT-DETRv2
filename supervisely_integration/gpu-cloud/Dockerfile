@@ -1,5 +1,7 @@
 FROM supervisely/rt-detrv2:1.0.3
 
+RUN pip install --no-cache-dir git+https://github.com/supervisely/supervisely.git@inference-local-deploy
+
 WORKDIR /app
 COPY . /app
 
