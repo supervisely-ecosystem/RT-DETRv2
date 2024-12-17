@@ -26,7 +26,7 @@ model.serve()
 #   --env TASK_ID=55555 \
 #   --env TEAM_ID=8 \
 #   --env WORKSPACE_ID=349 \
-#   --env LOCAL_DEPLOY=True
+#   --env LOCAL_DEPLOY=True \
 #   -v ".:/app" \
 #   -v "supervisely:/app/supervisely" \
 #   -w /app \

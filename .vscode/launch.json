@@ -11,7 +11,9 @@
             "justMyCode": false,
 			"args": [
 				"--model",
-				"RT-DETRv2-S"
+				"RT-DETRv2-S",
+				"--predict",
+				"demo/image.jpg"
 			],
 			"env": {
 				"PYTHONPATH": "${workspaceFolder}:${PYTHONPATH}",
