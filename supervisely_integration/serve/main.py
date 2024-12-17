@@ -30,6 +30,8 @@ model.serve()
 #   -v ".:/app" \
 #   -v "supervisely:/app/supervisely" \
 #   -w /app \
-#   supervisely/rt-detrv2:1.0.3 \
+#   supervisely/rt-detrv2-gpu-cloud:1.0.3 \
+#   --model "RT-DETRv2-S" --predict "demo/image.jpg"
+
 #   python3 /app/supervisely_integration/serve/main.py --model "RT-DETRv2-S"
 #   python3 supervisely_integration/serve/main.py --model "RT-DETRv2-S"
