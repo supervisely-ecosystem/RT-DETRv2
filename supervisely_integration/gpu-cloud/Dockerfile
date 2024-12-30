@@ -5,7 +5,7 @@ RUN pip install --no-cache-dir git+https://github.com/supervisely/supervisely.gi
 WORKDIR /app
 COPY . /app
 
-EXPOSE 80
+EXPOSE 8000
 
 ENV PYTHONPATH "${PYTHONPATH}:/app/supervisely_integration/serve"
 ENV APP_MODE=production ENV=production

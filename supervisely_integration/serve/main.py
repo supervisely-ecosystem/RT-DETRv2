@@ -9,29 +9,28 @@ if sly.is_development():
     load_dotenv("local.env")
     load_dotenv(os.path.expanduser("~/supervisely.env"))
 
+
 model = RTDETRv2(
     use_gui=True,
     use_serving_gui_template=True,
 )
 model.serve()
 
+# Local development
+# PYTHONPATH="${PWD}:${PYTHONPATH}" \
+# python ./supervisely_integration/serve/main.py \
+# --model ./my_experiments/2315_RT-DETRv2/checkpoints/best.pth
 
+# Docker deployment
 # docker run \
 #   --shm-size=1g \
 #   --runtime=nvidia \
 #   --cap-add NET_ADMIN \
 #   --env-file ~/supervisely.env \
 #   --env ENV=production \
-#   --env SLY_APP_DATA_DIR=./app_data \
-#   --env TASK_ID=55555 \
-#   --env TEAM_ID=8 \
-#   --env WORKSPACE_ID=349 \
 #   --env LOCAL_DEPLOY=True \
 #   -v ".:/app" \
-#   -v "supervisely:/app/supervisely" \
 #   -w /app \
+#   -p 8000:8000 \
 #   supervisely/rt-detrv2-gpu-cloud:1.0.3 \
-#   --model "RT-DETRv2-S" --predict "demo/image.jpg"
-
-#   python3 /app/supervisely_integration/serve/main.py --model "RT-DETRv2-S"
-#   python3 supervisely_integration/serve/main.py --model "RT-DETRv2-S"
+#   --model "RT-DETRv2-S"

@@ -21,7 +21,6 @@
 				"DEBUG_APP_DIR": "app_data",
 				"DEBUG_WITH_SLY_NET": "1",
 				"APP_NAME": "Serve RT-DETRv2",
-				"LOCAL_DEPLOY": "true"
 			}
 		},
 		{
@@ -45,7 +44,10 @@
 				"PYTHONPATH": "${workspaceFolder}:${PYTHONPATH}",
 				"LOG_LEVEL": "DEBUG",
 				"DEBUG_APP_DIR": "app_data",
-				"APP_NAME": "Train RT-DETRv2"
+				"APP_NAME": "Train RT-DETRv2",
+				"TEAM_ID": "33",
+				"WORKSPACE_ID": "90",
+				"PROJECT_ID": "553",
 			}
 		},
 		{

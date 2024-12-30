@@ -15,6 +15,7 @@ demo:
   onnx: "https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_onnx.py"
   tensorrt: "https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_tensorrt.py"
 
+local_demo_dir: "supervisely_integration/demo"
 # Enable this option when using supervisely train logger
 # train_logger: "tensorboard"
 
