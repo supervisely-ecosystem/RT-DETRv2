@@ -13,7 +13,7 @@
 				"--model",
 				"RT-DETRv2-S",
 				"--predict",
-				"demo/image.jpg"
+				"supervisely_integration/demo/img/coco_sample.jpg"
 			],
 			"env": {
 				"PYTHONPATH": "${workspaceFolder}:${PYTHONPATH}",
