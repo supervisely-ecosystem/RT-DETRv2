@@ -21,7 +21,11 @@ cd RT-DETRv2
 pip install -r rtdetrv2_pytorch/requirements.txt
 ```
 
-4. **Run inference:** Refer to our example scripts of how to load RT-DETRv2 and get predictions: [demo_pytorch.py](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_pytorch.py), [demo_onnx.py](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_onnx.py), [demo_tensorrt.py](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_tensorrt.py)
+4. **Run inference:** Refer to our example scripts of how to load RT-DETRv2 and get predictions:
+
+- [demo_pytorch.py](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_pytorch.py)
+- [demo_onnx.py](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_onnx.py)
+- [demo_tensorrt.py](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_tensorrt.py)
 
 ## 2. Local Inference with Supervisely SDK
 
