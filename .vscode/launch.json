@@ -12,7 +12,7 @@
 			"args": [
 				"--model",
 				"RT-DETRv2-S",
-				"--predict",
+				"--predict-image",
 				"supervisely_integration/demo/img/coco_sample.jpg"
 			],
 			"env": {
@@ -45,8 +45,6 @@
 				"LOG_LEVEL": "DEBUG",
 				"DEBUG_APP_DIR": "app_data",
 				"APP_NAME": "Train RT-DETRv2",
-				"TEAM_ID": "33",
-				"WORKSPACE_ID": "90",
 				"PROJECT_ID": "553",
 			}
 		},

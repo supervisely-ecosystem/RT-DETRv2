@@ -11,12 +11,6 @@ export_tensorrt_supported: true
 # How to use models outside of the Supervisely platform
 demo:
   path: "supervisely_integration/demo"
-  github: "https://github.com/supervisely-ecosystem/RT-DETRv2"
-
-#   overview: "https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/README.md"
-#   pytorch: "https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_pytorch.py"
-#   onnx: "https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_onnx.py"
-#   tensorrt: "https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_tensorrt.py"
 
 # Enable this option when using supervisely train logger
 # train_logger: "tensorboard"

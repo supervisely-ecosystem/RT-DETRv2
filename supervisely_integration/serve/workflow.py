@@ -1,14 +1,21 @@
 # This module contains functions that are used to configure the input and output of the workflow for the current app.
+from os.path import join
 
 import supervisely as sly
+from supervisely.io.fs import get_file_name_with_ext
+from supervisely.nn.utils import ModelSource
 
 
-def workflow_input(api: sly.Api, model_params: dict):
+def workflow_input(api: sly.Api, model_files: dict, model_info: dict, model_source: str):
     try:
-        checkpoint_url = model_params.get("checkpoint_url")
-        checkpoint_name = model_params.get("checkpoint_name")
-        model_name = "RT-DETR"
+        if model_source == ModelSource.PRETRAINED:
+            checkpoint_url = model_info["meta"]["model_files"]["checkpoint"]
+            checkpoint_name = model_info["meta"]["model_name"]
+        elif model_source == ModelSource.CUSTOM:
+            checkpoint_name = get_file_name_with_ext(model_files["checkpoint"])
+            checkpoint_url = join(model_info["artifacts_dir"], "checkpoints", checkpoint_name)
 
+        model_name = "RT-DETRv2"
         meta = sly.WorkflowMeta(node_settings=sly.WorkflowSettings(title=f"Serve {model_name}"))
 
         sly.logger.debug(
