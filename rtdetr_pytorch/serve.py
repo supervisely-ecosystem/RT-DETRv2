@@ -23,7 +23,7 @@ from src.solver import DetSolver
 from torchvision.transforms import ToTensor
 
 import supervisely as sly
-import supervisely_integration.serve.workflow as w
+import supervisely_integration.serve.workflow as sly_workflow
 from supervisely.app.widgets import (
     Container,
     CustomModelsSelector,
@@ -220,7 +220,7 @@ class RTDETR(sly.nn.inference.ObjectDetection):
 
         # -------------------------------------- Add Workflow Input -------------------------------------- #
         if not self.in_train:
-            w.workflow_input(self.api, model_params)
+            sly_workflow.workflow_input(self.api, model_params)
         # ----------------------------------------------- - ---------------------------------------------- #
 
         return load_model_args

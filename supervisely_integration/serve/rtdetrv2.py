@@ -44,13 +44,15 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
                 checkpoint_url=model_info["meta"]["model_files"]["checkpoint"],
                 model_source=model_source,
             )
-        
+
         h, w = 640, 640
         self.img_size = [w, h]
-        self.transforms = T.Compose([
-            T.Resize((h, w)),
-            T.ToTensor(),
-        ])
+        self.transforms = T.Compose(
+            [
+                T.Resize((h, w)),
+                T.ToTensor(),
+            ]
+        )
 
         if runtime == RuntimeType.PYTORCH:
             self.cfg = YAMLConfig(config_path, resume=checkpoint_path)
@@ -65,12 +67,22 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
             onnx_model_path = export_onnx(checkpoint_path, config_path, self.model_dir)
             if runtime == RuntimeType.ONNXRUNTIME:
                 import onnxruntime
-                providers = ["CUDAExecutionProvider"] if device != "cpu" else ["CPUExecutionProvider"]
+
+                providers = (
+                    ["CUDAExecutionProvider"] if device != "cpu" else ["CPUExecutionProvider"]
+                )
                 if device != "cpu":
-                    assert onnxruntime.get_device() == "GPU", "ONNXRuntime is not configured to use GPU"
-                self.onnx_session = onnxruntime.InferenceSession(onnx_model_path, providers=providers)
+                    assert (
+                        onnxruntime.get_device() == "GPU"
+                    ), "ONNXRuntime is not configured to use GPU"
+                self.onnx_session = onnxruntime.InferenceSession(
+                    onnx_model_path, providers=providers
+                )
             elif runtime == RuntimeType.TENSORRT:
-                from rtdetrv2_pytorch.references.deploy.rtdetrv2_tensorrt import TRTInference
+                from rtdetrv2_pytorch.references.deploy.rtdetrv2_tensorrt import (
+                    TRTInference,
+                )
+
                 assert device != "cpu", "TensorRT is not supported on CPU"
                 engine_path = export_tensorrt(onnx_model_path, self.model_dir, fp16=True)
                 self.engine = TRTInference(engine_path, device)
@@ -149,7 +161,7 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
             "postprocess": postprocess_timer.get_time(),
         }
         return predictions, benchmark
-    
+
     def _prepare_input(self, images_np: List[np.ndarray], device=None):
         if device is None:
             device = self.device
@@ -158,7 +170,7 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
         img_input = torch.stack([self.transforms(img) for img in imgs_pil])
         size_input = torch.tensor([self.img_size * len(images_np)]).reshape(-1, 2)
         return img_input.to(device), size_input.to(device), orig_sizes.to(device)
-    
+
     def _format_prediction(
         self, labels: np.ndarray, boxes: np.ndarray, scores: np.ndarray, conf_tresh: float
     ) -> List[PredictionBBox]:
@@ -173,7 +185,7 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
             bbox_yxyx = list(map(int, bbox_yxyx))
             predictions.append(PredictionBBox(class_name, bbox_yxyx, float(score)))
         return predictions
-    
+
     def _format_predictions(
         self, labels: np.ndarray, boxes: np.ndarray, scores: np.ndarray, settings: dict
     ) -> List[List[PredictionBBox]]:
