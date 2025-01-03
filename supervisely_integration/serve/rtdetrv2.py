@@ -10,8 +10,6 @@ from PIL import Image
 from torchvision.transforms import ToTensor
 
 import supervisely as sly
-import supervisely_integration.serve.workflow as w
-import supervisely_integration.serve.workflow as sly_workflow
 from rtdetrv2_pytorch.src.core import YAMLConfig
 from rtdetrv2_pytorch.src.data.dataset.coco_dataset import mscoco_category2name
 from supervisely.io.fs import get_file_name_with_ext
@@ -33,12 +31,6 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
     def load_model(
         self, model_files: dict, model_info: dict, model_source: str, device: str, runtime: str
     ):
-
-        # -------------------------------------- Add Workflow Input -------------------------------------- #
-        if not self.in_train:
-            sly_workflow.workflow_input(self.api, model_files, model_info, model_source)
-        # ----------------------------------------------- - ---------------------------------------------- #
-
         checkpoint_path = model_files["checkpoint"]
         if model_source == ModelSource.CUSTOM:
             config_path = model_files["config"]
