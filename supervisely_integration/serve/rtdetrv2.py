@@ -26,7 +26,6 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
     MODELS = "supervisely_integration/models_v2.json"
     APP_OPTIONS = f"{SERVE_PATH}/app_options.yaml"
     INFERENCE_SETTINGS = f"{SERVE_PATH}/inference_settings.yaml"
-    in_train = False
 
     def load_model(
         self, model_files: dict, model_info: dict, model_source: str, device: str, runtime: str
