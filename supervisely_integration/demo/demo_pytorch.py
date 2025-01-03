@@ -7,6 +7,7 @@ from rtdetrv2_pytorch.src.core import YAMLConfig
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
+# put your files here
 checkpoint_path = "model/best.pth"
 config_path = "model/model_config.yml"
 model_meta_path = "model/model_meta.json"
@@ -27,9 +28,12 @@ def draw(images, labels, boxes, scores, classes, thrh = 0.5):
 
 if __name__ == "__main__":
 
-    # load checkpoint
+    # load class names
     with open(model_meta_path, "r") as f:
         model_meta = json.load(f)
+    classes = [c["title"] for c in model_meta["classes"]]
+
+    # load model
     cfg = YAMLConfig(config_path, resume=checkpoint_path)
     checkpoint = torch.load(checkpoint_path, map_location="cpu")
     state = checkpoint["ema"]["module"] if "ema" in checkpoint else checkpoint["model"]
@@ -37,7 +41,6 @@ if __name__ == "__main__":
     model.load_state_dict(state)
     model.deploy().to(device)
     postprocessor = cfg.postprocessor.deploy().to(device)
-    classes = [c["title"] for c in model_meta["classes"]]
     h, w = 640, 640
     transforms = T.Compose([
         T.Resize((h, w)),
