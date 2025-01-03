@@ -38,4 +38,4 @@ RUN curl -L -o ~/.cache/supervisely/checkpoints/rtdetrv2_r50vd_m_7x_coco_ema.pth
 RUN curl -L -o ~/.cache/supervisely/checkpoints/rtdetrv2_r50vd_6x_coco_ema.pth https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetrv2_r50vd_6x_coco_ema.pth
 RUN curl -L -o ~/.cache/supervisely/checkpoints/rtdetrv2_r101vd_6x_coco_from_paddle.pth https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetrv2_r101vd_6x_coco_from_paddle.pth
 
-RUN pip install --no-cache-dir supervisely[training]==6.73.255
+RUN pip install --no-cache-dir supervisely[training]==6.73.270
