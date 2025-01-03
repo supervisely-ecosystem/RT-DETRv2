@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libmagic-dev \
     libexiv2-dev
 
-RUN apt-get install -y --no-install-recommends tensorrt
+RUN apt-get update && apt-get install -y --no-install-recommends tensorrt
 
 RUN ln -s /usr/bin/python3 /usr/bin/python \
     && apt-get clean \
