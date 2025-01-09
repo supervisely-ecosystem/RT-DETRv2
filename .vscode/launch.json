@@ -22,7 +22,8 @@
 				"PYTHONPATH": "${workspaceFolder}:${PYTHONPATH}",
 				"LOG_LEVEL": "DEBUG",
 				"DEBUG_APP_DIR": "app_data",
-				"APP_NAME": "Train RT-DETRv2"
+				"APP_NAME": "Train RT-DETRv2",
+				"PROJECT_ID": "553",
 			}
 		},
 		{
@@ -48,6 +49,27 @@
 				"DEBUG_APP_DIR": "app_data",
 				"DEBUG_WITH_SLY_NET": "1",
 				"APP_NAME": "Serve RT-DETRv2"
+			}
+		},
+		{
+			"name": "Local Deploy",
+			"type": "debugpy",
+			"request": "launch",
+			"program": "${workspaceFolder}/supervisely_integration/serve/main.py",
+			"console": "integratedTerminal",
+			"justMyCode": false,
+			"args": [
+				"--model",
+				"RT-DETRv2-S",
+				"--predict-image",
+				"supervisely_integration/demo/img/coco_sample.jpg"
+			],
+			"env": {
+				"PYTHONPATH": "${workspaceFolder}:${PYTHONPATH}",
+				"LOG_LEVEL": "DEBUG",
+				"DEBUG_APP_DIR": "app_data",
+				"DEBUG_WITH_SLY_NET": "1",
+				"APP_NAME": "Serve RT-DETRv2",
 			}
 		},
 		{

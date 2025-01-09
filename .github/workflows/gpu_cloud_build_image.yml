@@ -1,0 +1,69 @@
+name: GPU-Cloud Docker Image Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_version:
+        description: "Docker Image Tag (equal to release)"
+        required: true
+        type: string
+
+env:
+  IMAGE_NAME: supervisely/rt-detrv2-gpu-cloud
+  DOCKERFILE_PATH: gpu-cloud/Dockerfile
+
+jobs:
+  GPU-Cloud-image-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate tag
+        run: |
+          TAG_NAME="${{ inputs.tag_version }}"
+          if [[ ! "$TAG_NAME" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "Tag name should be in format v1.2.3 or 1.2.3"
+              exit 1
+          fi
+
+          CLEANED_TAG="${TAG_NAME#v}"
+          IMAGE_TAG="${{ env.IMAGE_NAME }}:${CLEANED_TAG}"
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "Validated and set image tag: $IMAGE_TAG"
+
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Delete .git folder
+        run: |
+          rm -rf .git
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME_COMMUNITY }}
+          password: ${{ secrets.DOCKER_TOKEN_COMMUNITY }}
+
+      - name: Login to Docker Supervisely Enterprise
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.DOCKER_ENTERPRISE_REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME_ENTERPRISE }}
+          password: ${{ secrets.DOCKER_PASSWORD_ENTERPRISE }}
+
+      - name: Build and Push
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          load: true
+          file: ${{ env.DOCKERFILE_PATH }}
+          tags: ${{ env.IMAGE_TAG }}
