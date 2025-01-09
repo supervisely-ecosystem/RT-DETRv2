@@ -1,14 +1,16 @@
 import os
-import sys
 import shutil
+import sys
 from multiprocessing import cpu_count
+
 sys.path.insert(0, "rtdetrv2_pytorch")
 import yaml
+
 import supervisely as sly
 from rtdetrv2_pytorch.src.core import YAMLConfig
 from rtdetrv2_pytorch.src.solver import DetSolver
-from supervisely.nn.training.train_app import TrainApp
 from supervisely.nn import ModelSource, RuntimeType
+from supervisely.nn.training.train_app import TrainApp
 from supervisely_integration.export import export_onnx, export_tensorrt
 from supervisely_integration.serve.rtdetrv2 import RTDETRv2
 from supervisely_integration.train.sly2coco import get_coco_annotations
@@ -83,14 +85,10 @@ def convert_data():
     meta = project.meta
 
     train_dataset: sly.Dataset = project.datasets.get("train")
-    coco_anno = get_coco_annotations(train_dataset, meta, train.classes)
-    train_ann_path = f"{train_dataset.directory}/coco_anno.json"
-    sly.json.dump_json_file(coco_anno, train_ann_path, indent=None)
+    _, _, train_ann_path, _ = train_dataset.to_coco(meta, train_dataset.directory, True, True)
 
     val_dataset: sly.Dataset = project.datasets.get("val")
-    coco_anno = get_coco_annotations(val_dataset, meta, train.classes)
-    val_ann_path = f"{val_dataset.directory}/coco_anno.json"
-    sly.json.dump_json_file(coco_anno, val_ann_path, indent=None)
+    _, _, val_ann_path, _ = val_dataset.to_coco(meta, val_dataset.directory, True, True)
     return train_ann_path, val_ann_path
 
 
