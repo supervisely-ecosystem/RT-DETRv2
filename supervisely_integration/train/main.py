@@ -84,10 +84,10 @@ def convert_data():
     meta = project.meta
 
     train_dataset: sly.Dataset = project.datasets.get("train")
-    train_ann_path = train_dataset.to_coco(meta, "path", train_dataset.directory)
+    train_ann_path = train_dataset.to_coco(meta, dest_dir=train_dataset.directory)
 
     val_dataset: sly.Dataset = project.datasets.get("val")
-    val_ann_path = val_dataset.to_coco(meta, "path", val_dataset.directory)
+    val_ann_path = val_dataset.to_coco(meta, dest_dir=val_dataset.directory)
     return train_ann_path, val_ann_path
 
 
