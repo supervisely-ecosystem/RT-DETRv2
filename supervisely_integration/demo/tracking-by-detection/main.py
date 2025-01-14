@@ -13,9 +13,8 @@ from dotenv import load_dotenv
 
 from video import video_to_frames_ffmpeg, frames_to_video_ffmpeg
 
-load_dotenv("local.env", override=True)
+load_dotenv("local.env")
 load_dotenv(os.path.expanduser("~/supervisely.env"))
-
 
 
 def load_tracker(
