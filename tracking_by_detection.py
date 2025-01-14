@@ -18,16 +18,22 @@ load_dotenv(os.path.expanduser("~/supervisely.env"))
 
 
 
-def load_tracker(tracker_type: str, device: str, half: bool = False, per_class: bool = False):
+def load_tracker(
+        device: str,
+        tracker_settings: dict = None,
+        half: bool = False,
+        per_class: bool = False
+    ):
     if "cuda" in device and ":" not in device:
         device = "cuda:0"
 
-    tracker_config = TRACKER_CONFIGS / (tracker_type + '.yaml')
+    tracker_config = TRACKER_CONFIGS / 'botsort.yaml'
 
     # Load configuration from file
     with open(tracker_config, "r") as f:
         yaml_config = yaml.load(f, Loader=yaml.FullLoader)
         tracker_args = {param: details['default'] for param, details in yaml_config.items()}
+    tracker_args.update(tracker_settings or {})
     tracker_args['per_class'] = per_class
 
     reid_weights = 'osnet_x1_0_msmt17.pt'
@@ -40,11 +46,8 @@ def load_tracker(tracker_type: str, device: str, half: bool = False, per_class: 
         'half': half,
     }
 
-    if tracker_type == 'bytetrack':
-        tracker = ByteTrack(**tracker_args)
-    elif tracker_type == 'botsort':
-        tracker_args.update(reid_args)
-        tracker = BotSort(**tracker_args)
+    tracker_args.update(reid_args)
+    tracker = BotSort(**tracker_args)
     if hasattr(tracker, 'model'):
         tracker.model.warmup()
     return tracker
@@ -109,16 +112,22 @@ def generate_bright_color(hue=None):
 
 if __name__ == '__main__':
     work_dir = 'output'
-    tracker_type = 'botsort'
     device = 'cuda:0'
     video_path = f"./video.mp4"
     model_server = "http://localhost:8000"
+    tracker_type = 'botsort'
+    tracker_settings = {
+        "track_high_thresh": 0.6,
+        "track_low_thresh": 0.1,
+        "new_track_thresh": 0.7,
+        "match_thresh": 0.8,
+    }
 
     os.makedirs(work_dir, exist_ok=True)
     api = sly.Api()
     session = sly.nn.inference.Session(api, session_url=model_server)
     model_meta = session.get_model_meta()
-    tracker = load_tracker(tracker_type=tracker_type, device=device)
+    tracker = load_tracker(device, tracker_settings)
     name2cat = {x.name: i for i, x in enumerate(model_meta.obj_classes)}
     cat2obj = {i: obj for i, obj in enumerate(model_meta.obj_classes)}
 
