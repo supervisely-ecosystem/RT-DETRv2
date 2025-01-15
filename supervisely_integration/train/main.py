@@ -1,17 +1,18 @@
 import os
-import sys
 import shutil
+import sys
 from multiprocessing import cpu_count
+
 sys.path.insert(0, "rtdetrv2_pytorch")
 import yaml
+
 import supervisely as sly
 from rtdetrv2_pytorch.src.core import YAMLConfig
 from rtdetrv2_pytorch.src.solver import DetSolver
-from supervisely.nn.training.train_app import TrainApp
 from supervisely.nn import ModelSource, RuntimeType
+from supervisely.nn.training.train_app import TrainApp
 from supervisely_integration.export import export_onnx, export_tensorrt
 from supervisely_integration.serve.rtdetrv2 import RTDETRv2
-from supervisely_integration.train.sly2coco import get_coco_annotations
 
 base_path = "supervisely_integration/train"
 train = TrainApp(
@@ -28,7 +29,7 @@ train.register_inference_class(RTDETRv2)
 def start_training():
     train_ann_path, val_ann_path = convert_data()
     checkpoint = train.model_files["checkpoint"]
-    custom_config_path = prepare_config()
+    custom_config_path = prepare_config(train_ann_path, val_ann_path)
     cfg = YAMLConfig(
         custom_config_path,
         tuning=checkpoint,
@@ -83,18 +84,14 @@ def convert_data():
     meta = project.meta
 
     train_dataset: sly.Dataset = project.datasets.get("train")
-    coco_anno = get_coco_annotations(train_dataset, meta, train.classes)
-    train_ann_path = f"{train_dataset.directory}/coco_anno.json"
-    sly.json.dump_json_file(coco_anno, train_ann_path, indent=None)
+    train_ann_path = train_dataset.to_coco(meta, dest_dir=train_dataset.directory)
 
     val_dataset: sly.Dataset = project.datasets.get("val")
-    coco_anno = get_coco_annotations(val_dataset, meta, train.classes)
-    val_ann_path = f"{val_dataset.directory}/coco_anno.json"
-    sly.json.dump_json_file(coco_anno, val_ann_path, indent=None)
+    val_ann_path = val_dataset.to_coco(meta, dest_dir=val_dataset.directory)
     return train_ann_path, val_ann_path
 
 
-def prepare_config():
+def prepare_config(train_ann_path: str, val_ann_path: str):
     rtdetrv2_config_dir = "rtdetrv2_pytorch/configs/rtdetrv2"
     if train.model_source == ModelSource.CUSTOM:
         config_path = train.model_files["config"]
@@ -111,15 +108,11 @@ def prepare_config():
 
     custom_config.setdefault("train_dataloader", {}).setdefault("dataset", {})
     custom_config["train_dataloader"]["dataset"]["img_folder"] = f"{train.train_dataset_dir}/img"
-    custom_config["train_dataloader"]["dataset"][
-        "ann_file"
-    ] = f"{train.train_dataset_dir}/coco_anno.json"
+    custom_config["train_dataloader"]["dataset"]["ann_file"] = train_ann_path
 
     custom_config.setdefault("val_dataloader", {}).setdefault("dataset", {})
     custom_config["val_dataloader"]["dataset"]["img_folder"] = f"{train.val_dataset_dir}/img"
-    custom_config["val_dataloader"]["dataset"][
-        "ann_file"
-    ] = f"{train.val_dataset_dir}/coco_anno.json"
+    custom_config["val_dataloader"]["dataset"]["ann_file"] = val_ann_path
 
     if "batch_size" in custom_config:
         batch_size = custom_config["batch_size"]
