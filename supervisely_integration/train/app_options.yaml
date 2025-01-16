@@ -1,5 +1,5 @@
 # Add selector for selecting cuda device
-device_selector: true
+device_selector: false
 
 # Add options to run model benchmark after training
 model_benchmark: true
