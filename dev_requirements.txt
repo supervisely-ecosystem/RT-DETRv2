@@ -1,12 +1,12 @@
 # git+https://github.com/supervisely/supervisely.git@some-test-branch
 
-supervisely==6.73.251
-supervisely["training"]==6.73.251
+# supervisely==6.73.279
+supervisely[training]==6.73.279
 setuptools==69.5.1
 scikit-learn
 plotly==5.22.0
 
-tensordboard
+tensorboard
 pycocotools
 torch==2.0.1
 torchvision==0.15.2

@@ -20,3 +20,6 @@ show_logs_in_gui: true
 
 # [Beta] Collapse GUI cards on selection
 collapsable: false
+
+# Automatically convert classes according to model CV task
+auto_convert_classes: true
