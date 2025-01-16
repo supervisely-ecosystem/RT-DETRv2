@@ -2,6 +2,7 @@ import os
 import shutil
 import sys
 from multiprocessing import cpu_count
+from pathlib import Path
 
 sys.path.insert(0, "rtdetrv2_pytorch")
 import yaml
@@ -40,18 +41,31 @@ def start_training():
     model_config_path = f"{output_dir}/model_config.yml"
     with open(model_config_path, "w") as f:
         yaml.dump(cfg.yaml_cfg, f)
-    remove_include(model_config_path)
-    # train
-    tensorboard_logs = f"{output_dir}/summary"
-    train.start_tensorboard(tensorboard_logs)
-    solver = DetSolver(cfg)
-    solver.fit()
+
+    if not train.debug_benchmark:
+        # remove __includes__ from the config if we are not in debug benchmark mode
+        remove_include(model_config_path)
+
+        # * --------------- train ---------------- #
+        tensorboard_logs = f"{output_dir}/summary"
+        train.start_tensorboard(tensorboard_logs)
+        solver = DetSolver(cfg)
+        solver.fit()
+        checkpoint_name = "best.pth"
+        # * -------------------------------------- #
+    else:
+        # for debug benchmark mode we don't need to train the model
+        # we just copy the checkpoint to the output dir.
+        # We also need to preserve the yaml config (with __includes__)
+        checkpoint_name = str(Path(checkpoint).name)
+        shutil.copy2(checkpoint, str(Path(output_dir) / checkpoint_name))
+
     # gather experiment info
     experiment_info = {
         "model_name": train.model_name,
         "model_files": {"config": model_config_path},
         "checkpoints": output_dir,
-        "best_checkpoint": "best.pth",
+        "best_checkpoint": checkpoint_name,
     }
     return experiment_info
 
@@ -102,7 +116,11 @@ def prepare_config(train_ann_path: str, val_ann_path: str):
     custom_config = train.hyperparameters
     custom_config["__include__"] = [config]
     custom_config["remap_mscoco_category"] = False
-    custom_config["num_classes"] = train.num_classes
+
+    # * for benchmark mode we will use number of classes from the COCO dataset
+    num_classes = 80 if train.debug_benchmark else train.num_classes
+
+    custom_config["num_classes"] = num_classes
     custom_config["print_freq"] = 50
 
     custom_config.setdefault("train_dataloader", {}).setdefault("dataset", {})

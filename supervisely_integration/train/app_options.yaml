@@ -1,5 +1,5 @@
 # Add selector for selecting cuda device
-device_selector: false
+device_selector: true
 
 # Add options to run model benchmark after training
 model_benchmark: true
@@ -23,3 +23,6 @@ collapsable: false
 
 # Automatically convert classes according to model CV task
 auto_convert_classes: true
+
+# Debug only benchmark
+debug_benchmark: false
