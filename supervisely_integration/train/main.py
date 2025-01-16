@@ -48,7 +48,6 @@ def start_training():
     solver.fit()
     # gather experiment info
     experiment_info = {
-        "task_type": sly.nn.TaskType.OBJECT_DETECTION,
         "model_name": train.model_name,
         "model_files": {"config": model_config_path},
         "checkpoints": output_dir,
