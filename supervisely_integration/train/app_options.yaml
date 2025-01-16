@@ -23,3 +23,6 @@ collapsable: false
 
 # Automatically convert classes according to model CV task
 auto_convert_classes: true
+
+# Debug only benchmark
+debug_benchmark: false
