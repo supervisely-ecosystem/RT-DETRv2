@@ -11,11 +11,11 @@
   <a href="#Acknowledgment">Acknowledgment</a>
 </p>
 
-[![](https://img.shields.io/badge/supervisely-ecosystem-brightgreen)](https://ecosystem.supervise.ly/apps/supervisely-ecosystem/rt-detr/supervisely_integration/train)
-[![](https://img.shields.io/badge/slack-chat-green.svg?logo=slack)](https://supervise.ly/slack)
+[![](https://img.shields.io/badge/supervisely-ecosystem-brightgreen)](https://ecosystem.supervisely.com/apps/supervisely-ecosystem/rt-detr/supervisely_integration/train)
+[![](https://img.shields.io/badge/slack-chat-green.svg?logo=slack)](https://supervisely.com/slack)
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/supervisely-ecosystem/RT-DETR)
-[![views](https://app.supervise.ly/img/badges/views/supervisely-ecosystem/rt-detr/supervisely_integration/train.png)](https://supervise.ly)
-[![runs](https://app.supervise.ly/img/badges/runs/supervisely-ecosystem/rt-detr/supervisely_integration/train.png)](https://supervise.ly)
+[![views](https://app.supervisely.com/img/badges/views/supervisely-ecosystem/rt-detr/supervisely_integration/train.png)](https://supervisely.com)
+[![runs](https://app.supervisely.com/img/badges/runs/supervisely-ecosystem/rt-detr/supervisely_integration/train.png)](https://supervisely.com)
 
 </div>
 
@@ -65,7 +65,7 @@ Train RT-DETRv2 models in Supervisely on your custom data. RT-DETRv2 (Real-Time 
 
 # Obtain saved checkpoints
 
-All the trained checkpoints, that are generated through the process of training models are stored in [Team Files](https://app.supervise.ly/files/) in the **experiments** folder.
+All the trained checkpoints, that are generated through the process of training models are stored in [Team Files](https://app.supervisely.com/files/) in the **experiments** folder.
 
 You will see a folder thumbnail with a link to your saved checkpoints by the end of training process.
 
