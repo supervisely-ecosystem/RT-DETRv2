@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   rtdetrv2:
     image: supervisely/rt-detrv2:1.0.8
@@ -17,4 +15,4 @@ services:
     expose:
       - "8000"
     entrypoint: [ "python3", "supervisely_integration/serve/main.py" ]
-    command: [ "--model", "RT-DETRv2-S", "--predict-project", "27" ]
+    command: [ "--model", "RT-DETRv2-S" ]

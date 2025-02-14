@@ -15,7 +15,7 @@ api = sly.Api.from_env()
 # 1. Serve with docker-compose #
 ################################
 # Run the following command in the terminal:
-# docker-compose up -d
+# docker-compose up
 
 
 ################################
@@ -40,6 +40,7 @@ api = sly.Api.from_env()
 # Run the following command in the terminal:
 # PYTHONPATH="${PWD}:${PYTHONPATH}" \
 # python ./supervisely_integration/serve/main.py \
+# --model "models/392_RT-DETRv2/checkpoints/best.pth"
 # --model "RT-DETRv2-S"
 
 ###################################
@@ -61,4 +62,4 @@ if os.path.exists(img_preview_path):
 # Read the image and draw the annotation
 img = sly.image.read(img_path)
 ann.draw_pretty(img)
-sly.image.show(img)
+sly.image.write(img_preview_path, img)
