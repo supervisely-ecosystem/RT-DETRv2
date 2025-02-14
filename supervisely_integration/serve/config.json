@@ -4,7 +4,7 @@
 	"name": "Serve RT-DETRv2",
 	"entrypoint": "python3 -m uvicorn main:model.app --host 0.0.0.0 --port 8000 --ws websockets --app-dir supervisely_integration/serve",
 	"port": 8000,
-	"categories": ["neural network", "images", "object detection", "serve"],
+	"categories": ["neural network", "images", "object detection", "serve", "framework:RT-DETRv2"],
 	"icon": "https://github.com/user-attachments/assets/304c71dc-86f2-49f1-a633-3f0315bdcfad",
 	"icon_cover": true,
 	"poster": "https://github.com/user-attachments/assets/af2c8f9c-8de7-4c78-9b4a-13a2627993be",
