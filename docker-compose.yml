@@ -1,6 +1,6 @@
 services:
   rtdetrv2:
-    image: supervisely/rt-detrv2:1.0.9
+    image: supervisely/rt-detrv2:1.0.10
     shm_size: 1g
     runtime: nvidia
     env_file:
@@ -15,4 +15,4 @@ services:
     expose:
       - "8000"
     entrypoint: [ "python3", "supervisely_integration/serve/main.py" ]
-    command: [ "--model", "RT-DETRv2-S" ]
+    command: [ "deploy" ]
