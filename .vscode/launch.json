@@ -61,13 +61,12 @@
 			"console": "integratedTerminal",
 			"justMyCode": false,
 			"args": [
-				"--model",
-				"RT-DETRv2-S",
-				"--predict-image",
+				"predict",
 				"supervisely_integration/demo/img/coco_sample.jpg"
 			],
 			"env": {
 				"PYTHONPATH": "${workspaceFolder}:${PYTHONPATH}",
+				"DEBUG_APP_DIR": "app_data",
 				"LOG_LEVEL": "DEBUG",
 				"TEAM_ID": "4",
 			}

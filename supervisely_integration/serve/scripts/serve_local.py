@@ -30,8 +30,8 @@ api = sly.Api.from_env()
 #   -v ".:/app" \
 #   -w /app \
 #   -p 8000:8000 \
-#   supervisely/rt-detrv2:1.0.9 \
-#   python3 supervisely_integration/serve/main.py --model "RT-DETRv2-S"
+#   supervisely/rt-detrv2:1.0.10 \
+#   python3 supervisely_integration/serve/main.py deploy
 
 
 ################################
@@ -39,9 +39,7 @@ api = sly.Api.from_env()
 ################################
 # Run the following command in the terminal:
 # PYTHONPATH="${PWD}:${PYTHONPATH}" \
-# python ./supervisely_integration/serve/main.py \
-# --model "models/392_RT-DETRv2/checkpoints/best.pth"
-# --model "RT-DETRv2-S"
+# python ./supervisely_integration/serve/main.py deploy \
 
 ###################################
 # How to use the serving session: #
