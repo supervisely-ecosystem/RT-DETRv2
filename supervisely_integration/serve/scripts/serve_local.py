@@ -30,7 +30,7 @@ api = sly.Api.from_env()
 #   -v ".:/app" \
 #   -w /app \
 #   -p 8000:8000 \
-#   supervisely/rt-detrv2:1.0.10 \
+#   supervisely/rt-detrv2:1.0.11 \
 #   python3 supervisely_integration/serve/main.py deploy
 
 
