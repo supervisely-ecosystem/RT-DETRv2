@@ -14,6 +14,7 @@
 > You can use your model in very different ways depending on your needs. For more information, please, refer to our full [Inference & Deployment](https://docs.supervisely.com/neural-networks/overview-1) documentation.
 
 ## Once Click Model Predictions
+🔴 на странице эксперимента
 
 Soon: run model inference on your data from experiemnt page.  
 You can apply your model in a single click. Select the input project and datasets, configure inference settings if needed, and run the model.
@@ -44,6 +45,7 @@ load_dotenv(os.path.expanduser("~/supervisely.env"))
 
 api = sly.Api()
 
+🔴 - тут будет автоподстановка
 session = api.nn.deploy_custom_model(
   artifacts_dir="path/to/model",
   team_id=123,
@@ -62,7 +64,7 @@ Every Served Model on the platform is available via API. You can get predictions
 import os
 import supervisely as sly
 from dotenv import load_dotenv
-from supervisely.nn.inference import Session
+from supervisely.nn.inference import Session 🔴 Inference / Predictor
 
 # Ensure you've set API_TOKEN and SERVER_ADDRESS environment variables.
 load_dotenv(os.path.expanduser("~/supervisely.env"))
@@ -73,8 +75,14 @@ api = sly.Api()
 task_id = 42  # ⬅ put your task_id from a platform
 session = Session(api, task_id=task_id)
 
+servings = sly.nn.get_deployed_models() 🔴
+inference = Inference(api, task_id=task_id) 🔴
+
+
 # Predict Image
 prediction = session.inference_image_id(image_id=123)
+prediction = predictor.image_id(image_id=123)
+🔴
 
 # Predict Project
 predictions = session.inference_project_id(project_id=456)
