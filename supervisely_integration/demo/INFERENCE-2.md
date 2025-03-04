@@ -97,9 +97,10 @@ load_dotenv(os.path.expanduser("~/supervisely.env"))
 
 api = sly.Api()
 
-# Deploy the model
+# Connect to deployed model
 model = api.nn.get_deployed_models(name="RT-DETRv2")[0]
 model = api.nn.get_deployed_models(model="path/to/best.pt")[0]
+model = api.nn.get_deployed_models(model_id=111)[0]
 
 # Predict image
 prediction = model.inference_image_id(image_id=123)
