@@ -136,9 +136,17 @@ load_dotenv(os.path.expanduser("~/supervisely.env"))
 api = sly.Api()
 
 # Connect to deployed model
+🔴🔴🔴🔴🔴
 model = api.nn.get_deployed_models(name="RT-DETRv2")[0]
-model = api.nn.get_deployed_models(model="path/to/best.pt")[0]
+model = api.nn.get_deployed_models(model="/path/to/best.pt")[0]
 model = api.nn.get_deployed_models(model_id=111)[0]
+
+🔴🔴🔴🔴🔴 - предложить к обсуждению
+model_id можем на этапе трейнинга проставлять для чекпоинтов
+api.nn.register(checkpoint=/// train_id=888 ,,, metrics={a=1, b=2}) - train-metrics по хешу регистрация в фоне
+как будет на новой странице эксперимента выглядеть табличка моделей
+макс предлагает best модель использовать всегда model_id = train_id ? = task_id
+yolo - best/last - только на best опасно
 
 # Predict image
 prediction = model.inference_image_id(image_id=123)
