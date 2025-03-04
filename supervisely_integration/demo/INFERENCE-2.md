@@ -50,7 +50,19 @@ session = api.nn.deploy_custom_model(
   artifacts_dir="path/to/model",
   team_id=123,
 )
+
+🔴 - discuss
+session = api.nn.deploy_custom_model(path="http://sly.com/team-123/path/to/folder/or/file/model.pt")
+над путем можно посоветоваться с денисом
+storage_path=
+path=
+....
+link=
+url=...
+название аршгумента может сделать коротким dir / model / location / ....????
 ```
+session = api.nn.deploy_custom_model(task_id=777) train_id model_id
+можем ли мы внести понятие model_id<->file_hash? чтобы даже если пользователь перенес свой файл, все равно все работало
 
 > For more information, see [Deploy & Predict with Supervisely SDK](https://docs.supervisely.com/neural-networks/overview-1/deploy_and_predict_with_supervisely_sdk).
 
