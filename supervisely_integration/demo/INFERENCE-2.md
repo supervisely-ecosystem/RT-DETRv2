@@ -13,8 +13,9 @@
 
 > You can use your model in very different ways depending on your needs. For more information, please, refer to our full [Inference & Deployment](https://docs.supervisely.com/neural-networks/overview-1) documentation.
 
-## Apply Model to your Project
+## Once Click Model Predictions
 
+Soon: run model inference on your data from experiemnt page.  
 You can apply your model in a single click. Select the input project and datasets, configure inference settings if needed, and run the model.
 
 *(We add this selector right into the page)*
