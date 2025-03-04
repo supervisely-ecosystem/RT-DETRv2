@@ -111,7 +111,7 @@ pip install supervisely
 
 Download your checkpoint and model files from Team Files.
 
-![Download checkpoint from Team Files](/.gitbook/assets/deploy-predict-download-local.png)
+![Download checkpoint from Team Files](img/team_files_download_2.png)
 
 #### 4. Predict
 
@@ -192,7 +192,7 @@ pip install supervisely
 
 Download your checkpoint, model files and `experiment_info.json` from Team Files or the whole artifacts directory.
 
-![Download checkpoint from Team Files](/.gitbook/assets/deploy-predict-download-local-serve.png)
+![Download checkpoint from Team Files](img/team_files_download_2.png)
 
 Place downloaded files in the folder within app repo. For example, create `models` folder inside root directory of the repository and place all files there.
 
