@@ -95,7 +95,7 @@ OR model_api?
 prediction = model.inference_image_id(image_id=123)
 
 🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴
-prediction = model.predict(image=123)
+prediction = model.predict(image=123)   🔴🔴🔴🔴🔴🔴🔴🔴 ?????? settings={"confidence_threshold": 0.4}
 prediction = model.predict(image="/a/b.jpg")
 prediction = model.predict(image="https://a/b.jpg")
 prediction = model.predict(images=["https://a/b.jpg", ... ])
@@ -244,11 +244,14 @@ img = "https://a/b/c.jpg"
 img = 777
 
 # Predict
+🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴 -- model.inference -> model.predict - чтобы было одинакого и единообразно
 ann = model.inference(img, settings={"confidence_threshold": 0.4})
 
 # Draw predictions
 ann.draw_pretty(img)
 Image.fromarray(img).save("prediction.jpg")
+
+# OR here is the small example how to 
 ```
 
 If you need to run the code in your project and not in the root of the repository, you can add the path to the repository into `PYTHONPATH`, or by the following lines at the beginning of the script:
