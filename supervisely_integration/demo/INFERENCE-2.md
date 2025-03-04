@@ -64,6 +64,8 @@ url=...
 session = api.nn.deploy_custom_model(task_id=777) train_id model_id
 можем ли мы внести понятие model_id<->file_hash? чтобы даже если пользователь перенес свой файл, все равно все работало
 
+🔴 - session -> model
+
 > For more information, see [Deploy & Predict with Supervisely SDK](https://docs.supervisely.com/neural-networks/overview-1/deploy_and_predict_with_supervisely_sdk).
 
 
@@ -90,11 +92,33 @@ model = api.nn.deploy_custom_model(
 # Predict image
 prediction = model.inference_image_id(image_id=123)
 
+🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴
+prediction = model.predict(image=123)
+prediction = model.predict(image="/a/b.jpg")
+prediction = model.predict(image="https://a/b.jpg")
+prediction = model.predict(images=["https://a/b.jpg", ... ])
+prediction = model.predict(video="/a/b.jpg")
+prediction = model.predict(video="https://a/b.jpg")
+
+
+xxxx ??? -> prediction = model.predict(dir="/a/b/c")
+prediction = model.predict(project_id=777)
+prediction = model.predict(dataset_id=777)
+
+
+info = model.predict(project_id=777, inplace=True)
+https://docs.python.org/3/library/functions.html#open
+info = model.predict(project_id=777, mode='append' / 'replace' / 'smart-merge') image-id? ...
+
+
 # Predict project
 predictions = model.inference_project_id(project_id=456)
 
 # Stop model server
 model.stop_serving_app()
+
+🔴
+model.shutdown()
 ```
 
 ---
