@@ -2,7 +2,7 @@
 
 **Table of Contents (only for this readme):**
 
-- [Apply Model to your Project](#apply-model-to-your-project)
+- [Predict in One Click](#predict-in-one-click)
 - [Serve Model in Supervisely Platform](#serve-model-in-supervisely-platform)
 - [Inference via API](#inference-via-api)
 - [Using Model Outside of Supervisely Platform](#using-model-outside-of-supervisely-platform)
@@ -13,7 +13,7 @@
 
 > You can use your model in very different ways depending on your needs. For more information, please, refer to our full [Inference & Deployment](https://docs.supervisely.com/neural-networks/overview-1) documentation.
 
-## Once Click Model Predictions
+## Predict in One Click
 🔴 на странице эксперимента
 
 Soon: run model inference on your data from experiemnt page.  
@@ -49,7 +49,6 @@ api = sly.Api()
 session = api.nn.deploy_custom_model(
   artifacts_dir="path/to/model",
   team_id=123,
-  device="cuda",
 )
 ```
 
@@ -64,28 +63,52 @@ Every Served Model on the platform is available via API. You can get predictions
 import os
 import supervisely as sly
 from dotenv import load_dotenv
-from supervisely.nn.inference import Session 🔴 Inference / Predictor
 
 # Ensure you've set API_TOKEN and SERVER_ADDRESS environment variables.
 load_dotenv(os.path.expanduser("~/supervisely.env"))
 
 api = sly.Api()
 
-# Create Inference Session, if you deployed a model manually.
-task_id = 42  # ⬅ put your task_id from a platform
-session = Session(api, task_id=task_id)
+# Deploy the model
+model = api.nn.deploy_custom_model(
+  artifacts_dir="path/to/model",
+  team_id=123,
+)
 
-servings = sly.nn.get_deployed_models() 🔴
-inference = Inference(api, task_id=task_id) 🔴
+# Predict image
+prediction = model.inference_image_id(image_id=123)
 
+# Predict project
+predictions = model.inference_project_id(project_id=456)
 
-# Predict Image
-prediction = session.inference_image_id(image_id=123)
-prediction = predictor.image_id(image_id=123)
-🔴
+# Stop model server
+model.stop_serving_app()
+```
 
-# Predict Project
-predictions = session.inference_project_id(project_id=456)
+---
+
+```python
+import os
+import supervisely as sly
+from dotenv import load_dotenv
+
+# Ensure you've set API_TOKEN and SERVER_ADDRESS environment variables.
+load_dotenv(os.path.expanduser("~/supervisely.env"))
+
+api = sly.Api()
+
+# Deploy the model
+model = api.nn.get_deployed_models(name="RT-DETRv2")[0]
+model = api.nn.get_deployed_models(model="path/to/best.pt")[0]
+
+# Predict image
+prediction = model.inference_image_id(image_id=123)
+
+# Predict project
+predictions = model.inference_project_id(project_id=456)
+
+# Stop model server
+model.stop_serving_app()
 ```
 
 > For more information, see [Inference API Tutorial](https://docs.supervisely.com/neural-networks/inference-api).
