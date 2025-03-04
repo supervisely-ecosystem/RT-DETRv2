@@ -7,7 +7,6 @@
 <p align="center">
   <a href="#Overview">Overview</a> •
   <a href="#How-To-Run">How To Run</a> •
-  <a href="#Obtain-saved-checkpoints">Obtain saved checkpoints</a> •
   <a href="#Acknowledgment">Acknowledgment</a>
 </p>
 
