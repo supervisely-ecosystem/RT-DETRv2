@@ -1,15 +1,6 @@
 # Demo: Inference & Deployment
 
-**Table of Contents:**
-
-<!-- - [Apply Model to your Project](#apply-model-to-your-project)
-- Serve Model in Supervisely Platform
-- Inference via API
-- Using Model Outside of Supervisely Platform
-  - Get predictions in your code
-  - Deploy model as a server on your machine
-  - Deploy in a Docker Container
-- Using Your Model as a Standalone PyTorch Model -->
+**Table of Contents (only for this readme):**
 
 - [Apply Model to your Project](#apply-model-to-your-project)
 - [Serve Model in Supervisely Platform](#serve-model-in-supervisely-platform)
@@ -20,19 +11,23 @@
   - [Deploy in a Docker Container](#deploy-in-a-docker-container)
 - [Using Your Model as a Standalone PyTorch Model](#using-your-model-as-a-standalone-pytorch-model)
 
-You can use your model in very different ways depending on your needs. For more information, please, refer to our full [Inference & Deployment](https://docs.supervisely.com/neural-networks/overview-1) documentation.
+> You can use your model in very different ways depending on your needs. For more information, please, refer to our full [Inference & Deployment](https://docs.supervisely.com/neural-networks/overview-1) documentation.
 
 ## Apply Model to your Project
 
 You can apply your model in a single click. Select the input project and datasets, configure inference settings if needed, and run the model.
 
+*(We add this selector right into the page)*
+
 ![Selecting a project GIF (tmp)](https://developer.supervisely.com/~gitbook/image?url=https%3A%2F%2Fuser-images.githubusercontent.com%2F79905215%2F222367677-cdee343d-a841-4868-9106-10d3f44d9e76.gif&width=768&dpr=4&quality=100&sign=424c1477&sv=2)
 
-You can also get predictions with **Applying Apps**, such as [Apply NN to Images](https://ecosystem.supervisely.com/apps/nn-image-labeling/project-dataset) or [Apply NN to Video](https://ecosystem.supervisely.com/apps/apply-nn-to-videos-project). Read more in documentation [Apply Model in Platform](https://docs.supervisely.com/neural-networks/overview-1/supervisely-serving-apps#apply-model-in-platform).
+> You can also get predictions with **Applying Apps**, such as [Apply NN to Images](https://ecosystem.supervisely.com/apps/nn-image-labeling/project-dataset) or [Apply NN to Video](https://ecosystem.supervisely.com/apps/apply-nn-to-videos-project). Read more in documentation [Apply Model in Platform](https://docs.supervisely.com/neural-networks/overview-1/supervisely-serving-apps#apply-model-in-platform).
 
 ## Serve Model in Supervisely Platform
 
 To deploy a model on the platform, we use [Supervisely Serving Apps](https://docs.supervisely.com/neural-networks/overview-1/supervisely-serving-apps). For your model use the {Serve RT-DETRv2} Serving App:
+
+*(Clickable widget)*
 
 ![Serve RT-DETRv2 App](img/serving-app.png)
 
@@ -55,7 +50,7 @@ session = api.nn.deploy_custom_model(
 )
 ```
 
-For more information, see [Deploy & Predict with Supervisely SDK](https://docs.supervisely.com/neural-networks/overview-1/deploy_and_predict_with_supervisely_sdk).
+> For more information, see [Deploy & Predict with Supervisely SDK](https://docs.supervisely.com/neural-networks/overview-1/deploy_and_predict_with_supervisely_sdk).
 
 
 ## Inference via API
@@ -84,7 +79,7 @@ prediction = session.inference_image_id(image_id=123)
 predictions = session.inference_project_id(project_id=456)
 ```
 
-For more information, see [Inference API Tutorial](https://docs.supervisely.com/neural-networks/inference-api).
+> For more information, see [Inference API Tutorial](https://docs.supervisely.com/neural-networks/inference-api).
 
 ---
 
@@ -266,7 +261,7 @@ python ./supervisely_integration/serve/main.py \
   --output ./predictions
 ```
 
-For the full list of arguments, see the documentation [Deploy Model as a Server](https://docs.supervisely.com/neural-networks/overview-1/deploy_and_predict_with_supervisely_sdk#id-4.-deploy).
+> For the full list of arguments, see the documentation [Deploy Model as a Server](https://docs.supervisely.com/neural-networks/overview-1/deploy_and_predict_with_supervisely_sdk#id-4.-deploy).
 
 
 ### Deploy in a Docker Container
@@ -307,7 +302,7 @@ docker run \
   --output ./predictions
 ```
 
-See more information in the [Deploy in Docker Container](https://docs.supervisely.com/neural-networks/overview-1/deploy_and_predict_with_supervisely_sdk#deploy-in-docker-container) documentation.
+> See more information in the [Deploy in Docker Container](https://docs.supervisely.com/neural-networks/overview-1/deploy_and_predict_with_supervisely_sdk#deploy-in-docker-container) documentation.
 
 ---
 
