@@ -89,6 +89,8 @@ model = api.nn.deploy_custom_model(
   team_id=123,
 )
 
+OR model_api?
+
 # Predict image
 prediction = model.inference_image_id(image_id=123)
 
