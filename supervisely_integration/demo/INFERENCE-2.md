@@ -164,6 +164,8 @@ model.stop_serving_app()
 
 ## Using Model Outside of Supervisely Platform
 
+🔴 - по порядку я бы предложил контейнеризацию? для тех кто деплоит в сови системы
+
 ### Get predictions in your code
 
 This example shows how to load your checkpoint and get predictions in any of your code. You will need to clone our RT-DETRv2 repository and install dependencies. Then, you can load the model in your code and get predictions.
@@ -209,26 +211,37 @@ from supervisely_integration.serve.rtdetrv2 import RTDETRv2
 # Put your path to image here
 IMAGE_PATH = "sample_image.jpg"
 
-# Model config and weights (downloaded from Team Files)
-model_files = {
+# Model config and weights and list of classes (downloaded from Team Files)
+input = {
     "checkpoint": "model/rtdetrv2_r18vd_120e_coco_rerun_48.1.pth",
     "config": "model/rtdetrv2_r18vd_120e_coco.yml",
+    🔴"classes": "model/classes.json" 
 }
 
 # JSON model meta with class names (downloaded from Team Files)
+🔴 json.read() - вместо sly 
 model_meta = sly.io.json.load_json_file("model/model_meta.json")
 
 # Load model
-model = RTDETRv2()
-model.load_custom_checkpoint(
-    model_files=model_files,
-    model_meta=model_meta,
-    device="cuda",
-)
+class RTDETRv2Serving(Inference):
+class RTDETRv2(Prediction/ ... ): - потом можно иерархию наследования подшаманить чтобы упростить количество аршументов и отделить наши от базового predict
+
+model = RTDETRv2() - 🔴 - это возможно за счет того что унас для моделей будут класссы inference
+
+model.load_custom_checkpoint(files=input, device="cuda")
+🔴🔴🔴🔴
+model.load_checkpoint(weights="/a/b.pt", config="/a/b.json", device="cuda")
+🔴🔴🔴🔴 - если это только для моделей, обученный в SLY, то тогда можно все вживать в чекпоинт для упрощения - будем искать поля в файле и если что- фолбекаться по умолчанию к поиску файла в той же папке в фоне и потом если что писать ошибку что не можем найти confix_x.abc
+model.load_checkpoint(path="/a/b.pth", device="cuda")
+
+model = RTDETRv2(checkpoint="", device="cuda") 
+
 
 # Load image
-image = Image.open(IMAGE_PATH).convert("RGB")
-img = np.array(image)
+img = np.array(Image.open(IMAGE_PATH).convert("RGB"))
+img = "/a/b/c.jpg"
+img = "https://a/b/c.jpg"
+img = 777
 
 # Predict
 ann = model.inference(img, settings={"confidence_threshold": 0.4})
