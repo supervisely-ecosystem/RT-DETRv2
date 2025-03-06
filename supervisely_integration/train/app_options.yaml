@@ -10,6 +10,7 @@ export_tensorrt_supported: true
 
 # How to use models outside of the Supervisely platform
 demo:
+  branch: "main"
   path: "supervisely_integration/demo"
 
 # Enable this option when using supervisely train logger
