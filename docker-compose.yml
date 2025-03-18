@@ -1,6 +1,6 @@
 services:
   rtdetrv2:
-    image: supervisely/rt-detrv2:1.0.12
+    image: supervisely/rt-detrv2:1.0.13
     shm_size: 1g
     runtime: nvidia
     env_file:
