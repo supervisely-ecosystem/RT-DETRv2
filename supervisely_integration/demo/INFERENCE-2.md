@@ -55,7 +55,7 @@ _model - может удалить
 api.nn.deploy.custom()
 api.nn.deploy.pretrained()
 
-🔴 - api.nn.deploy.custom_model?
+🔴 - model = api.nn.deploy.custom_model?
      api.nn.deploy.custom_model(checkpoint="...", train_id=777) - train_id
 🔴 - api.nn.deploy.pretrained_model?
 model = api.nn.deploy_custom_model(
@@ -79,9 +79,11 @@ model = api.nn.connect(deploy_id=777) - если вызываем api.nn.deploy.
 
 🔴 - 
 
-🔴 - Session - класс отнаследовать в дубликат? ModelAPI?
-
-🔴 - 
+🔴 - class ModelAPI: - класс отнаследовать в дубликат? ModelAPI? использовать session приватно без наследования потом переопредлеить все методы вызва внутри из сессии
+меняем докстринги
+🔴 - ModelAPI зачем в конструкторе отправлять много запросов? может делать в тот момент когюа используем и кешировать
+🔴 - ModelAPI.healthcheck() проверит и закеширует 
+🔴 - проверить что sly.Api в конструкторе не отправляет запросы - сергей делал там проверку на hhtp / https - возможно ее надо переносить on-demand
 
 ```
 __session = api.nn.deploy_custom_model(task_id=777) train_id model_id
@@ -119,8 +121,19 @@ model = api.nn.deploy_custom_model(
 #### Option 2: Connect to already deployed model
 To connect to a model you will need to know the `session_id` of the model. You can get it from the UI or use the following code snippet:
 ```python
-workspace_id = 123 # автоподстановка при рендере
+🔴 - 
+🔴 - 
+
+🔴 -workspace_id = 123 # автоподстановка при рендере
+нужно team_id - потому что сервалки привязаны к тимам а не воркспецсам и отображаются в сессиях
+
+🔴 - api.nn.deploy.get_running_models
 # тут будет автоподстановка при рендере для всех аргументов
+🔴 -model_info = api.nn.get_running_models()
+🔴 - api.nn.deploy.get_list() => ??? сессии? 
+🔴 - api.nn.deploy.stop()
+🔴 - api.nn.deploy.kill()
+
 model_info = api.nn.get_deployed_models(workspace_id, model_name="RT-DETRv2")[0]
 model_info = api.nn.get_deployed_models(workspace_id, framework="RT-DETRv2")[0]
 model_info = api.nn.get_deployed_models(workspace_id, model_id=model_id)[0] # model_id пока мы не решили что это будет
