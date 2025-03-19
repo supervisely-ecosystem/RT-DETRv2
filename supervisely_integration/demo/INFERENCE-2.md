@@ -151,6 +151,7 @@ After you have the `session_id`, you can connect to the model:
 model = api.nn.connect_to_model(session_id)
 ```
 ### 2. Predict
+
 ```python
 # without output - returns annotations
 annotation = model.predict(image=123) # image_id
