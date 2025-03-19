@@ -159,7 +159,13 @@ annotation = model.predict(image="/images/image1.jpg") # path in teamfiles
 annotations = model.predict(images=[123, 124]) # list of image_id 
 annotations = model.predict(images=["/images/image1.jpg", "/images/image2.jpg"]) # list of paths in teamfiles
 annotation = model.predict(video=123) # video_id
-annotation = model.predict(video="/videos/video1.mp4") # path in teamfiles
+frames_anns = model.predict(video="/videos/video1.mp4") # path in teamfiles
+
+import boxmot
+RESULT =  boxmot.track(to-BOXMOT(frames_anns))
+video_ann = sly.Annotation(RESULT)
+api.video.annotation.upload(video_ann)
+
 # annotation_info = {"image_id": image_id, "annotation": annotation}
 annotation_infos = model.predict(project=123) # project_id # output=None
 annotation_infos = model.predict(dataset=123) # dataset_id # output=None
@@ -167,9 +173,10 @@ annotation_infos = model.predict(dataset=123) # dataset_id # output=None
 # with output - saves annotations to Supervisely
 # single image/video
 # save annotation inplace
-model.predict(image=123, output="inplace")
+model.predict(image=123, output="inplace") 🔴 -  использовать только на проекте / датасете и возможно видео?
 or
-model.predict(image=123, inplace=True)
+model.predict(image=123, inplace=True) 🔴 -  merge/ replace / mergeIoU / ?
+
 or
 model.predict_image(123, output="inplace")
 or
@@ -820,10 +827,14 @@ detections, name2cat = convert_to_boxmot_format(annotation)
 # name2cat: {class_name: category}
 
 # 3. Apply tracking algorithm
-from boxmot import BotSort
+import boxmot
 device = "cuda:0"
 # Initialize tracker
-tracker = BotSort(reid_weights=Path('osnet_x0_25_msmt17.pt'), device=device, half=False)
+tracker = boxmot.BotSort(reid_weights=Path('osnet_x0_25_msmt17.pt'), device=device, half=False)
+
+video_ann = sly.nn.track(tracker, ferames, video)
+video_ann.preview(xxx)
+video_ann.preview(xxx)
 
 # Video capture setup
 import cv2
