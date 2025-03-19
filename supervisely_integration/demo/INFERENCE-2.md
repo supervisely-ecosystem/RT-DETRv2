@@ -57,6 +57,7 @@ api.nn.deploy.pretrained()
 
 🔴 - model = api.nn.deploy.custom_model?
      api.nn.deploy.custom_model(checkpoint="...", train_id=777) - train_id
+     - в checkpoint нужно защивать инфу experiemnt dict в котором все - версия апы, метаданные
 🔴 - api.nn.deploy.pretrained_model?
 model = api.nn.deploy_custom_model(
   agent_id=123, # Можно сделать опциональным, сейчас обязательный
@@ -312,7 +313,7 @@ Deploying in a Docker Container is a convenient way to run a model without needi
 
 Можно при релизе билдить новый образ rt-detrv2:<app-version> с кодом репы, это будет проще и быстрее. В докерфайле прописать 
 ```Dockerfile
-FROM supervisely/rt-detrv2:1.0.11
+FROM supervisely/rt-detrv2-base:v1
 COPY . /app
 ENTRYPOINT ["sh", "-c", "PYTHONPATH=\"${PWD}:${PYTHONPATH}\" exec python3 supervisely_integration/serve/main.py \"$@\"", "sh"]
 ```
@@ -324,7 +325,9 @@ docker run \
   # -v "./data:/data" \ # < ?
   -v "./input:/input" \ # < path to input directory
   -v "./output:/output" \ # < path to output directory
-  supervisely/rt-detrv2:1.0.11 \
+  supervisely/rt-detrv2 ????? latest \
+  = чтобы не было проблем - нужно в чекпоинт сохранть дикто (версии апы, experiment info)
+
   predict "image.jpg" \ # < will search it inside of /input
   --model "/models/392_RT-DETRv2/checkpoints/best.pth" \
   --device cuda \
@@ -552,6 +555,14 @@ img = np.array(Image.open(IMAGE_PATH).convert("RGB"))
 img = "/a/b/c.jpg"
 img = "https://a/b/c.jpg"
 img = 777
+img = [777, ]
+
+🔴🔴🔴🔴🔴🔴
+image
+video
+project
+dataset
+folder
 
 # Predict
 🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴 -- model.inference -> model.predict - чтобы было одинаково и единообразно
