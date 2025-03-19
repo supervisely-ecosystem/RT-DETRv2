@@ -3,7 +3,7 @@
 **Table of Contents (only for this readme):**
 
 - [Predict in One Click](#predict-in-one-click)
-- [Serve Model in Supervisely Platform](#serve-model-in-supervisely-platform)
+- [🔴 Deploy ~~Serve~~ Model in Supervisely Platform](#serve-model-in-supervisely-platform)
 - [Inference via API](#inference-via-api)
 - [Using Model Outside of Supervisely Platform](#using-model-outside-of-supervisely-platform)
   - [Get predictions in your code](#get-predictions-in-your-code)
@@ -21,18 +21,17 @@ You can apply your model in a single click. Select the input project and dataset
 
 *(We add this selector right into the page)*
 
-Спрятал пока картинку чтобы не мешала восприятию
+🔴 Спрятал пока картинку чтобы не мешала восприятию
 [Selecting a project GIF (tmp)](https://developer.supervisely.com/~gitbook/image?url=https%3A%2F%2Fuser-images.githubusercontent.com%2F79905215%2F222367677-cdee343d-a841-4868-9106-10d3f44d9e76.gif&width=768&dpr=4&quality=100&sign=424c1477&sv=2)
 
 > You can also get predictions with **Applying Apps**, such as [Apply NN to Images](https://ecosystem.supervisely.com/apps/nn-image-labeling/project-dataset) or [Apply NN to Video](https://ecosystem.supervisely.com/apps/apply-nn-to-videos-project). Read more in documentation [Apply Model in Platform](https://docs.supervisely.com/neural-networks/overview-1/supervisely-serving-apps#apply-model-in-platform).
 
-## Serve Model in Supervisely Platform
+## Deploy ~~Serve~~ Model in Supervisely Platform
 
 To deploy a model on the platform, we use [Supervisely Serving Apps](https://docs.supervisely.com/neural-networks/overview-1/supervisely-serving-apps). For your model use the {Serve RT-DETRv2} Serving App:
 
-*(Clickable widget)*
-
-![Serve RT-DETRv2 App](img/serving-app.png)
+🔴 *(Clickable widget)*
+[Serve RT-DETRv2 App](img/serving-app.png)
 
 Alternatively, you can use [Supervisely SDK](https://github.com/supervisely/supervisely) to deploy the model on the platform:
 
@@ -46,18 +45,43 @@ load_dotenv(os.path.expanduser("~/supervisely.env"))
 
 api = sly.Api()
 
+🔴 - agent_id переименовать? server_id?
+🔴 - запуск агента и установка зависимостией - сделано коля
+🔴 - artifacts_dir rename checkpoint="supervisely.com/files/123/a/b/c.pth" + web?
+🔴 - по умолчанию агент автоматом выбирается в команде с большим gpu а если нет то напишет ворнинг или типа того
+🔴 - artifacts_dir оставить только ckpt, server, device?
+_model - может удалить
+
+api.nn.deploy.custom()
+api.nn.deploy.pretrained()
+
+🔴 - api.nn.deploy.custom_model?
+     api.nn.deploy.custom_model(checkpoint="...", train_id=777) - train_id
+🔴 - api.nn.deploy.pretrained_model?
 model = api.nn.deploy_custom_model(
   agent_id=123, # Можно сделать опциональным, сейчас обязательный
   artifacts_dir="path/to/model", # автоподстановка при рендере
   team_id=123, # автоподстановка при рендере
+  🔴device="",
+  checkpoint="123/a/b/c.pth"
 )
 
 # Еще вариант деплоя, который можно добавить в эту доку. Для деплоя нужно знать task_id, он будет автоподставляться при рендере.
 # Можно добавить метод, который api.nn.get_experiment_info и api.nn.deploy.deploy_custom_model_from_experiment_info объеденит.
 # Например api.nn.deploy.from_train_task(task_id=123)
-experiment_info = api.nn.get_experiment_info(task_id=123) # task_id автоподстановка при рендере
-task_info = api.nn.deploy.deploy_custom_model_from_experiment_info(agent_id, experiment_info) # Это имя мы с Максом Елисеевым обсуждали, но я бы сократил до api.nn.deploy.from_experiment_info
-model = api.nn.connect_to_model(task_info["id"]) # возвращает Session
+experiment = api.nn.train.get_info(task_id=123)
+experiment = api.nn.train.run(task_id=123)
+~~experiment = api.nn.get_train_info(task_id=123)~~ # task_id автоподстановка при рендере
+~~task_info = api.nn.deploy.deploy_custom_model_from_experiment_info(agent_id, experiment_info)~~ # Это имя мы с Максом Елисеевым обсуждали, но я бы сократил до api.nn.deploy.from_experiment_info
+
+~~model = api.nn.connect_to_model(task_info["id"]) ~~# возвращает Session
+model = api.nn.connect(deploy_id=777) - если вызываем api.nn.deploy.custom_model то внутри если раздеплоена то коннектится к существующией? 
+
+🔴 - 
+
+🔴 - Session - класс отнаследовать в дубликат? ModelAPI?
+
+🔴 - 
 
 ```
 __session = api.nn.deploy_custom_model(task_id=777) train_id model_id
