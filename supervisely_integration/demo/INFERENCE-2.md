@@ -84,6 +84,7 @@ model = api.nn.connect(deploy_id=777) - если вызываем api.nn.deploy.
 🔴 - ModelAPI зачем в конструкторе отправлять много запросов? может делать в тот момент когюа используем и кешировать
 🔴 - ModelAPI.healthcheck() проверит и закеширует 
 🔴 - проверить что sly.Api в конструкторе не отправляет запросы - сергей делал там проверку на hhtp / https - возможно ее надо переносить on-demand
+🔴 - ModelAPI - подумать как в Session сделать api опциональным чтобы использовать при локальном коннекте вне платформу. в ModelAPI точно это не должно быть и делаться on-demand
 
 ```
 __session = api.nn.deploy_custom_model(task_id=777) train_id model_id
@@ -131,15 +132,18 @@ To connect to a model you will need to know the `session_id` of the model. You c
 # тут будет автоподстановка при рендере для всех аргументов
 🔴 -model_info = api.nn.get_running_models()
 🔴 - api.nn.deploy.get_list() => ??? сессии? 
-🔴 - api.nn.deploy.stop()
-🔴 - api.nn.deploy.kill()
+🔴 - api.nn.deploy.shutdown(deploy_id=)
+🔴 - model.shutdown ???
+🔴 - model.stop() - останови бекграунд выпоолнеение ???
 
-model_info = api.nn.get_deployed_models(workspace_id, model_name="RT-DETRv2")[0]
+~~model_info = api.nn.get_deployed_models(workspace_id, model_name="RT-DETRv2")[0]~~ - model_name - может использовать только framework
+🔴 -  model = вместо model_info
 model_info = api.nn.get_deployed_models(workspace_id, framework="RT-DETRv2")[0]
 model_info = api.nn.get_deployed_models(workspace_id, model_id=model_id)[0] # model_id пока мы не решили что это будет
+checkpoint вместо checkpoint_name
 model_info = api.nn.get_deployed_models(workspace_id, checkpoint_name="/path/to/best.pt")[0]
 model_info = api.nn.get_deployed_models(workspace_id, model="/path/to/best.pt")[0] # model это аргумент, в который можно передать что угодно. Пока по реализации не понятно
-model_info = api.nn.get_deployed_models(workspace_id, task_type="detection")[0]
+~~model_info = api.nn.get_deployed_models(workspace_id, task_type="detection")[0]~~
 session_id = model_info.session_id
 ```
 After you have the `session_id`, you can connect to the model:
