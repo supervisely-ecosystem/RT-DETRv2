@@ -1,10 +1,14 @@
 ## Your experiment info
 
+Оглавление
+Short usecase explanation
+tqdm
+
 ## Deploy
 
 If you don't have available servers, you can follow the instructions from this guide to connect your machine to Supervisely
 
-### Deploy model in Supervisely web interface
+### Deploy model manually in Supervisely Web Interface
 
 ### Deploy model using API
 
@@ -21,10 +25,16 @@ load_dotenv(os.path.expanduser("~/supervisely.env"))
 api = sly.Api()
 ```
 
+team_id - в контекст API объекта / ENV засунуть чтобы не передавать всегда?
+team_id - можно ли понять активную тиму?
+еще можно подумать, что если всего одна команда то мы сами найдем файл
+и даже если несколько команд то мы тоже можем найти команду и файл сами
+
 * With path to the model checkpoint:
     ```python
     model = api.nn.deploy.custom(
-        checkpoint="/experiments/path/to/checkpoint.pth"
+        team_id=777, # optional + auto + regex
+        checkpoint="/experiments/path/to/checkpoint.pth" # поддердивать file path и file url
     )
     ```
 
@@ -32,6 +42,7 @@ api = sly.Api()
     ```python
     model = api.nn.deploy.custom(
         train_id=123,
+        checkpoint= # если не указан, то берем best / last / name.pht / path - можно еще имя или путь
     )
     ```
 
@@ -78,6 +89,12 @@ Here is the description of the parameters:
 Optionally, you can add the following parameters to the command:
 ```bash
 --device cuda
+```
+
+```python
+
+model = api.nn.connect(url="http://localhost:8000")
+
 ```
 
 #### Deploy model using Python
@@ -140,8 +157,11 @@ image = "https://a/b/c.jpg"
 # int image id
 image = 111
 
+inference_settings-rename => 
 inference_settings = {"confidence_threshold": 0.5} # Optional
 annotation: Prediction = model.predict(image=image, settings=inference_settings)
+model.predict(image=image, params=params)????
+model.predict(image=image, opts=opts)????
 ```
 
 Multiple Images:
@@ -159,6 +179,10 @@ inference_settings = {"confidence_threshold": 0.5} # Optional
 predictions: List[Prediction] = model.predict(image=images, settings=inference_settings)
 ```
 #### Predict video
+
+detach (video / project / dataset)
++stop
+whle true sleep
 
 ```python
 # str path to video
@@ -202,9 +226,33 @@ predictions: List[Prediction] = model.predict(dir=dir, output=output, settings=i
 dataset = 123
 
 inference_settings = {"confidence_threshold": 0.5} # Optional
-inplace = True # Optional. Default is False. If True, annotations will be uploaded to the dataset
+inplace = True # merge replace smart merge # Optional. Default is False. If True, annotations will be uploaded to the dataset
 predictions: List[Prediction] = model.predict(dataset=dataset, inplace=inplace, settings=inference_settings)
 ```
+
+simple example
+for image in api.dataset():
+  ann = mode1.predict(image)
+
+model ansamble - low priority
+for image in api.dataset():
+  ann = mode1.predict(image)
+  for bbox in ann:
+    crop
+    label = model2.predict(image)
+  api.annotation.upload(image, ann, )
+
+
+batched example
+
+mega optimal example
+
+
+detach corutine?? example
+
+iterator???
+inplace
+detach?
 
 #### Predict project
 
@@ -247,6 +295,8 @@ Optionally, you can add the following parameters to the command:
   --device cuda \
   --settings confidence_threshold=0.5
 ```
+
+пример что 
 
 ### Predict using API
 
