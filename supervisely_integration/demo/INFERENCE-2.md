@@ -3,7 +3,7 @@
 **Table of Contents (only for this readme):**
 
 - [Predict in One Click](#predict-in-one-click)
-- [🔴 Deploy ~~Serve~~ Model in Supervisely Platform](#serve-model-in-supervisely-platform)
+- [Deploy Model in Supervisely Platform](#serve-model-in-supervisely-platform)
 - [Inference via API](#inference-via-api)
 - [Using Model Outside of Supervisely Platform](#using-model-outside-of-supervisely-platform)
   - [Get predictions in your code](#get-predictions-in-your-code)
@@ -26,13 +26,21 @@ You can apply your model in a single click. Select the input project and dataset
 
 > You can also get predictions with **Applying Apps**, such as [Apply NN to Images](https://ecosystem.supervisely.com/apps/nn-image-labeling/project-dataset) or [Apply NN to Video](https://ecosystem.supervisely.com/apps/apply-nn-to-videos-project). Read more in documentation [Apply Model in Platform](https://docs.supervisely.com/neural-networks/overview-1/supervisely-serving-apps#apply-model-in-platform).
 
-## Deploy ~~Serve~~ Model in Supervisely Platform
+## Deploy Model in Supervisely Platform
 
 To deploy a model on the platform, we use [Supervisely Serving Apps](https://docs.supervisely.com/neural-networks/overview-1/supervisely-serving-apps). For your model use the {Serve RT-DETRv2} Serving App:
 
 🔴 *(Clickable widget)*
 [Serve RT-DETRv2 App](img/serving-app.png)
 
+
+🔴 - agent_id переименовать? server_id?
+🔴 - запуск агента и установка зависимостией - сделано коля
+🔴 - checkpoint="supervisely.com/files/123/a/b/c.pth" + web? вместо team_id + path
+🔴 - в checkpoint нужно защивать инфу experiemnt dict в котором все - версия апы, метаданные
+
+
+### Deploy using Supervisely SDK
 Alternatively, you can use [Supervisely SDK](https://github.com/supervisely/supervisely) to deploy the model on the platform:
 
 ```python
@@ -44,63 +52,60 @@ from dotenv import load_dotenv
 load_dotenv(os.path.expanduser("~/supervisely.env"))
 
 api = sly.Api()
-
-🔴 - agent_id переименовать? server_id?
-🔴 - запуск агента и установка зависимостией - сделано коля
-🔴 - artifacts_dir rename checkpoint="supervisely.com/files/123/a/b/c.pth" + web?
-🔴 - по умолчанию агент автоматом выбирается в команде с большим gpu а если нет то напишет ворнинг или типа того
-🔴 - artifacts_dir оставить только ckpt, server, device?
-_model - может удалить
-
-api.nn.deploy.custom()
-api.nn.deploy.pretrained()
-
-🔴 - model = api.nn.deploy.custom_model?
-     api.nn.deploy.custom_model(checkpoint="...", train_id=777) - train_id
-     - в checkpoint нужно защивать инфу experiemnt dict в котором все - версия апы, метаданные
-🔴 - api.nn.deploy.pretrained_model?
-model = api.nn.deploy_custom_model(
-  agent_id=123, # Можно сделать опциональным, сейчас обязательный
-  artifacts_dir="path/to/model", # автоподстановка при рендере
-  team_id=123, # автоподстановка при рендере
-  🔴device="",
-  checkpoint="123/a/b/c.pth"
-)
-
-# Еще вариант деплоя, который можно добавить в эту доку. Для деплоя нужно знать task_id, он будет автоподставляться при рендере.
-# Можно добавить метод, который api.nn.get_experiment_info и api.nn.deploy.deploy_custom_model_from_experiment_info объеденит.
-# Например api.nn.deploy.from_train_task(task_id=123)
-experiment = api.nn.train.get_info(task_id=123)
-experiment = api.nn.train.run(task_id=123)
-~~experiment = api.nn.get_train_info(task_id=123)~~ # task_id автоподстановка при рендере
-~~task_info = api.nn.deploy.deploy_custom_model_from_experiment_info(agent_id, experiment_info)~~ # Это имя мы с Максом Елисеевым обсуждали, но я бы сократил до api.nn.deploy.from_experiment_info
-
-~~model = api.nn.connect_to_model(task_info["id"]) ~~# возвращает Session
-model = api.nn.connect(deploy_id=777) - если вызываем api.nn.deploy.custom_model то внутри если раздеплоена то коннектится к существующией? 
-
-🔴 - 
-
-🔴 - class ModelAPI: - класс отнаследовать в дубликат? ModelAPI? использовать session приватно без наследования потом переопредлеить все методы вызва внутри из сессии
-меняем докстринги
-🔴 - ModelAPI зачем в конструкторе отправлять много запросов? может делать в тот момент когюа используем и кешировать
-🔴 - ModelAPI.healthcheck() проверит и закеширует 
-🔴 - проверить что sly.Api в конструкторе не отправляет запросы - сергей делал там проверку на hhtp / https - возможно ее надо переносить on-demand
-🔴 - ModelAPI - подумать как в Session сделать api опциональным чтобы использовать при локальном коннекте вне платформу. в ModelAPI точно это не должно быть и делаться on-demand
-
 ```
-__session = api.nn.deploy_custom_model(task_id=777) train_id model_id
-можем ли мы внести понятие model_id<->file_hash? чтобы даже если пользователь перенес свой файл, все равно все работало__
 
-* Нет, насколько я понимаю, одного файла недостаточно. Нужен еще experiment_info
+🔴
+Проверить что sly.Api в конструкторе не отправляет запросы - сергей делал там проверку на hhtp / https - возможно ее надо переносить on-demand
+ModelAPI - подумать как в Session сделать api опциональным чтобы использовать при локальном коннекте вне платформу. в ModelAPI точно это не должно быть и делаться on-demand
+```Python
+class ModelApi:
+  def init(self, api, url):
+    self._api = api
+    self._session_url
+    self.session = None
+  @property
+  def session(self):
+    if self._session is None:
+      self._session = Session(self._api, self._session_url)
+    return self._session
+  def predict(self, *args):
+    return self.session.inference_x()
+  def healthcheck(self):
+    pass
+```
+🔴
+
+* With path to the model checkpoint:
+    ```python
+    model = api.nn.deploy.custom(
+        checkpoint="/experiments/path/to/checkpoint.pth"
+    )
+    ```
+
+* With train task id:
+    ```python
+    model = api.nn.deploy.custom(
+        train_id=123,
+    )
+    ```
+
+* Or you can deploy pretrained model:
+    ```python
+    model = api.nn.deploy.pretrained(framework="RT-DETRv2", model_name="RT-DETRv2-S")
+    ```
 
 > For more information, see [Deploy & Predict with Supervisely SDK](https://docs.supervisely.com/neural-networks/overview-1/deploy_and_predict_with_supervisely_sdk).
 
 
 ## Inference via API
 
-Every Served Model on the platform is available via API. You can get predictions using our convenient inference `Session` class in Supervisely SDK. Here's an example:
+Every Served Model on the platform is available via API. You can get predictions using our convenient inference `ModelApi` class in Supervisely SDK.
 
 ### 1. Connect to model
+
+If you deployed a model as shown in [Deploy using Supervisely SDK](#deploy-using-supervisely-sdk) then you already have the model object. Otherwise, you can connect to the model using the following code snippet:
+
+Initialize the API client:
 ```python
 import os
 import supervisely as sly
@@ -111,190 +116,120 @@ load_dotenv(os.path.expanduser("~/supervisely.env"))
 
 api = sly.Api()
 ```
-#### Option 1: Deploy the model via api as shown above
-```python
-team_id = 111 # автоподстановка при рендере
-model = api.nn.deploy_custom_model(
-  agent_id=1, # Можно сделать опциональным, сейчас обязательный
-  artifacts_dir="path/to/model", # автоподстановка при рендере
-  team_id=team_id,
-)
-```
-#### Option 2: Connect to already deployed model
-To connect to a model you will need to know the `session_id` of the model. You can get it from the UI or use the following code snippet:
-```python
-🔴 - 
-🔴 - 
 
-🔴 -workspace_id = 123 # автоподстановка при рендере
-нужно team_id - потому что сервалки привязаны к тимам а не воркспецсам и отображаются в сессиях
-
-🔴 - api.nn.deploy.get_running_models
-# тут будет автоподстановка при рендере для всех аргументов
-🔴 -model_info = api.nn.get_running_models()
-🔴 - api.nn.deploy.get_list() => ??? сессии? 
-🔴 - api.nn.deploy.shutdown(deploy_id=)
-🔴 - model.shutdown ???
-🔴 - model.stop() - останови бекграунд выпоолнеение ???
-
-~~model_info = api.nn.get_deployed_models(workspace_id, model_name="RT-DETRv2")[0]~~ - model_name - может использовать только framework
-🔴 -  model = вместо model_info
-model_info = api.nn.get_deployed_models(workspace_id, framework="RT-DETRv2")[0]
-model_info = api.nn.get_deployed_models(workspace_id, model_id=model_id)[0] # model_id пока мы не решили что это будет
-checkpoint вместо checkpoint_name
-model_info = api.nn.get_deployed_models(workspace_id, checkpoint_name="/path/to/best.pt")[0]
-model_info = api.nn.get_deployed_models(workspace_id, model="/path/to/best.pt")[0] # model это аргумент, в который можно передать что угодно. Пока по реализации не понятно
-~~model_info = api.nn.get_deployed_models(workspace_id, task_type="detection")[0]~~
-session_id = model_info.session_id
-```
-After you have the `session_id`, you can connect to the model:
+Select from the list of deployed models:
+🔴 team_id = 123 # автоподстановка при рендере, опциональная, ее можно получить либо из енва либо зная юзера.
 ```python
-model = api.nn.connect_to_model(session_id)
+framework = "RT-DETRv2" # Opitonal
+models = api.nn.get_running_models(framework=framework)
+model = models[0]
 ```
+
+Connect to the model by id:
+```python
+model_id = 123 🔴 - то же самое, что и task_id
+model = api.nn.connect(model_id)
+```
+
 ### 2. Predict
 
+#### Predict images
+
 ```python
-# without output - returns annotations
-annotation = model.predict(image=123) # image_id
-annotation = model.predict(image="/images/image1.jpg") # path in teamfiles
-annotations = model.predict(images=[123, 124]) # list of image_id 
-annotations = model.predict(images=["/images/image1.jpg", "/images/image2.jpg"]) # list of paths in teamfiles
-annotation = model.predict(video=123) # video_id
-frames_anns = model.predict(video="/videos/video1.mp4") # path in teamfiles
+class Prediction:
+    source: Union[str, int]
+    annotation: sly.Annotation
+    frame_index: Optional[int] # only for video frames
+```
 
+Single Image:
+```python
+# np.array
+image = np.array(Image.open(IMAGE_PATH).convert("RGB"))
+# str path to image
+image = "/a/b/c.jpg"
+# str url to image file in team files
+image = "https://a/b/c.jpg"
+# int image id
+image = 111
+
+inference_settings = {"confidence_threshold": 0.5} # Optional
+annotation: Prediction = model.predict(image=image, settings=inference_settings)
+```
+
+Multiple Images:
+```python
+# np.array
+images = [np.array(Image.open(image_path).convert("RGB")) for image_path in IMAGE_PATHS]
+# str path to image
+images = ["/a/b/c.jpg", "/a/b/d.jpg"]
+# str url to image file in team files
+images = ["https:supervisely.com/files/123/a/b/c.jpg", "https://supervisely.com/files/123/a/b/d.jpg"]
+# int image id
+images = [111, 222]
+
+inference_settings = {"confidence_threshold": 0.5} # Optional
+predictions: List[Prediction] = model.predict(image=images, settings=inference_settings)
+```
+#### Predict video
+
+```python
+# str path to video
+video = "/a/b/c.mp4"
+# str url to video file in team files
+video = "https://a/b/c.mp4"
+# int video id
+video = 111
+
+inference_settings = {"confidence_threshold": 0.5} # Optional
+predictions: List[Prediction] = model.predict(video=video, settings=inference_settings)
+```
+
+After you got predictions for video frames, you can apply tracking algorithm. You can use the following code:
+```python
+from supervisely.nn.tracking import track
 import boxmot
-RESULT =  boxmot.track(to-BOXMOT(frames_anns))
-video_ann = sly.Annotation(RESULT)
-api.video.annotation.upload(video_ann)
 
-# annotation_info = {"image_id": image_id, "annotation": annotation}
-annotation_infos = model.predict(project=123) # project_id # output=None
-annotation_infos = model.predict(dataset=123) # dataset_id # output=None
+device = "cuda:0
+tracker = boxmot.BotSort(reid_weights=Path('osnet_x0_25_msmt17.pt'), device=device, half=False)
+video_ann = track(tracker, predictions, video)
+```
 
-# with output - saves annotations to Supervisely
-# single image/video
-# save annotation inplace
-model.predict(image=123, output="inplace") 🔴 -  использовать только на проекте / датасете и возможно видео?
-or
-model.predict(image=123, inplace=True) 🔴 -  merge/ replace / mergeIoU / ?
+#### Predict directory
 
-or
-model.predict_image(123, output="inplace")
-or
-model.predict_image(123, inplace=True)
-# save annotation to the output_directory
-model.predict(image=123, output="/images/predictions")
-or
-model.predict(image=123, output_dir="/images/predictions")
-or
-model.predict_image(123, output="/images/predictions")
-or
-model.predict_image(123, output_dir="/images/predictions")
-# copy item and save annotation to the dataset
-model.predict(image=123, output=456)
-or
-model.predict(image=123, output_dataset=456)
-or
-model.predict_image(123, output=456)
-or
-model.predict_image(123, output_dataset=456)
+```python
+# str path to directory with images or videos
+directory = "/a/b/c"
+# str url to directory with images or videos in team files
+directory = "https://a/b/c"
 
-# multiple images/videos
-# save annotations inplace
-model.predict(images=[123, 124], output="inplace")
-or
-model.predict(images=[123, 124], inplace=True)
-or
-model.predict_images([123, 124], output="inplace")
-or
-model.predict_images([123, 124], inplace=True)
-# save annotations to the output_directory
-model.predict(images=[123, 124], output="/images/predictions")
-or
-model.predict(images=[123, 124], output_dir="/images/predictions")
-or
-model.predict_images([123, 124], output="/images/predictions")
-or
-model.predict_images([123, 124], output_dir="/images/predictions")
-# copy items and save annotations to the dataset
-model.predict(images=[123, 124], output=456)
-or
-model.predict(images=[123, 124], output_dataset=456)
-or
-model.predict_images([123, 124], output=456)
-or
-model.predict_images([123, 124], output_dataset=456)
+inference_settings = {"confidence_threshold": 0.5} # Optional
+output = "/a/b/c/predictions" # Optional. If not specified, annotations will be saved in the same directory
+predictions: List[Prediction] = model.predict(dir=dir, output=output, settings=inference_settings)
+```
 
-# directory
-# save annotations to the output_directory
-# if output dir is None, then save to input dir
-model.predict(images="/images/input", output="/images/predictions")
-or
-model.predict(images="/images/input", output_dir="/images/predictions")
-or
-model.predict_images("/images/input", output="/images/predictions")
-or
-model.predict_images("/images/input", output_dir="/images/predictions")
-# copy items and save annotations to the dataset
-model.predict(images="/images/input", output=456)
-or
-model.predict(images="/images/input", output_dataset=456)
-or
-model.predict_images("/images/input", output=456)
-or
-model.predict_images("/images/input", output_dataset=456)
+#### Predict dataset
 
-# dataset
-# save annotations inplace
-model.predict(dataset=123, output="inplace")
-or
-model.predict(dataset=123, inplace=True)
-or
-model.predict_dataset(123, output="inplace")
-or
-model.predict_dataset(123, inplace=True)
-# save annotations to the output_directory
-model.predict(dataset=123, output="/images/predictions")
-or
-model.predict(dataset=123, output_dir="/images/predictions")
-or
-model.predict_dataset(123, output="/images/predictions")
-or
-model.predict_dataset(123, output_dir="/images/predictions")
-# create new dataset and save annotations to the project
-model.predict(dataset=123, output=456)
-or
-model.predict(dataset=123, output_project=456)
-or
-model.predict_dataset(123, output=456)
-or
-model.predict_dataset(123, output_project=456)
+```python
+# int dataset id
+dataset = 123
 
-# project
-# save annotations inplace
-model.predict(project=123, output="inplace")
-or
-model.predict(project=123, inplace=True)
-or
-model.predict_project(123, output="inplace")
-or
-model.predict_project(123, inplace=True)
-# save annotations to the output_directory
-model.predict(project=123, output="/images/predictions")
-or
-model.predict(project=123, output_dir="/images/predictions")
-or
-model.predict_project(123, output="/images/predictions")
-or
-model.predict_project(123, output_dir="/images/predictions")
-# create project and save annotations to the workspace
-model.predict(project=123, output=456)
-or
-model.predict(project=123, output_workspace=456)
-or
-model.predict_project(123, output=456)
-or
-model.predict_project(123, output_workspace=456)
+inference_settings = {"confidence_threshold": 0.5} # Optional
+inplace = True # Optional. Default is False. If True, annotations will be uploaded to the dataset
+predictions: List[Prediction] = model.predict(dataset=dataset, inplace=inplace, settings=inference_settings)
+```
+
+#### Predict project
+
+```python
+# str path to a project directory
+project = "/a/b/c"
+# int project id
+project = 123
+
+inference_settings = {"confidence_threshold": 0.5} # Optional
+inplace = True # Optional. Default is False. If True, annotations will be either uploaded to the project or saved in the same directory
+predictions: List[Prediction] = model.predict(project=project, inplace=inplace, settings=inference_settings)
 ```
 
 ### 3. Stop the model
@@ -302,77 +237,16 @@ model.predict_project(123, output_workspace=456)
 ```python
 model.shutdown()
 ```
+or
+```python
+api.nn.deploy.stop(model_id)
+```
 
 > For more information, see [Inference API Tutorial](https://docs.supervisely.com/neural-networks/inference-api).
 
 ## Using Model Outside of Supervisely Platform
 
-### Deploy in a Docker Container
-
-Deploying in a Docker Container is a convenient way to run a model without needing to install dependencies on your machine. You can use our pre-built docker image with the model implementation.
-
-Можно при релизе билдить новый образ rt-detrv2:<app-version> с кодом репы, это будет проще и быстрее. В докерфайле прописать 
-```Dockerfile
-FROM supervisely/rt-detrv2-base:v1
-COPY . /app
-ENTRYPOINT ["sh", "-c", "PYTHONPATH=\"${PWD}:${PYTHONPATH}\" exec python3 supervisely_integration/serve/main.py \"$@\"", "sh"]
-```
-и предикт с помощью контейнера будет таким:
-```bash
-docker run \
-  --runtime=nvidia \
-  -v "./models:/models" \ # < path to downloaded models directory 
-  # -v "./data:/data" \ # < ?
-  -v "./input:/input" \ # < path to input directory
-  -v "./output:/output" \ # < path to output directory
-  supervisely/rt-detrv2 ????? latest \
-  = чтобы не было проблем - нужно в чекпоинт сохранть дикто (версии апы, experiment info)
-
-  predict "image.jpg" \ # < will search it inside of /input
-  --model "/models/392_RT-DETRv2/checkpoints/best.pth" \
-  --device cuda \
-  --settings confidence_threshold=0.5 \
-  # --output ./predictions # < defaults to /output
-```
-В таком случае, даже не надо будет клонировать репу, можно просто скачать модели и запустить контейнер с нужными параметрами.
-
-Можно сделать баш скрипт, который будет запускать контейнер с нужными параметрами.
-usage:
-```bash
-predict.sh -i <image> -m <model path> -s <settings>
-```
-внутри он будет вызывать докер ран с нужными параметрами. Подставлять вольюмы сам и тд.
-например хочу проинферить картинку с путем /a/b/c.jpg, модель /d/e/f.pth
-тогда скрипт будет вызывать
-```bash
-docker run \
-  --runtime=nvidia \
-  -v "/a/b:/input" \
-  -v "/d/e:/models" \
-  -v "./output:/output" \
-  supervisely/rt-detrv2:1.0.11 \
-  predict "c.jpg" \
-  --model "/models/f.pth" \
-  --device cuda \
-  --settings confidence_threshold=0.5
-```
-
-В supervisely CLI добавить методы
-supervisely deploy и supervisely predict, они будет по чекпоинту определять эпу и запускать контейнер как выше
-
-#### 1. Clone repository # НЕ ОБЯЗАТЕЛЬНО
-
-🔴🔴🔴 Можно убрать этот шаг
-
-Clone our [RT-DETRv2](https://github.com/supervisely-ecosystem/RT-DETRv2) fork with the model implementation.
-
-```bash
-git clone https://github.com/supervisely-ecosystem/RT-DETRv2
-cd RT-DETRv2
-```
-
-#### 2. Download checkpoint
-
+To use the model outside of the Supervisely platform, you will first need to download the model files.
 You can download the entire folder containing your model files and checkpoints, or download only the necessary files:
 
 🔴🔴🔴 кнопка "download model.zip"
@@ -381,13 +255,48 @@ You can download the entire folder containing your model files and checkpoints, 
 
 For example, create a folder `models` on your machine, place there your downloaded models. You had to specify a path to your model later.
 
-#### 3. Pull Docker Image
 
-🔴🔴🔴 Можно скипнуть этот шаг
+### Deploy in a Docker Container
+
+Deploying in a Docker Container is a convenient way to run a model without needing to install dependencies on your machine. You can use our pre-built docker image with the model implementation.
+
+🔴
+Можно при релизе билдить новый образ rt-detrv2:<app-version> с кодом репы, это будет проще и быстрее. В докерфайле прописать 
+```Dockerfile
+FROM supervisely/rt-detrv2-base:v1
+COPY . /app
+ENTRYPOINT ["sh", "-c", "PYTHONPATH=\"${PWD}:${PYTHONPATH}\" exec python3 supervisely_integration/serve/main.py \"$@\"", "sh"]
+```
+🔴
 
 ```bash
-docker pull supervisely/rt-detrv2:1.0.11
+docker run \
+--runtime=nvidia \
+-v "./models:/models" \
+-v "./data:/input" \
+-v "./predictions:/output" \
+-p 8080:8000 \
+supervisely/rt-detrv2-app:latest \
+deploy \
+--model "/f.pth" \
 ```
+
+Here is the description of the parameters:
+* -v "./models:/models" - mount the "models" directory as model directory inside the container.
+* -v "./data:/input" - mount the "data" directory as input directory inside the container. When predicting, you will be able to specify the path to the image or directory you want to process, relative to the "data" directory.
+* -v "./predictions:/output" - mount the "predictions" directory as output directory inside the container.
+* -p 8080:8000 - expose the port 8000 of the container to the port 8080 of your machine. The model will be available at http://localhost:8080
+* supervisely/rt-detrv2-app:latest - the name and the version of the docker image. You can specify older versions if needed.
+* deploy - the command to deploy the model.
+
+Optionally, you can add the following parameters to the command:
+```bash
+--device cuda
+```
+
+В supervisely CLI добавить методы
+supervisely deploy и supervisely predict, они будет по чекпоинту определять эпу и запускать контейнер как выше
+
 
 #### 4. Predict
 ##### Using Supervisely SDK
