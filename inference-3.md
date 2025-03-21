@@ -1,8 +1,14 @@
-## Your experiment info
+# Demo: Inference & Deployment
 
-Оглавление
-Short usecase explanation
-tqdm
+**Table of Contents (only for this readme):**
+
+- [Deploy model using API](#deploy-model-using-api)
+- [Using Model Outside of Supervisely Platform](#using-model-outside-of-supervisely-platform)
+  - [Deploy model using Docker](#deploy-model-using-docker)
+  - [Deploy model using Python](#deploy-model-using-python)
+- [Predict using SDK](#predict-using-sdk)
+- [Predict using docker](#predict-using-docker)
+- [Predict using API](#predict-using-api)
 
 ## Deploy
 
