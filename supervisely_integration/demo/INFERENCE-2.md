@@ -68,10 +68,11 @@ class ModelApi:
     if self._session is None:
       self._session = Session(self._api, self._session_url)
     return self._session
-  def predict(self, *args):
-    return self.session.inference_x()
-  def healthcheck(self):
-    pass
+  def predcit():
+  def stop():
+  def shutdown():
+  def get_info():
+  def healthcheck():
 ```
 🔴
 
@@ -118,7 +119,49 @@ api = sly.Api()
 ```
 
 Select from the list of deployed models:
-🔴 team_id = 123 # автоподстановка при рендере, опциональная, ее можно получить либо из енва либо зная юзера.
+```python
+team_id = 123 # Optional # 🔴 автоподстановка при рендере, опциональная, ее можно получить либо из енва либо зная юзера.
+framework = "RT-DETRv2" # Opitonal
+models = api.nn.get_running_models(framework=framework, team_id=team_id)
+model = models[0]
+```
+
+Connect to the model by id:
+```python
+model_id = 123
+model = api.nn.connect(model_id)
+```
+
+Or connect to the model by url if you deployed it as an API server as shown in the [Using Model Outside of Supervisely Platform](#using-model-outside-of-supervisely-platform) section:
+```python
+url = "localhost:8080"
+model = api.nn.connect(url)
+```
+
+### 2. Predict
+
+```python
+class ModelApi:
+    def predcit():
+    def stop():
+    def shutdown():
+    def get_info():
+    def healthcheck():
+```
+
+Initialize API client:
+```python
+import os
+import supervisely as sly
+from dotenv import load_dotenv
+
+# Ensure you've set API_TOKEN and SERVER_ADDRESS environment variables.
+load_dotenv(os.path.expanduser("~/supervisely.env"))
+
+api = sly.Api()
+```
+
+Select from the list of deployed models:
 ```python
 framework = "RT-DETRv2" # Opitonal
 models = api.nn.get_running_models(framework=framework)
@@ -127,20 +170,61 @@ model = models[0]
 
 Connect to the model by id:
 ```python
-model_id = 123 🔴 - то же самое, что и task_id
+model_id = 123
 model = api.nn.connect(model_id)
 ```
 
-### 2. Predict
+Or connect to the model by url if you deployed it as an API server as shown in the [Using Model Outside of Supervisely Platform](#using-model-outside-of-supervisely-platform) section:
+```python
+url = "localhost:8080"
+model = api.nn.connect(url)
+```
 
-#### Predict images
+The method that is used to predict is `predict`. It allows you to predict images, videos, directories, datasets, and projects. The method returns a list of objectes of class `Prediciton`. This method is optimized and allows you to predict efficiently even the largest datasets.
+You can run the inferenece in detached mode, in that case the method returns an iterable class 🔴`InferenceSession` that yields predictions as they are being received from the model.
+You can stop the prediction process at any time by calling the `stop` method of the `InferenceSession` object.
 
 ```python
 class Prediction:
     source: Union[str, int]
     annotation: sly.Annotation
-    frame_index: Optional[int] # only for video frames
+    image_id: Optional[int]
+    image_name: Optional[str]
+    dataset_id: Optional[int]
+    frame_index: Optional[int]
 ```
+
+```python
+class InferenceSession:
+    def done() -> bool:
+    def get(timeout: Optional[int] = None) -> Prediction:
+    def get_nowait() -> Union[Prediction, None]:
+    def stop():
+```
+
+Get predictions
+```pytgon
+annotations = model.predict(source, params)
+```
+
+Get predictions in detached mode. In this simple example we will get predictions for 10 seconds and then stop the session.
+```python
+with model.predict(source, params, detached=True) as session:
+  predictions = []
+  timeout = 10
+  t = time.monotonic()
+  while time.monotonic() - t < timeout:
+      if session.done():
+          break
+      # prediction = session.get(timeout=10) # blocking
+      prediction = session.get_nowait() # non blocking call
+      if prediction is not None:
+          predictions.append(prediction)
+  session.stop()
+  print(f"Predicted {len(predictions)} images in {timeout} seconds")
+```
+
+#### Predict images
 
 Single Image:
 ```python
@@ -153,8 +237,8 @@ image = "https://a/b/c.jpg"
 # int image id
 image = 111
 
-inference_settings = {"confidence_threshold": 0.5} # Optional
-annotation: Prediction = model.predict(image=image, settings=inference_settings)
+params = {"confidence_threshold": 0.5} # Optional
+prediction: Prediction = model.predict(image=image, params=params)
 ```
 
 Multiple Images:
@@ -168,9 +252,29 @@ images = ["https:supervisely.com/files/123/a/b/c.jpg", "https://supervisely.com/
 # int image id
 images = [111, 222]
 
-inference_settings = {"confidence_threshold": 0.5} # Optional
-predictions: List[Prediction] = model.predict(image=images, settings=inference_settings)
+# Processing images one by one
+params = {"confidence_threshold": 0.5} # Optional
+for image in images:
+    prediction: Prediction = model.predict(image=image, params=params)
+    json.dump(prediction.annotation.to_json(), open(f"{image}.json", "w"))
+
+# Processing images in batch
+predictions: List[Prediction] = model.predict(image=images, params=params)
+json.dump([prediction.annotation.to_json() for prediction in predictions], open("predictions.json", "w"))
+
+🔴 # if predict yields annotations
+# for image, annotation in zip(images, model.predict(image=images, params=params)):
+#     api.annotation.upload(image, annotation) 
+
+# Processing in detached mode
+with model.predict(image=images, params=params, detached=True) as session:
+    for prediction in session:
+        api.annotation.upload(prediction.source, prediction.annotation)
+        
+for prediction in model.predict(image=images, params=params):
+    json.dump(prediction.annotation.to_json(), open(f"{prediction.source}.json", "w"))
 ```
+
 #### Predict video
 
 ```python
@@ -181,8 +285,14 @@ video = "https://a/b/c.mp4"
 # int video id
 video = 111
 
-inference_settings = {"confidence_threshold": 0.5} # Optional
-predictions: List[Prediction] = model.predict(video=video, settings=inference_settings)
+params = {"confidence_threshold": 0.5} # Optional
+
+predictions: List[Prediction] = model.predict(video=video, params=params)
+
+# Processing video in detached mode
+with model.predict(video=video, params=params, detached=True) as session:
+    for prediction in session:
+        json.dump(prediction.annotation.to_json(), open(f"{prediction.source}_{prediction.frame_index}.json", "w"))
 ```
 
 After you got predictions for video frames, you can apply tracking algorithm. You can use the following code:
@@ -190,9 +300,9 @@ After you got predictions for video frames, you can apply tracking algorithm. Yo
 from supervisely.nn.tracking import track
 import boxmot
 
-device = "cuda:0
+device = "cuda:0"
 tracker = boxmot.BotSort(reid_weights=Path('osnet_x0_25_msmt17.pt'), device=device, half=False)
-video_ann = track(tracker, predictions, video)
+video_ann: VideoAnnotation = track(tracker, predictions, video)
 ```
 
 #### Predict directory
@@ -203,9 +313,15 @@ directory = "/a/b/c"
 # str url to directory with images or videos in team files
 directory = "https://a/b/c"
 
-inference_settings = {"confidence_threshold": 0.5} # Optional
-output = "/a/b/c/predictions" # Optional. If not specified, annotations will be saved in the same directory
-predictions: List[Prediction] = model.predict(dir=dir, output=output, settings=inference_settings)
+params = {"confidence_threshold": 0.5} # Optional
+recursive = True # Optional. Default is False. If True, the model will predict images in subdirectories
+
+predictions: List[Prediction] = model.predict(dir=dir, params=params, recursive=True)
+
+# Processing in detached mode
+with model.predict(dir=dir, params=params, recursive=True, detached=True) as session:
+    for prediction in session:
+        json.dump(prediction.annotation.to_json(), open(f"{prediction.source}.json", "w"))
 ```
 
 #### Predict dataset
@@ -214,10 +330,29 @@ predictions: List[Prediction] = model.predict(dir=dir, output=output, settings=i
 # int dataset id
 dataset = 123
 
-inference_settings = {"confidence_threshold": 0.5} # Optional
-inplace = True # Optional. Default is False. If True, annotations will be uploaded to the dataset
-predictions: List[Prediction] = model.predict(dataset=dataset, inplace=inplace, settings=inference_settings)
+params = {"confidence_threshold": 0.5} # Optional
+upload = True # merge replace smart merge # Optional. Default is False. If True, annotations will be uploaded to the dataset
+mode: Literal["append", "replace"] = "append" # Optional. Default is "append". If "replace", all annotations in the dataset will be replaced with the new ones.
+
+predictions: List[Prediction] = model.predict(dataset=dataset, upload=upload, mode=mode, params=params)
+
+# Processing in detached mode
+with model.predict(dataset=dataset, upload=upload, mode=mode, params=params, detached=True) as session:
+    for prediction in session:
+        json.dump(prediction.annotation.to_json(), open(f"{prediction.image_name}.json", "w"))
 ```
+
+simple example
+for image in api.dataset():
+  ann = mode1.predict(image)
+
+model ansamble - low priority
+for image in api.dataset():
+  ann = mode1.predict(image)
+  for bbox in ann:
+    crop
+    label = model2.predict(image)
+  api.annotation.upload(image, ann, )
 
 #### Predict project
 
@@ -227,9 +362,62 @@ project = "/a/b/c"
 # int project id
 project = 123
 
-inference_settings = {"confidence_threshold": 0.5} # Optional
-inplace = True # Optional. Default is False. If True, annotations will be either uploaded to the project or saved in the same directory
-predictions: List[Prediction] = model.predict(project=project, inplace=inplace, settings=inference_settings)
+params = {"confidence_threshold": 0.5} # Optional
+upload = True # Optional. Default is False. If True, annotations will be uploaded to the project
+mode: Literal["append", "replace"] = "append" # Optional. Default is "append". If "replace", all annotations in the project will be replaced with the new ones.
+
+predictions: List[Prediction] = model.predict(project=project, upload=upload, mode=mode, params=params)
+
+# Processing in detached mode
+with model.predict(project=project, upload=upload, mode=mode, params=params, detached=True) as session:
+    for prediction in queue:
+        json.dump(prediction.annotation.to_json(), open(f"{prediction.image_name}.json", "w"))
+
+```
+
+#### More examples
+
+Model ensemble:
+```python
+with model1.predict(project=project, detached=True) as session1, model2.predict(project=project, detached=True) as session2:
+    for prediction1, prediction2 in zip(session1, session2):
+        consensus = process_predictions(prediction1, prediction2)
+        api.annotation.upload(prediction1.image_id, consensus)
+```
+
+Refine predictions with another model:
+```python
+with detection_model.predict(project=project, detached=True) as session:
+    for prediction in session:
+        to_refine = []
+        labels = prediction.annotation.labels
+        for i, label in enumerate(labels):
+            conf = get_confidence(label)
+            if conf < 0.5:
+                to_refine.append(i)
+        if to_refine:
+            image = api.image.download_np(prediction.image_id)
+            crops = [get_crop(image, labels[i]) for i in to_refine]
+            refined_predictions = classification_model.predict(crops)
+            for i, refined_prediction in zip(to_refine, refined_predictions):
+                labels[i] = refined_prediction.annotation.labels[0]
+            prediction.annotation = prediction.annotation.clone(labels=labels)
+        api.annotation.upload(prediction.image_id, prediction.annotation)
+```
+
+Segmentation model + classification model:
+```python
+with segmentation_model.predict(project=project, detached=True) as seg_session:
+    for seg_prediction in seg_session:
+        labels = seg_prediction.annotation.labels
+        image = api.image.download_np(seg_prediction.image_id)
+        crops = []
+        for label in labels:
+            crops.append(get_crop(image, label))
+        classes = classifyer_model.predict(crops)
+        labels = [update_class(label, class) for label, class in zip(labels, classes)]
+        seg_prediction.annotation = seg_prediction.annotation.clone(labels=labels)
+        api.annotation.upload(seg_prediction.image_id, seg_prediction.annotation)
 ```
 
 ### 3. Stop the model
@@ -260,6 +448,33 @@ For example, create a folder `models` on your machine, place there your download
 
 Deploying in a Docker Container is a convenient way to run a model without needing to install dependencies on your machine. You can use our pre-built docker image with the model implementation.
 
+#### Using Docker run command
+
+Predcit with custom model:
+```bash
+docker run \
+  --env-file ~/supervisely.env \  # 🔴 Опционально. Если нет, то предикт проекта не будет работать. Если использовать баш скрипт или команду supervisely deploy/predict, то можно искать автоматически в дефолтных местах
+  --runtime=nvidia \
+  -v "<user_input_dir>:/input" \
+  -v "<user_models_dir>:/models" \
+  -v "<user_output_dir>:/output" \
+  supervisely/rt-detrv2:1.0.11 \
+  predict "<user_image_name>" \
+  --model "<model path inside of models dir>" \ # .pth file
+  --device cuda \
+  --settings confidence_threshold=0.5
+```
+
+Deploy custom model:
+```bash
+docker run \
+  --runtime=nvidia \
+  -v "<user_models_dir>:/models" \
+  -p <host_port>:8000 \
+  supervisely/rt-detrv2:1.0.11 \
+  deploy \
+  --model "<model path inside of models dir>" \ # .pth file
+```
 🔴
 Можно при релизе билдить новый образ rt-detrv2:<app-version> с кодом репы, это будет проще и быстрее. В докерфайле прописать 
 ```Dockerfile
@@ -294,12 +509,23 @@ Optionally, you can add the following parameters to the command:
 --device cuda
 ```
 
-В supervisely CLI добавить методы
-supervisely deploy и supervisely predict, они будет по чекпоинту определять эпу и запускать контейнер как выше
+Then we can predict using the API:
+Either using Supervisely SDK or curl:
 
+Тут надо описать какие параметры принимает API и какие ответы возвращает
 
-#### 4. Predict
-##### Using Supervisely SDK
+```python
+import supervisely as sly
+model = sly.api.nn.connect(url="localhost:<host_port>")
+annotation = model.predict(image="image.jpg")
+```
+```bash
+curl -X POST http://localhost:<host_port>/predict \
+  -d '{"image": "image.jpg"}' > prediction.json
+```
+
+#### Using Supervisely CLI
+
 ```bash
 pip install -U supervisely
 ```
@@ -356,47 +582,8 @@ supervisely predict \
   --output "./predictions"
 ```
 
-##### Using Docker run command
-Predcit with custom model:
-```bash
-docker run \
-  --env-file ~/supervisely.env \  # 🔴 Опционально. Если нет, то предикт проекта не будет работать. Если использовать баш скрипт или команду supervisely deploy/predict, то можно искать автоматически в дефолтных местах
-  --runtime=nvidia \
-  -v "<user_input_dir>:/input" \
-  -v "<user_models_dir>:/models" \
-  -v "<user_output_dir>:/output" \
-  supervisely/rt-detrv2:1.0.11 \
-  predict "<user_image_name>" \
-  --model "<model path inside of models dir>" \ # .pth file
-  --device cuda \
-  --settings confidence_threshold=0.5
-```
-Deploy custom model:
-```bash
-docker run \
-  --runtime=nvidia \
-  -v "<user_models_dir>:/models" \
-  -p <host_port>:8000 \
-  supervisely/rt-detrv2:1.0.11 \
-  deploy \
-  --model "<model path inside of models dir>" \ # .pth file
-```
-Then we can predict using the API:
-Either using Supervisely SDK or curl:
-
-Тут надо описать какие параметры принимает API и какие ответы возвращает
-
-```python
-import supervisely as sly
-model = sly.api.nn.connect_to_model(session_url="localhost:<host_port>")
-annotation = model.predict(image="image.jpg")
-```
-```bash
-curl -X POST http://localhost:<host_port>/predict \
-  -d '{"image": "image.jpg"}' > prediction.json
-```
-
 > See more information in the [Deploy in Docker Container](https://docs.supervisely.com/neural-networks/overview-1/deploy_and_predict_with_supervisely_sdk#deploy-in-docker-container) documentation.
+
 
 ### Get predictions in your code
 
@@ -465,13 +652,6 @@ img = "/a/b/c.jpg"
 img = "https://a/b/c.jpg"
 img = 777
 img = [777, ]
-
-🔴🔴🔴🔴🔴🔴
-image
-video
-project
-dataset
-folder
 
 # Predict
 🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴 -- model.inference -> model.predict - чтобы было одинаково и единообразно
@@ -570,20 +750,6 @@ prediction = session.inference_image_path("image_01.jpg")
 
 # batch of images
 predictions = session.inference_image_paths(["image_01.jpg", "image_02.jpg"])
-```
-
-##### Predict with CLI
-
-Instead of deploying the model and using `Session` for predicting, you can deploy and predict in a single command.
-
-```bash
-PYTHONPATH="${PWD}:${PYTHONPATH}" \
-python ./supervisely_integration/serve/main.py \
-  predict "./image.jpg" \
-  --model "models/392_RT-DETRv2/checkpoints/best.pth" \
-  --device cuda \
-  --settings confidence_threshold=0.4 \
-  --output ./predictions
 ```
 
 > For the full list of arguments, see the documentation [Deploy Model as a Server](https://docs.supervisely.com/neural-networks/overview-1/deploy_and_predict_with_supervisely_sdk#id-4.-deploy).
@@ -720,73 +886,4 @@ return: {pred_project_id, inference_info}
 
 # 3. Generate charts and dashboards
 json_metrics = bench.generate_report()  🔴🔴🔴 need implement
-```
-
-
-## Apply Tracking algorithm
-
-You can apply tracking algorithm to your predicted annotations. For example, you can use [boxmot](https://github.com/mikel-brostrom/boxmot) package to track objects in video.
-
-```bash
-pip install supervisely
-pip install boxmot
-```
-
-```python
-# 1. Get your model predictions using one of the methods above or read from files
-annotation = model.predict(video="path")
-import json
-from supervisely import VideoAnnotation
-model_meta = json.load(open("model_meta.json"))
-annotation = VideoAnnotation.from_json(annotation, model_meta)
-
-# 2. Convert annotations to boxmot format
-from supervisely.tracking.boxmot import convert_to_boxmot_format
-detections, name2cat = convert_to_boxmot_format(annotation)
-# detections: N x (x, y, x, y, conf, category)
-# name2cat: {class_name: category}
-
-# 3. Apply tracking algorithm
-import boxmot
-device = "cuda:0"
-# Initialize tracker
-tracker = boxmot.BotSort(reid_weights=Path('osnet_x0_25_msmt17.pt'), device=device, half=False)
-
-video_ann = sly.nn.track(tracker, ferames, video)
-video_ann.preview(xxx)
-video_ann.preview(xxx)
-
-# Video capture setup
-import cv2
-vid = cv2.VideoCapture(0)
-
-frame_width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
-frame_height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
-frame_shape = (frame_height, frame_width)
-
-tracks = []
-frame_idx = 0
-while True:
-    # Read frame
-    ret, frame = vid.read()
-    if not ret:
-        break
-
-    # Get detections for current frame
-    dets = detections[frame_idx]
-    frame_idx += 1
-
-    # Update tracker
-    tracks.append(tracker.update(dets, frame))
-
-# Release resources
-vid.release()
-
-# Convert tracks to Supervisely format
-from supervisely.tracking.boxmot import convert_from_boxmot_format
-
-VideoAnnotation = convert_from_boxmot_format(annotation, model_meta, name2cat, tracks, frame_shape, frame_index)
-
-# Save Resulting VideoAnnotation
-json.dump(VideoAnnotation.to_json(), open("result.json", "w"))
 ```
