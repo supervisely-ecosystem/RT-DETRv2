@@ -10,9 +10,11 @@
   - [Deploy model as a server on your machine](#deploy-model-as-a-server-on-your-machine)
   - [Deploy in a Docker Container](#deploy-in-a-docker-container)
 - [Using Your Model as a Standalone PyTorch Model](#using-your-model-as-a-standalone-pytorch-model)
-- 🔴 onnx
-- 🔴 tensorrt
-- 🔴 tqdm
+- ❓ onnx
+- ❓ tensorrt
+- ❓ tqdm
+- ❓ - есть ли у нас контекст по пользователю - команда из env / или просто активная команда и тд, чтобы упростить количество аргументов типа team_id / agent_id и тд
+- 🔴 как сделан api yolo?
 
 > You can use your model in very different ways depending on your needs. For more information, please, refer to our full [Inference & Deployment](https://docs.supervisely.com/neural-networks/overview-1) documentation.
 
@@ -24,7 +26,7 @@ You can apply your model in a single click. Select the input project and dataset
 
 *(We add this selector right into the page)*
 
-🔴 Спрятал пока картинку чтобы не мешала восприятию
+Спрятал пока картинку чтобы не мешала восприятию
 [Selecting a project GIF (tmp)](https://developer.supervisely.com/~gitbook/image?url=https%3A%2F%2Fuser-images.githubusercontent.com%2F79905215%2F222367677-cdee343d-a841-4868-9106-10d3f44d9e76.gif&width=768&dpr=4&quality=100&sign=424c1477&sv=2)
 
 > You can also get predictions with **Applying Apps**, such as [Apply NN to Images](https://ecosystem.supervisely.com/apps/nn-image-labeling/project-dataset) or [Apply NN to Video](https://ecosystem.supervisely.com/apps/apply-nn-to-videos-project). Read more in documentation [Apply Model in Platform](https://docs.supervisely.com/neural-networks/overview-1/supervisely-serving-apps#apply-model-in-platform).
@@ -33,15 +35,15 @@ You can apply your model in a single click. Select the input project and dataset
 
 To deploy a model on the platform, we use [Supervisely Serving Apps](https://docs.supervisely.com/neural-networks/overview-1/supervisely-serving-apps). For your model use the {Serve RT-DETRv2} Serving App:
 
-🔴 *(Clickable widget)*
+*(Clickable widget)*
 [Serve RT-DETRv2 App](img/serving-app.png)
 
+❓ - это осталось или что с этими коментами?
 
 🔴 - agent_id переименовать? server_id?
 🔴 - запуск агента и установка зависимостией - сделано коля
 🔴 - checkpoint="supervisely.com/files/123/a/b/c.pth" + web? вместо team_id + path
 🔴 - в checkpoint нужно защивать инфу experiemnt dict в котором все - версия апы, метаданные
-
 
 ### Deploy using Supervisely SDK
 Alternatively, you can use [Supervisely SDK](https://github.com/supervisely/supervisely) to deploy the model on the platform:
@@ -59,6 +61,9 @@ api = sly.Api()
 🔴
 Проверить что sly.Api в конструкторе не отправляет запросы - сергей делал там проверку на hhtp / https - возможно ее надо переносить on-demand
 ModelAPI - подумать как в Session сделать api опциональным чтобы использовать при локальном коннекте вне платформу. в ModelAPI точно это не должно быть и делаться on-demand
+
+❓ - может сделаем api необязательным - или вообще его уберем?
+❓ - почему тут URL, можно ли узказать deploy_id
 ```Python
 class ModelApi:
   def init(self, api, url):
@@ -85,14 +90,14 @@ class ModelApi:
     )
     ```
 
-* With train task id:
+* With train task id: (❓ best / last / конкретный? может лучше сделать api.nn.get_checkpoints(train_id=123)->d: dict-> model = api.nn.deploy.custom(d["xxx"]))
     ```python
     model = api.nn.deploy.custom(
         train_id=123,
     )
     ```
 
-* Or you can deploy pretrained model:
+* Or you can deploy pretrained model (❓ - как получить список возмоных? и залистить их - типа хелпы):
     ```python
     model = api.nn.deploy.pretrained(framework="RT-DETRv2", model_name="RT-DETRv2-S")
     ```
@@ -129,6 +134,7 @@ model = models[0]
 ```
 
 Connect to the model by id:
+🔴 - откуда берется model_id? может лучше назвать deploy_id - по сути это task_id?
 ```python
 model_id = 123
 model = api.nn.connect(model_id)
@@ -144,7 +150,7 @@ model = api.nn.connect(url)
 
 ```python
 class ModelApi:
-    def predcit():
+    def predict():
     def stop():
     def shutdown():
     def get_info():
@@ -172,7 +178,7 @@ model = models[0]
 
 Connect to the model by id:
 ```python
-model_id = 123
+model_id = 123 🔴
 model = api.nn.connect(model_id)
 ```
 
@@ -186,6 +192,7 @@ The method that is used to predict is `predict`. It allows you to predict images
 You can run the inferenece in detached mode, in that case the method returns an iterable class 🔴`InferenceSession` that yields predictions as they are being received from the model.
 You can stop the prediction process at any time by calling the `stop` method of the `InferenceSession` object.
 
+🔴 - не до конца уверен что этот класс нужен
 ```python
 class Prediction:
     source: Union[str, int]
@@ -197,6 +204,7 @@ class Prediction:
 ```
 
 ```python
+🔴 - название тоже под вопросом
 class InferenceSession:
     def done() -> bool:
     def get(timeout: Optional[int] = None) -> Prediction:
@@ -211,6 +219,8 @@ annotations = model.predict(source, params)
 
 Get predictions in detached mode. In this simple example we will get predictions for 10 seconds and then stop the session.
 ```python
+🔴 - а нельзя проще через tqdm и генератор?
+🔴 - почему этот пример идет в самом верху перед остальными более простыми и базовыми методами?
 with model.predict(source, params, detached=True) as session:
   predictions = []
   timeout = 10
@@ -240,6 +250,7 @@ image = "https://a/b/c.jpg"
 image = 111
 
 params = {"confidence_threshold": 0.5} # Optional
+🔴 - как понять какие у модели есть поддерживаемые параметры, может это не в первом примере делать?
 prediction: Prediction = model.predict(image=image, params=params)
 ```
 
@@ -254,6 +265,7 @@ images = ["https:supervisely.com/files/123/a/b/c.jpg", "https://supervisely.com/
 # int image id
 images = [111, 222]
 
+🔴 по идее если мы предиктим на картинках, то нам PredictionDTO не нужен, он нужен возможно только в видео и dataset / project
 # Processing images one by one
 params = {"confidence_threshold": 0.5} # Optional
 for image in images:
@@ -264,7 +276,7 @@ for image in images:
 predictions: List[Prediction] = model.predict(image=images, params=params)
 json.dump([prediction.annotation.to_json() for prediction in predictions], open("predictions.json", "w"))
 
-🔴 # if predict yields annotations
+🔴 # if predict yields annotations - то есть это будет дефолтная реализация?
 # for image, annotation in zip(images, model.predict(image=images, params=params)):
 #     api.annotation.upload(image, annotation) 
 
@@ -292,6 +304,7 @@ params = {"confidence_threshold": 0.5} # Optional
 predictions: List[Prediction] = model.predict(video=video, params=params)
 
 # Processing video in detached mode
+🔴 - tqdm возможне
 with model.predict(video=video, params=params, detached=True) as session:
     for prediction in session:
         json.dump(prediction.annotation.to_json(), open(f"{prediction.source}_{prediction.frame_index}.json", "w"))
@@ -456,7 +469,7 @@ Predcit with custom model:
 ```bash
 docker run \
   --env-file ~/supervisely.env \  # 🔴 Опционально. Если нет, то предикт проекта не будет работать. Если использовать баш скрипт или команду supervisely deploy/predict, то можно искать автоматически в дефолтных местах
-  --runtime=nvidia \
+  --runtime=nvidia \ 🔴 - а это автоматом можно по чекпоинту понимать?
   -v "<user_input_dir>:/input" \
   -v "<user_models_dir>:/models" \
   -v "<user_output_dir>:/output" \
