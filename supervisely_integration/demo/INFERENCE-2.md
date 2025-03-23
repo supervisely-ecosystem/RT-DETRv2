@@ -14,6 +14,7 @@
 - ❓ tensorrt
 - ❓ tqdm
 - ❓ - есть ли у нас контекст по пользователю - команда из env / или просто активная команда и тд, чтобы упростить количество аргументов типа team_id / agent_id и тд
+- ❓ - удобно ли нам будет это использовать в других приложениях?
 - 🔴 как сделан api yolo?
 
 > You can use your model in very different ways depending on your needs. For more information, please, refer to our full [Inference & Deployment](https://docs.supervisely.com/neural-networks/overview-1) documentation.
