@@ -10,6 +10,9 @@
   - [Deploy model as a server on your machine](#deploy-model-as-a-server-on-your-machine)
   - [Deploy in a Docker Container](#deploy-in-a-docker-container)
 - [Using Your Model as a Standalone PyTorch Model](#using-your-model-as-a-standalone-pytorch-model)
+- 🔴 onnx
+- 🔴 tensorrt
+- 🔴 tqdm
 
 > You can use your model in very different ways depending on your needs. For more information, please, refer to our full [Inference & Deployment](https://docs.supervisely.com/neural-networks/overview-1) documentation.
 
@@ -53,7 +56,6 @@ load_dotenv(os.path.expanduser("~/supervisely.env"))
 
 api = sly.Api()
 ```
-
 🔴
 Проверить что sly.Api в конструкторе не отправляет запросы - сергей делал там проверку на hhtp / https - возможно ее надо переносить on-demand
 ModelAPI - подумать как в Session сделать api опциональным чтобы использовать при локальном коннекте вне платформу. в ModelAPI точно это не должно быть и делаться on-demand
