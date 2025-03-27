@@ -159,10 +159,12 @@ model = api.nn.connect(url)
 ```python
 class ModelApi:
     def predict():
+    def predict_detached():
     def stop():
     def shutdown():
-    def get_info():
+    def get_info(): deploy_info
     def healthcheck():
+    def monitor(): GPU memory, stats (request count, RPM, очередь на будущие предикты), errors
 ```
 
 Initialize API client:
@@ -204,24 +206,51 @@ You can stop the prediction process at any time by calling the `stop` method of 
 ```python
 class Prediction:
     source: Union[str, int]
+    image_path: Optional[str]
+    image: Optional[np.ndarray]
     annotation: sly.Annotation
     image_id: Optional[int]
     image_name: Optional[str]
     dataset_id: Optional[int]
+    project_id: Optional[int]
+
+
+class PredictionFrame(Prediction):
+    source: Union[str, int]
+    video_path: Optional[str]
+    annotation: sly.Annotation
+    video_id: Optional[int]
+    video_name: Optional[str]
+    dataset_id: Optional[int]
+    project_id: Optional[int]
     frame_index: Optional[int]
+    read_image(self) -> np.ndarray
+
+  
+class PredictionTrack(Prediction):
+    source: Union[str, int]
+    video_path: Optional[str]
+    annotation: sly.VideoAnnotation
+    video_id: Optional[int]
+    video_name: Optional[str]
+    dataset_id: Optional[int]
+    project_id: Optional[int]
 ```
 
 ```python
 ❓ - название тоже под вопросом. 🔴 Да, я тоже не уверен в названии, но не придумал лучше
-class InferenceSession:
-    def done() -> bool:
-    def get(timeout: Optional[int] = None) -> Prediction:
-    def get_nowait() -> Union[Prediction, None]:
+class PredictionSession:
+    def __next__():
+    def is_done() -> bool:
+    def get_prediction(timeout: Optional[int] = None, block=True) -> Prediction:  # 🔴 подумать над именем
+    # def get_nowait() -> Union[Prediction, None]:
     def stop():
+    def status():  progress, message, error traceback, context (project_id, dataset_id ...)
+    def pause() ???
 ```
 
 Get predictions
-```pytgon
+```python
 annotations = model.predict(source, params)
 ```
 
@@ -250,6 +279,10 @@ image = 111
 params = {"confidence_threshold": 0.5} # Optional
 ❓ - как понять какие у модели есть поддерживаемые параметры, может это не в первом примере делать? 🔴 Можно получить список параметров модели
 prediction: Prediction = model.predict(image=image, params=params)
+```
+
+```python
+session: PredictionSession = model.predict_detach(image=image, params=params)
 ```
 
 Multiple Images:
@@ -331,10 +364,10 @@ directory = "https://a/b/c"
 params = {"confidence_threshold": 0.5} # Optional
 recursive = True # Optional. Default is False. If True, the model will predict images in subdirectories
 
-predictions: List[Prediction] = model.predict(dir=dir, params=params, recursive=True)
+predictions: List[Prediction] = model.predict(image=directory, params=params, recursive=True)
 
 # Processing in detached mode
-with model.predict(dir=dir, params=params, recursive=True, detached=True) as session:
+with model.predict(image=directory, params=params, recursive=True, detached=True) as session:
     for prediction in session:
         json.dump(prediction.annotation.to_json(), open(f"{prediction.source}.json", "w"))
 ```
@@ -343,16 +376,16 @@ with model.predict(dir=dir, params=params, recursive=True, detached=True) as ses
 
 ```python
 # int dataset id
-dataset = 123
+dataset_id = 123
 
 params = {"confidence_threshold": 0.5} # Optional
 upload = True # merge replace smart merge # Optional. Default is False. If True, annotations will be uploaded to the dataset
 mode: Literal["append", "replace"] = "append" # Optional. Default is "append". If "replace", all annotations in the dataset will be replaced with the new ones.
 
-predictions: List[Prediction] = model.predict(dataset=dataset, upload=upload, mode=mode, params=params)
+predictions: List[Prediction] = model.predict(dataset_id=dataset_id, upload=upload, mode=mode, params=params)
 
 # Processing in detached mode
-with model.predict(dataset=dataset, upload=upload, mode=mode, params=params, detached=True) as session:
+with model.predict(dataset_id=dataset_id, upload=upload, mode=mode, params=params, detached=True) as session:
     for prediction in session:
         json.dump(prediction.annotation.to_json(), open(f"{prediction.image_name}.json", "w"))
 ```
@@ -373,18 +406,18 @@ for image in api.dataset():
 
 ```python
 # str path to a project directory
-project = "/a/b/c"
+project_path = "/a/b/c"
 # int project id
-project = 123
+project_id = 123
 
 params = {"confidence_threshold": 0.5} # Optional
 upload = True # Optional. Default is False. If True, annotations will be uploaded to the project
 mode: Literal["append", "replace"] = "append" # Optional. Default is "append". If "replace", all annotations in the project will be replaced with the new ones.
 
-predictions: List[Prediction] = model.predict(project=project, upload=upload, mode=mode, params=params)
+predictions: List[Prediction] = model.predict(image=project_path, upload=upload, mode=mode, params=params)
 
 # Processing in detached mode
-with model.predict(project=project, upload=upload, mode=mode, params=params, detached=True) as session:
+with model.predict(project_id=project_id, upload=upload, mode=mode, params=params, detached=True) as session:
     for prediction in queue:
         json.dump(prediction.annotation.to_json(), open(f"{prediction.image_name}.json", "w"))
 
@@ -526,7 +559,8 @@ FROM supervisely/rt-detrv2-base:v1
 COPY . /app
 ENTRYPOINT ["sh", "-c", "PYTHONPATH=\"${PWD}:${PYTHONPATH}\" exec python3 supervisely_integration/serve/main.py \"$@\"", "sh"]
 ```
-🔴
+
+🔴 Нужно порешать как билдить на своих тачках (через github CLI)
 
 ```bash
 docker run \
@@ -681,7 +715,24 @@ MODEL_META_PATH = "model/model_meta.json" # < or None если есть дефо
 
 # Load model
 class RTDETRv2Serving(Inference):
-class RTDETRv2(Prediction/ ... ): - потом можно иерархию наследования подшаманить чтобы упростить количество аршументов и отделить наши от базового predict
+class RTDETRv2(LocalPredictor/ ... ): - потом можно иерархию наследования подшаманить чтобы упростить количество аршументов и отделить наши от базового predict
+
+class InferenceCombiner:
+  - self.TemplateGUI
+  - self.FastAPIServer
+  - self.LocalPredictor
+
+
+class RTDETRv2(InferenceCombiner):
+    def predict(..):
+      self.model.predict()
+    
+
+model : LocalPredictor = RTDETRv2()
+
+inference = InferenceCombiner(model, use_gui=True)
+infernece.serve()
+
 
 model = RTDETRv2() - 🔴 - это возможно за счет того что унас для моделей будут класссы inference
 model.load_checkpoint(path="/a/b.pth", device="cuda")
