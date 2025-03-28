@@ -1,5 +1,7 @@
 # Inference
 
+🔴 Add sliding window (sahi)
+
 ## Predict signature
 
 ```python
@@ -41,7 +43,7 @@ class Prediction:
     # dataset_id = 555
 ```
 
-## Stream
+## Inference Stream
 
 ```python
 class PredictionSession:
@@ -124,11 +126,19 @@ class ModelAPI:
     def model_info(self) -> dict:
         pass
 
-    def load_checkpoint(self) -> dict:
+    def load_custom_model(self, checkpoint_path=None, checkpoint_id=None):  # only remote?
         pass
 
-    def shutdown_model(self) -> None:
+    def load_pretrained_model(self, model_name: str):
         pass
+
+    def shutdown_model(self):
+        pass
+
+    def predict_promptalbe()
+
+    def predict_pointcloud()
+    def predict_tracking()
 
 ```
 
@@ -149,5 +159,14 @@ class ModelAPITracking(ModelAPI):
     def predict(
         video="video.mp4",
         tracking_method="botsort",
+    )
+
+class PromptableModelAPI(ModelAPI):
+    def predict(
+        images="image.png",
+        prompt="a cat",
+        bbox=...
+        mask=...
+        points=...
     )
 ```

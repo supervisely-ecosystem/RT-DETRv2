@@ -213,6 +213,7 @@ class Prediction:
     image_name: Optional[str]
     dataset_id: Optional[int]
     project_id: Optional[int]
+    image_info: Optional[sly.ImageInfo]  # 🔴 можно сделать как property
 
 
 class PredictionFrame(Prediction):
@@ -239,6 +240,9 @@ class PredictionTrack(Prediction):
 
 ```python
 ❓ - название тоже под вопросом. 🔴 Да, я тоже не уверен в названии, но не придумал лучше
+- PredictionSession
+- InferenceSession
+- InferenceStream
 class PredictionSession:
     def __next__():
     def is_done() -> bool:
