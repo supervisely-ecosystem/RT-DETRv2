@@ -144,4 +144,10 @@ class ModelAPI3D(ModelAPI):
         pcd="pointcloud.pcd",
         ...
     )
+
+class ModelAPITracking(ModelAPI):
+    def predict(
+        video="video.mp4",
+        tracking_method="botsort",
+    )
 ```
