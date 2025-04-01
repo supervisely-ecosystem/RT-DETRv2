@@ -39,6 +39,10 @@
 | cehckpoint015.pt |
 | cehckpoint020.pt |
 
+## Training
+
+![chart](img/chart.png)
+
 ## Predictions
 
 ![predictions](img/predictions.png)
