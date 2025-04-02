@@ -11,6 +11,7 @@ ProjectInfo -> Project??? Project(ProjectInfo)
 model.predict(input=Dataset(id=777))
 model.predict(input=Project(id=777))
 model.predict(input=["/a/b/x.mp4"])
+model.predict(input=Dataset(id=777), settings=PSetting(imgsz=640, conf0Thresh=0.5))
 !!!🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴
 
 **Table of Contents (only for this readme):**
