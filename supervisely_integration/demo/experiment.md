@@ -34,10 +34,10 @@
 |---------|
 | best.pt |
 | last.pt |
-| cehckpoint005.pt |
-| cehckpoint010.pt |
-| cehckpoint015.pt |
-| cehckpoint020.pt |
+| checkpoint005.pt |
+| checkpoint010.pt |
+| checkpoint015.pt |
+| checkpoint020.pt |
 
 ## Training
 
@@ -185,4 +185,21 @@ prediction = model.predict(
     params={"confidence_threshold": 0.5}
 )
 ```
+
+
+Вопросы:
+- Как загружать best.onnx / best.engine?
+
+```python
+# Be sure you are in the root of the RT-DETRv2 repository
+from supervisely_integration.serve.rtdetrv2 import RTDETRv2
+
+model = RTDETRv2(
+    model_dir="./{1089_RT-DETRv2}",
+    checkpoint="best.onnx",  # or "best.engine"
+    device="cuda",
+)
+```
+
+## Standalone Model
 
