@@ -1,5 +1,18 @@
 # Demo: Inference & Deployment
 
+!!!🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴
+image_id = 777
+~~~image = api.image.get_info(image_id)~~~
+
+model.predict(input=image) np | path | url | list | ImageInfo | ProjectInfo | DatasetInfo
+
+DatasetInfo -> Dataset???
+ProjectInfo -> Project??? Project(ProjectInfo)
+model.predict(input=Dataset(id=777))
+model.predict(input=Project(id=777))
+model.predict(input=["/a/b/x.mp4"])
+!!!🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴
+
 **Table of Contents (only for this readme):**
 
 - [Predict in One Click](#predict-in-one-click)
