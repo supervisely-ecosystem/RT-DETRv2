@@ -180,6 +180,8 @@ model = RTDETRv2(
 )
 
 # Predict
+prediction = model(image=777) <------ !!!!
+
 prediction = model.predict(
     "image.png",  # local paths, directory, local project, np.array, PIL.Image, URL
     params={"confidence_threshold": 0.5}
