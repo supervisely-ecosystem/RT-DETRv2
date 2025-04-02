@@ -180,6 +180,8 @@ model = RTDETRv2(
 )
 
 # Predict
+prediction = model(image=777) <------ !!!!
+
 prediction = model.predict(
     "image.png",  # local paths, directory, local project, np.array, PIL.Image, URL
     params={"confidence_threshold": 0.5}
@@ -203,3 +205,6 @@ model = RTDETRv2(
 
 ## Standalone Model
 
+## Predict standalone (whithout Supervisely dependencies)
+
+https://github.com/lyuwenyu/RT-DETR/blob/main/rtdetrv2_pytorch/references/deploy/rtdetrv2_torch.py
