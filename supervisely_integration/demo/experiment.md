@@ -186,3 +186,7 @@ prediction = model.predict(
 )
 ```
 
+
+## Predict standalone (whithout Supervisely dependencies)
+
+https://github.com/lyuwenyu/RT-DETR/blob/main/rtdetrv2_pytorch/references/deploy/rtdetrv2_torch.py
