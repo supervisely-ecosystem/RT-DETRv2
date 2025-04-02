@@ -99,7 +99,7 @@ ema:
 use_amp: false
 ```
 
-## Inference API
+## Model API
 
 Deploy and predict in Supervisely.
 
@@ -109,9 +109,8 @@ import supervisely as sly
 api = sly.Api()
 
 # Deploy
-model = api.nn.deploy.custom(
-    train_id={123},
-    checkpoint="best.pt"
+model = api.nn.deploy_custom_model(
+    checkpoint_id={12345},  # file id
 )
 
 # Predict
@@ -180,9 +179,7 @@ model = RTDETRv2(
 )
 
 # Predict
-prediction = model(image=777) <------ !!!!
-
-prediction = model.predict(
+prediction = model(
     "image.png",  # local paths, directory, local project, np.array, PIL.Image, URL
     params={"confidence_threshold": 0.5}
 )
@@ -202,8 +199,6 @@ model = RTDETRv2(
     device="cuda",
 )
 ```
-
-## Standalone Model
 
 ## Predict standalone (whithout Supervisely dependencies)
 
