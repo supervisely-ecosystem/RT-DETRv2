@@ -59,7 +59,7 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
         elif runtime == RuntimeType.ONNXRUNTIME:
             self._load_runtime(checkpoint_path, config_path, "onnx", device)
         elif runtime == RuntimeType.TENSORRT:
-            self._load_runtime(checkpoint_path, config_path, "tensorrt", device)
+            self._load_runtime(checkpoint_path, config_path, "engine", device)
 
     def _load_runtime(self, checkpoint_path: str, config_path: str, format: str, device: str):
         def export_model():
@@ -72,7 +72,7 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
             if format == "onnx":
                 self._remove_existing_checkpoints(checkpoint_path, format)
                 onnx_model_path = export_onnx(checkpoint_path, config_path, self.model_dir)
-            elif format == "tensorrt":
+            elif format == "engine":
                 self._remove_existing_checkpoints(checkpoint_path, format)
                 onnx_model_path = export_onnx(checkpoint_path, config_path, self.model_dir)
                 engine_path = export_tensorrt(onnx_model_path, self.model_dir, fp16=True)
@@ -81,7 +81,7 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
                 self.gui.download_progress.hide()
             if format == "onnx":
                 return onnx_model_path
-            elif format == "tensorrt":
+            elif format == "engine":
                 return engine_path
 
         file_name = sly.fs.get_file_name(checkpoint_path)
@@ -97,7 +97,7 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
 
         if format == "onnx":
             self._load_onnx(exported_checkpoint_path, device)
-        elif format == "tensorrt":
+        elif format == "engine":
             self._load_tensorrt(exported_checkpoint_path, device)
 
     def _load_pytorch(self, checkpoint_path: str, config_path: str, device: str):
@@ -259,7 +259,7 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
             onnx_path = checkpoint_path.replace(".pth", ".onnx")
             if os.path.exists(onnx_path):
                 sly.fs.silent_remove(onnx_path)
-        elif format == "tensorrt":
+        elif format == "engine":
             onnx_path = checkpoint_path.replace(".pth", ".onnx")
             engine_path = checkpoint_path.replace(".pth", ".engine")
             if os.path.exists(onnx_path):
