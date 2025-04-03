@@ -17,7 +17,7 @@ from supervisely_integration.serve.rtdetrv2 import RTDETRv2
 base_path = "supervisely_integration/train"
 train = TrainApp(
     "RT-DETRv2",
-    f"supervisely_integration/models_v2.json",
+    f"supervisely_integration/models.json",
     f"{base_path}/hyperparameters.yaml",
     f"{base_path}/app_options.yaml",
 )

@@ -17,7 +17,7 @@ project_id = api.dataset.get_info_by_id(train_dataset_id).project_id
 project_meta = sly.ProjectMeta.from_json(api.project.get_meta(project_id))
 selected_classes = [obj_class.name for obj_class in project_meta.obj_classes]
 
-models_json = "supervisely_integration/train/models_v2.json"
+models_json = "supervisely_integration/train/models.json"
 models = sly.json.load_json_file(models_json)
 project_dir = "./app_data/project"
 user_hyperparametrs = ""
