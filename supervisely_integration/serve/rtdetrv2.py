@@ -16,10 +16,15 @@ from supervisely.io.fs import get_file_name_with_ext
 from supervisely.nn.inference import CheckpointInfo, ModelSource, RuntimeType, Timer
 from supervisely.nn.prediction_dto import PredictionBBox
 from supervisely_integration.export import export_onnx, export_tensorrt
+from supervisely.io.env import team_id, task_id
+
+from supervisely_integration.serve.profiler import MemoryProfiler
 
 SERVE_PATH = "supervisely_integration/serve"
 CONFIG_DIR = "rtdetrv2_pytorch/configs/rtdetrv2"
 
+
+profiler = MemoryProfiler()
 
 class RTDETRv2(sly.nn.inference.ObjectDetection):
     FRAMEWORK_NAME = "RT-DETRv2"
@@ -27,6 +32,16 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
     APP_OPTIONS = f"{SERVE_PATH}/app_options.yaml"
     INFERENCE_SETTINGS = f"{SERVE_PATH}/inference_settings.yaml"
 
+    @profiler.profile
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    @profiler.profile
+    def serve(self, *args, **kwargs):
+        super().serve(*args, **kwargs)
+        self.app.call_before_shutdown(profiler.upload(self.api, team_id(raise_not_found=False), f"/memory_profiles/{task_id(raise_not_found=False)}"))
+
+    @profiler.profile
     def load_model(
         self, model_files: dict, model_info: dict, model_source: str, device: str, runtime: str
     ):
@@ -88,6 +103,7 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
                 self.engine = TRTInference(engine_path, device)
                 self.max_batch_size = 1
 
+    @profiler.profile
     def predict_benchmark(self, images_np: List[np.ndarray], settings: dict = None):
         if self.runtime == RuntimeType.PYTORCH:
             return self._predict_pytorch(images_np, settings)
