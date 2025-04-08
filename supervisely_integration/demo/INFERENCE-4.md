@@ -14,7 +14,7 @@ def predict(
     upload_mode=None,  # None, append, replace, create, iou_merge (only bbox/mask)
     recursive=True,
     classes=["person", "car"],  # list of classes to predict
-) -> Prediction | List[Prediction]:
+) -> List[Prediction]:
     pass
 
 def predict_detached(
@@ -35,12 +35,12 @@ def predict_detached(
 ```python
 class Prediction:
     annotation: sly.Annotation
-    source = "images/image001.png"  # path | url | team_files_url
-    image: np.ndarray = None
-    image_info: sly.ImageInfo = None
-    # image_id = 121
-    # project_id = 234
-    # dataset_id = 555
+    source: Any = "images/image001.png"  # path | url | ... or None
+    project_id = 123
+    dataset_id = 456
+    image_id = 12345
+    def load_image(): np.ndarray = None
+    def draw(): np.ndarray = None
 ```
 
 ## Inference Stream
@@ -91,15 +91,17 @@ class ModelAPI:
         pass
 
     def predict(
-        images="image.png",  # local paths, directory, local project, np.array, PIL.Image, url, team_files_url
-        video="video.mp4",
-        model_params={"conf": 0.55},
-        project_id=123,
-        dataset_id=456,
-        upload_mode=None,  # None, append, replace, create, iou_merge (only bbox/mask)
-        recursive=True,
-        classes=None,  # list of classes to predict
-    ) -> Prediction | List[Prediction]:
+        input=None,  # local paths, directory, local project, np.array, PIL.Image, url, team_files_url
+        settings=None,
+        project_id=None,
+        dataset_id=None,
+        image_ids=None,
+        batch_size=None,
+        img_size=None,  # int for square resizing or a (height, width) tuple. Default: using model's default input size
+        classes=None,  # list of classes to predict (List[str])
+        upload=None,  # None, append, replace, create, iou_merge (only bbox/mask)
+        recursive=False,
+    ) -> List[Prediction]:
         pass
 
     def predict_detached(
@@ -114,31 +116,26 @@ class ModelAPI:
     ) -> PredictionSession:
         pass
 
-    def default_model_params(self) -> dict:
+    def get_default_settings(self) -> dict:
         pass
 
-    def model_classes(self) -> List[str]:
+    def get_classes(self) -> List[str]:
         pass
 
-    def model_meta(self) -> sly.ProjectMeta:
+    def get_meta(self) -> sly.ProjectMeta:
         pass
 
-    def model_info(self) -> dict:
+    def get_info(self) -> dict:
         pass
 
-    def load_custom_model(self, checkpoint_path=None, checkpoint_id=None):  # only remote?
+    def load(self, model=None, runtime=None, ...):  # remote and local
         pass
 
-    def load_pretrained_model(self, model_name: str):
+    def stop(self):
         pass
 
-    def shutdown_model(self):
+    def shutdown(self):
         pass
-
-    def predict_promptalbe()
-
-    def predict_pointcloud()
-    def predict_tracking()
 
 ```
 

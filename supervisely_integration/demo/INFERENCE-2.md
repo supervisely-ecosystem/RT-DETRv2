@@ -368,7 +368,7 @@ import boxmot
 
 device = "cuda:0"
 tracker = boxmot.BotSort(reid_weights=Path('osnet_x0_25_msmt17.pt'), device=device, half=False)
-video_ann: VideoAnnotation = track(tracker, predictions, video)
+video_ann: VideoAnnotation = track(tracker, predictions)
 ```
 
 #### Predict directory
