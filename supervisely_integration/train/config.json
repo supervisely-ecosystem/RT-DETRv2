@@ -30,10 +30,12 @@
 	},
 	"framework": {
 		"name": "RT-DETRv2",
-		"conference": "CVPR'24",
+		"conference": "CVPR 2024",
 		"released": 2024,
-		"models": 5,
-		"metric": 54.3,
+		"object_detection": {
+			"metric": 54.3,
+			"models": 5
+		},
 		"real_time": true,
 		"onnx": true,
 		"tensorrt": true
