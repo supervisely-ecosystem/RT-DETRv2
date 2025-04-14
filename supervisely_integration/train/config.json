@@ -27,5 +27,15 @@
 	},
 	"license": {
 		"type": "Apache-2.0"
+	},
+	"framework": {
+		"name": "RT-DETRv2",
+		"conference": "CVPR'24",
+		"released": 2024,
+		"models": 5,
+		"metric": 54.3,
+		"real_time": true,
+		"onnx": true,
+		"tensorrt": true
 	}
 }
