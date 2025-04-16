@@ -39,10 +39,6 @@
 | checkpoint015.pt |
 | checkpoint020.pt |
 
-## Training
-
-![chart](img/chart.png)
-
 ## Predictions
 
 ![predictions](img/predictions.png)
@@ -98,6 +94,10 @@ ema:
 
 use_amp: false
 ```
+
+## Training
+
+![chart](img/chart.png)
 
 ## Model API
 
