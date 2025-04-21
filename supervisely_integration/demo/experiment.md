@@ -203,7 +203,7 @@ prediction = model.predict(
 )
 ```
 
-> For more information, see [Prediction API](https://docs.supervisely.com/neural-networks/overview-1/prediction-api) and [Model API](https://docs.supervisely.com/neural-networks/overview-1/model-api).
+> For more information, see [Prediction API](https://docs.supervisely.com/neural-networks/overview-1/prediction-api) and [Model API](https://docs.supervisely.com/neural-networks/overview-1/model-api) documentation.
 
 ## Predict in Docker
 
@@ -275,7 +275,7 @@ predictions = model(
 )
 ```
 
-> For more information, see [Prediction API](https://docs.supervisely.com/neural-networks/overview-1/prediction-api) and [Local Deployment](https://docs.supervisely.com/neural-networks/overview-1/local-deployment.md).
+> For more information, see [Prediction API](https://docs.supervisely.com/neural-networks/overview-1/prediction-api) and [Local Deployment](https://docs.supervisely.com/neural-networks/overview-1/local-deployment.md) documentation.
 
 ### Using ONNX and TensorRT
 
