@@ -254,7 +254,7 @@ pip install -r dev_requirements.txt
 pip install supervisely
 ```
 
-4. Run inference
+4. Run the inference code
 
 ```python
 # Be sure you are in the root of the RT-DETRv2 repository
