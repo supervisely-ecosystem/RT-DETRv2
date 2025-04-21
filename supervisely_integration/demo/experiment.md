@@ -127,7 +127,7 @@ prediction = model.predict(
 )
 ```
 
-#### Image ID
+#### Image ID 🔴🔴🔴 Здесь будут tabs с разными примерами
 
 ```python
 import supervisely as sly
@@ -146,7 +146,7 @@ prediction = model.predict(
 )
 ```
 
-#### Dataset
+#### Dataset 🔴🔴🔴 Здесь будут tabs с разными примерами
 
 ```python
 import supervisely as sly
@@ -165,7 +165,7 @@ prediction = model.predict(
 )
 ```
 
-#### Project
+#### Project 🔴🔴🔴 Здесь будут tabs с разными примерами
 
 ```python
 import supervisely as sly
@@ -184,7 +184,7 @@ prediction = model.predict(
 )
 ```
 
-#### Video
+#### Video 🔴🔴🔴 Здесь будут tabs с разными примерами
 
 ```python
 import supervisely as sly
