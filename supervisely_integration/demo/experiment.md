@@ -207,7 +207,7 @@ prediction = model.predict(
 
 #### Tracking Objects in Video
 
-🔴🔴🔴 Как вариант - сделать отдельную эпу **Serve BoxMot**, чтобы трекать на агенте а не на клиенте.
+🔴🔴🔴 Как вариант - сделать отдельную эпу **Deploy BoxMot**, чтобы трекать на агенте а не на клиенте.
 
 You can track objects in video using `boxmot` library. BoxMot is a third-party library that implements lightweight neural networks for tracking-by-detection task (when the tracking is performed on the objects predicted by a separate detector). For `boxmot` models you can use even CPU device.
 
@@ -241,6 +241,7 @@ video_ann: sly.VideoAnnotation = track(tracker, session)
 ```
 
 🔴🔴🔴 Variant 2:
+pip install boxmot
 
 ```python
 import supervisely as sly
