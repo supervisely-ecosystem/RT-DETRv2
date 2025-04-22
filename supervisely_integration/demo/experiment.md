@@ -1,9 +1,9 @@
 # Experiment "835 Mouse Detector"
 
 ## Buttons
-- 🚀 Deploy (PyTorch)  (открывать модалку с настройками*)
-- 🚀 Deploy (TensorRT)  -- Если был экспорт в TRT
-- ⚡ Apply model to images/video (открывать модалку с настройками*)
+- 🚀 Deploy -> Modal (runtime, device, checkpoint, server) -> btn Deploy -> new task
+- ⚡ Predict -> Modal (connect to model or deploy, project/dataset, settings -> inplnace / create new / ...) (Deploy if none -> Predict -> Stop model (auto [x]checkbox))
+- Later -> Related: Auto labeling image/video в labeling tool где можно выбрать модели -> preview / predict / predict all и тд
 - ⏩ Fine-tune
 - 🔄 Re-train
 - 📦 Download model
