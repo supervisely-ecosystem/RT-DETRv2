@@ -205,6 +205,72 @@ prediction = model.predict(
 
 > For more information, see [Prediction API](https://docs.supervisely.com/neural-networks/overview-1/prediction-api) and [Model API](https://docs.supervisely.com/neural-networks/overview-1/model-api) documentation.
 
+#### Tracking Objects in Video
+
+🔴🔴🔴 Как вариант - сделать отдельную эпу **Serve BoxMot**, чтобы трекать на агенте а не на клиенте.
+
+You can track objects in video using `boxmot` library. BoxMot is a third-party library that implements lightweight neural networks for tracking-by-detection task (when the tracking is performed on the objects predicted by a separate detector). For `boxmot` models you can use even CPU device.
+
+Supervisely SDK has the `track()` method from `supervisely.nn.tracking` which allows you to apply `boxmot` models together with a detector in a single line of code. This method takes two arguments: a `boxmot` tracker, and a `PredictionSession` of a detector. It returns a `sly.VideoAnnotation` with the tracked objects.
+
+🔴🔴🔴 Variant 1:
+
+```python
+import supervisely as sly
+from supervisely.nn.tracking import track
+import boxmot
+from pathlib import Path
+
+# Deploy a detector
+model = api.nn.deploy(
+    model="rt-detrv2/RT-DETRv2-M",
+    device="cuda:0",  # Use GPU for detection
+)
+
+# Start predict objects in video
+session = model.predict_detached(video_id=42)
+
+# Load BoxMot tracker
+tracker = boxmot.BotSort(
+    reid_weights=Path('osnet_x0_25_msmt17.pt'),
+    device="cpu",  # Use CPU for tracking
+)
+
+# Track objects in a single line
+video_ann: sly.VideoAnnotation = track(tracker, session)
+```
+
+🔴🔴🔴 Variant 2:
+
+```python
+import supervisely as sly
+from supervisely.nn.tracking import track
+import boxmot
+from pathlib import Path
+
+# Deploy a detector
+detector = api.nn.deploy(
+    model="rt-detrv2/RT-DETRv2-M",
+    device="cuda:0",  # Use GPU for detection
+)
+
+# Load BoxMot tracker
+tracker = boxmot.BotSort(
+    reid_weights=Path('osnet_x0_25_msmt17.pt'),
+    device="cpu",  # Use CPU for tracking
+)
+
+# Track objects in a single line
+video_ann: sly.VideoAnnotation = track(
+    video_id=42,
+    detector=detector,
+    tracker=tracker,
+)
+```
+
+> For more information, see the section [Tracking Objects in Video](https://docs.supervisely.com/neural-networks/overview-1/prediction-api#tracking-objects-in-video).
+
+
 ## Predict in Docker
 
 You can apply this model in a 🐋 Docker Container with a single `docker run` comand. For this, you need to download a checkpoint, pull the docker image for the corresponding model's framework, and run the `docker run` comand with addtional arguments.
