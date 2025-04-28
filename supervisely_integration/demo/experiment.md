@@ -211,6 +211,12 @@ prediction = model.predict(
 
 You can track objects in video using `boxmot` library. BoxMot is a third-party library that implements lightweight neural networks for tracking-by-detection task (when the tracking is performed on the objects predicted by a separate detector). For `boxmot` models you can use even CPU device.
 
+First, install BoxMot:
+
+```bash
+pip install boxmot
+```
+
 Supervisely SDK has the `track()` method from `supervisely.nn.tracking` which allows you to apply `boxmot` models together with a detector in a single line of code. This method takes two arguments: a `boxmot` tracker, and a `PredictionSession` of a detector. It returns a `sly.VideoAnnotation` with the tracked objects.
 
 🔴🔴🔴 Variant 1 (won't be used):
@@ -246,7 +252,6 @@ video_ann: sly.VideoAnnotation = track(tracker, session)
 </details>
 
 🔴🔴🔴 Variant 2:
-pip install boxmot
 
 ```python
 import supervisely as sly
