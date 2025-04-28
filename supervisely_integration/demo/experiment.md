@@ -209,9 +209,9 @@ prediction = model.predict(
 
 🔴🔴🔴 Как вариант - сделать отдельную эпу **Deploy BoxMot**, чтобы трекать на агенте а не на клиенте.
 
-You can track objects in video using `boxmot` library. BoxMot is a third-party library that implements lightweight neural networks for tracking-by-detection task (when the tracking is performed on the objects predicted by a separate detector). For `boxmot` models you can use even CPU device.
+You can track objects in video using `boxmot` library. [BoxMot](https://github.com/mikel-brostrom/boxmot) is a third-party library that implements lightweight neural networks for tracking-by-detection task (when the tracking is performed on the objects predicted by a separate detector). For `boxmot` models you can use even CPU device.
 
-First, install BoxMot:
+First, install [BoxMot](https://github.com/mikel-brostrom/boxmot):
 
 ```bash
 pip install boxmot
