@@ -213,7 +213,10 @@ You can track objects in video using `boxmot` library. BoxMot is a third-party l
 
 Supervisely SDK has the `track()` method from `supervisely.nn.tracking` which allows you to apply `boxmot` models together with a detector in a single line of code. This method takes two arguments: a `boxmot` tracker, and a `PredictionSession` of a detector. It returns a `sly.VideoAnnotation` with the tracked objects.
 
-🔴🔴🔴 Variant 1:
+🔴🔴🔴 Variant 1 (won't be used):
+
+<details>
+<summary>Click to expand</summary>
 
 ```python
 import supervisely as sly
@@ -239,6 +242,8 @@ tracker = boxmot.BotSort(
 # Track objects in a single line
 video_ann: sly.VideoAnnotation = track(tracker, session)
 ```
+
+</details>
 
 🔴🔴🔴 Variant 2:
 pip install boxmot
