@@ -205,7 +205,7 @@ prediction = model.predict(
 
 > For more information, see [Prediction API](https://docs.supervisely.com/neural-networks/overview-1/prediction-api) and [Model API](https://docs.supervisely.com/neural-networks/overview-1/model-api) documentation.
 
-#### Tracking Objects in Video
+### Tracking Objects in Video
 
 🔴🔴🔴 Как вариант - сделать отдельную эпу **Deploy BoxMot**, чтобы трекать на агенте а не на клиенте.
 
