@@ -12,7 +12,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxext6 \
     libxrender-dev \
     libmagic-dev \
-    libexiv2-dev
+    libexiv2-dev \
+    python3-dev
 
 RUN apt-get update && apt-get install -y --no-install-recommends tensorrt
 
