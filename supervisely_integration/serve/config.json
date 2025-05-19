@@ -20,10 +20,10 @@
 	"gpu": "preferred",
 	"session_tags": ["deployed_nn"],
 	"community_agent": false,
-	"docker_image": "supervisely/rt-detrv2:1.0.18",
+	"docker_image": "supervisely/rt-detrv2:1.0.19",
 	"task_location": "application_sessions",
 	"license": {
 		"type": "Apache-2.0"
 	},
-	"instance_version": "6.12.34"
+	"instance_version": "6.12.44"
 }
