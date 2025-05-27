@@ -30,7 +30,8 @@ RUN pip install --no-cache-dir \
     pycocotools \
     PyYAML \
     tensorboard \
-    imgaug==0.4.0
+    imgaug==0.4.0 \
+    decord
 
 RUN mkdir -p ~/.cache/supervisely/checkpoints && \
     curl -L -o ~/.cache/supervisely/checkpoints/rtdetrv2_r18vd_120e_coco_rerun_48.1.pth https://github.com/lyuwenyu/storage/releases/download/v0.2/rtdetrv2_r18vd_120e_coco_rerun_48.1.pth && \
