@@ -17,12 +17,11 @@ workspace_id = sly.env.workspace_id()
 
 
 model = api.nn.deploy(
-    model="/experiments/27_Lemons (Rectangle)/2053_RT-DETRv2/export/best.onnx",
+    model="/experiments/27_Lemons (Rectangle)/2053_RT-DETRv2/export/best.engine",
     device="cuda:0",
-    runtime="ONNXRuntime",
 )
 
 predictions = model.predict(
-    input=["supervisely_integration/train/coco_sample.jpg"],
+    input=["supervisely_integration/demo/img/coco_sample.jpg"],
 )
 print(predictions)
