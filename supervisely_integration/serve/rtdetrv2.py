@@ -12,7 +12,7 @@ from torchvision.transforms import ToTensor
 import supervisely as sly
 from rtdetrv2_pytorch.src.core import YAMLConfig
 from rtdetrv2_pytorch.src.data.dataset.coco_dataset import mscoco_category2name
-from supervisely.io.fs import get_file_name_with_ext
+from supervisely.io.fs import get_file_ext, get_file_name_with_ext
 from supervisely.nn.inference import CheckpointInfo, ModelSource, RuntimeType, Timer
 from supervisely.nn.prediction_dto import PredictionBBox
 from supervisely_integration.export import export_onnx, export_tensorrt
@@ -67,7 +67,10 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
             self.postprocessor = self.cfg.postprocessor.deploy().to(device)
         elif runtime in [RuntimeType.ONNXRUNTIME, RuntimeType.TENSORRT]:
             # when runtime is ONNX and weights is .pth
-            onnx_model_path = export_onnx(checkpoint_path, config_path, self.model_dir)
+            # or deployed from api with onnx / engine checkpoint
+            # if deplyed from api with .engine checkpoint, then we don't need to export onnx
+            if not get_file_ext(checkpoint_path) == ".engine":
+                onnx_model_path = export_onnx(checkpoint_path, config_path, self.model_dir)
             if runtime == RuntimeType.ONNXRUNTIME:
                 import onnxruntime
 
@@ -87,7 +90,9 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
                 )
 
                 assert device != "cpu", "TensorRT is not supported on CPU"
-                engine_path = export_tensorrt(onnx_model_path, self.model_dir, fp16=True)
+                # if deployed from api with .engine checkpoint, then we don't need to export engine
+                if not get_file_ext(checkpoint_path) == ".engine":
+                    engine_path = export_tensorrt(onnx_model_path, self.model_dir, fp16=True)
                 self.engine = TRTInference(engine_path, device)
                 self.max_batch_size = 1
 
