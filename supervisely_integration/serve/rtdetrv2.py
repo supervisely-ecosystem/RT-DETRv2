@@ -93,6 +93,8 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
                 # if deployed from api with .engine checkpoint, then we don't need to export engine
                 if not get_file_ext(checkpoint_path) == ".engine":
                     engine_path = export_tensorrt(onnx_model_path, self.model_dir, fp16=True)
+                else:
+                    engine_path = checkpoint_path
                 self.engine = TRTInference(engine_path, device)
                 self.max_batch_size = 1
 
