@@ -3,8 +3,6 @@ import os
 from dotenv import load_dotenv
 
 import supervisely as sly
-from supervisely.template.experiment.experiment_generator import ExperimentGenerator
-from supervisely_integration.serve.main import RTDETRv2
 
 if sly.is_development():
     load_dotenv("local.env")
@@ -17,7 +15,8 @@ workspace_id = sly.env.workspace_id()
 
 
 model = api.nn.deploy(
-    model="/experiments/27_Lemons (Rectangle)/2053_RT-DETRv2/export/best.engine",
+    model="YOLO/YOLO12n",
+    # model="/experiments/27_Lemons (Rectangle)/2053_RT-DETRv2/export/best.engine",
     device="cuda:0",
 )
 
