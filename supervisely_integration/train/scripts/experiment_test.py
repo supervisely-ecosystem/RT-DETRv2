@@ -15,9 +15,12 @@ workspace_id = sly.env.workspace_id()
 
 
 model = api.nn.deploy(
-    model="YOLO/YOLO12n",
+    model="RT-DETRv2/RT-DETRv2-M",
+    # model="/experiments/27_Lemons (Rectangle)/2053_RT-DETRv2/checkpoints/best.pth",
+    # model="/experiments/27_Lemons (Rectangle)/2053_RT-DETRv2/export/best.onnx",
     # model="/experiments/27_Lemons (Rectangle)/2053_RT-DETRv2/export/best.engine",
     device="cuda:0",
+    # runtime="TensorRT",
 )
 
 predictions = model.predict(
