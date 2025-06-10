@@ -22,6 +22,7 @@ experiment_info = {
     "task_type": "object detection",
     "project_id": 27,
     "task_id": 2053,
+    "device": "NVIDIA GeForce RTX 4070 Ti SUPER",
     "model_files": {"config": "model_config.yml"},
     "checkpoints": [
         "checkpoints/best.pth",
