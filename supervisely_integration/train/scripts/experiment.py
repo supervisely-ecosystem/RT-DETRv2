@@ -1,9 +1,9 @@
 import os
 
-from dotenv import load_dotenv
-
 import supervisely as sly
+from dotenv import load_dotenv
 from supervisely.template.experiment.experiment_generator import ExperimentGenerator
+
 from supervisely_integration.serve.main import RTDETRv2
 
 if sly.is_development():
