@@ -24,3 +24,24 @@ collapsable: false
 
 # Automatically convert classes according to model CV task
 auto_convert_classes: true
+
+# if false, use all classes from project meta
+classes_selector: 
+  enabled: true
+
+# if false, use all tags from project meta
+tags_selector:
+  enabled: false
+
+# if false, skip train/val splits step
+train_val_splits_selector: 
+  enabled: true
+  methods:
+    - Random
+    - Based on tags
+    - Based on datasets
+    - Based on collections
+
+model_selector:
+  enabled: true
+  show_custom: true
