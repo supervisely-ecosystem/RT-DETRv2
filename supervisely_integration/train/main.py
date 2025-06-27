@@ -1,4 +1,7 @@
 import os
+
+os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
+
 import shutil
 import sys
 from multiprocessing import cpu_count
@@ -135,4 +138,5 @@ def remove_include(config_path: str):
     if "__include__" in config:
         config.pop("__include__")
         with open(config_path, "w") as f:
+            yaml.dump(config, f)
             yaml.dump(config, f)
