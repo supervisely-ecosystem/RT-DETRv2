@@ -25,7 +25,7 @@ pip install -r rtdetrv2_pytorch/requirements.txt
 We provide a pre-built docker image with all dependencies installed [DockerHub](https://hub.docker.com/r/supervisely/rt-detrv2/tags). The image includes installed packages for ONNXRuntime and TensorRT inference.
 
 ```bash
-docker pull supervisely/rt-detrv2:1.0.23
+docker pull supervisely/rt-detrv2:1.0.24
 ```
 
 See our [Dockerfile](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/docker/Dockerfile) for more details.
@@ -42,13 +42,13 @@ For RT-DETRv2, you need to download the following files:
 
 **For PyTorch inference:**
 
--   `checkpoint.pth` - model weights, for example `best.pth`
--   `model_config.yml` - model configuration
--   `model_meta.json` - class names
+- `checkpoint.pth` - model weights, for example `best.pth`
+- `model_config.yml` - model configuration
+- `model_meta.json` - class names
 
 **ONNXRuntime and TensorRT inference require only \*.onnx and \*.engine files respectively.**
 
--   Exported ONNX/TensorRT models can be found in the `export` folder in Team Files after training.
+- Exported ONNX/TensorRT models can be found in the `export` folder in Team Files after training.
 
 Go to Team Files in Supervisely Platform and download the files.
 
@@ -60,6 +60,6 @@ Files for PyTorch inference:
 
 We provide several demo scripts to run inference with your checkpoint:
 
--   [demo_pytorch.py](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_pytorch.py) - simple PyTorch inference
--   [demo_onnx.py](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_onnx.py) - ONNXRuntime inference
--   [demo_tensorrt.py](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_tensorrt.py) - TensorRT inference
+- [demo_pytorch.py](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_pytorch.py) - simple PyTorch inference
+- [demo_onnx.py](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_onnx.py) - ONNXRuntime inference
+- [demo_tensorrt.py](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_tensorrt.py) - TensorRT inference

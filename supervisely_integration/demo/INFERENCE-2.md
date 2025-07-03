@@ -2,14 +2,14 @@
 
 **Table of Contents (only for this readme):**
 
--   [Apply Model to your Project](#apply-model-to-your-project)
--   [Serve Model in Supervisely Platform](#serve-model-in-supervisely-platform)
--   [Inference via API](#inference-via-api)
--   [Using Model Outside of Supervisely Platform](#using-model-outside-of-supervisely-platform)
-    -   [Get predictions in your code](#get-predictions-in-your-code)
-    -   [Deploy model as a server on your machine](#deploy-model-as-a-server-on-your-machine)
-    -   [Deploy in a Docker Container](#deploy-in-a-docker-container)
--   [Using Your Model as a Standalone PyTorch Model](#using-your-model-as-a-standalone-pytorch-model)
+- [Apply Model to your Project](#apply-model-to-your-project)
+- [Serve Model in Supervisely Platform](#serve-model-in-supervisely-platform)
+- [Inference via API](#inference-via-api)
+- [Using Model Outside of Supervisely Platform](#using-model-outside-of-supervisely-platform)
+  - [Get predictions in your code](#get-predictions-in-your-code)
+  - [Deploy model as a server on your machine](#deploy-model-as-a-server-on-your-machine)
+  - [Deploy in a Docker Container](#deploy-in-a-docker-container)
+- [Using Your Model as a Standalone PyTorch Model](#using-your-model-as-a-standalone-pytorch-model)
 
 > You can use your model in very different ways depending on your needs. For more information, please, refer to our full [Inference & Deployment](https://docs.supervisely.com/neural-networks/overview-1) documentation.
 
@@ -276,7 +276,7 @@ docker run \
   -v ".:/app" \
   -w /app \
   -p 8000:8000 \
-  supervisely/rt-detrv2:1.0.23 \
+  supervisely/rt-detrv2:1.0.24 \
   python3 supervisely_integration/serve/main.py deploy \
   --model "models/392_RT-DETRv2/checkpoints/best.pth"
 ```
@@ -291,7 +291,7 @@ docker run \
   -v ".:/app" \
   -w /app \
   -p 8000:8000 \
-  supervisely/rt-detrv2:1.0.23 \
+  supervisely/rt-detrv2:1.0.24 \
   python3 supervisely_integration/serve/main.py \
   predict "./image.jpg" \
   --model "models/392_RT-DETRv2/checkpoints/best.pth" \
@@ -325,9 +325,9 @@ pip install -r rtdetrv2_pytorch/requirements.txt
 
 4. **Run inference:** Refer to our example scripts of how to load RT-DETRv2 and get predictions:
 
--   [demo_pytorch.py](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_pytorch.py)
--   [demo_onnx.py](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_onnx.py)
--   [demo_tensorrt.py](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_tensorrt.py)
+- [demo_pytorch.py](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_pytorch.py)
+- [demo_onnx.py](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_onnx.py)
+- [demo_tensorrt.py](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_tensorrt.py)
 
 **demo_pytorch.py** is a simple example of how to load a PyTorch checkpoint and get predictions. You can use it as a starting point for your own code:
 
