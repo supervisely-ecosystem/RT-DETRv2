@@ -101,7 +101,7 @@ def prepare_config(train_ann_path: str, val_ann_path: str):
 
     custom_config = train.hyperparameters
     custom_config["__include__"] = [config]
-    custom_config["remap_mscoco_category"] = False
+    custom_config["remap_mscoco_category"] = True
     custom_config["num_classes"] = train.num_classes
     custom_config["print_freq"] = 50
 
@@ -135,4 +135,5 @@ def remove_include(config_path: str):
     if "__include__" in config:
         config.pop("__include__")
         with open(config_path, "w") as f:
+            yaml.dump(config, f)
             yaml.dump(config, f)

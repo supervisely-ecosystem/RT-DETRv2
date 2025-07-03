@@ -183,3 +183,4 @@ supervisely_integration/train/output
 supervisely_integration/train/data
 supervisely
 app_data
+experiment_report/
