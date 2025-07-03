@@ -1,46 +1,46 @@
 {
-	"type": "app",
-	"version": "2.0.0",
-	"name": "Train RT-DETRv2",
-	"entrypoint": "python3 -m uvicorn main:train.app --host 0.0.0.0 --port 8000 --ws websockets --app-dir supervisely_integration/train",
-	"port": 8000,
-	"categories": [
-		"neural network",
-		"images",
-		"object detection",
-		"detection & tracking",
-		"train",
-		"framework:RT-DETRv2"
-	],
-	"icon": "https://github.com/user-attachments/assets/7dc4334b-5f50-4866-bc6a-1d36226bb093",
-	"icon_cover": true,
-	"poster": "https://github.com/user-attachments/assets/b4554de5-3d2c-4b4f-aba9-95864cb05289",
-	"description": "Train RT-DETRv2 model on your data",
-	"docker_image": "supervisely/rt-detrv2:1.0.22",
-	"instance_version": "6.12.44",
-	"task_location": "workspace_tasks",
-	"need_gpu": true,
-	"gpu": "required",
-	"community_agent": false,
-	"context_menu": {
-		"target": ["images_project"],
-		"context_root": "Neural Networks"
-	},
-	"license": {
-		"type": "Apache-2.0"
-	},
-	"framework": {
-		"name": "RT-DETRv2",
-		"conference": "CVPR 2024",
-		"released": 2024,
-		"tasks": {
-			"object_detection": {
-				"metric": 54.3,
-				"models": 5
-			}
-		},
-		"real_time": true,
-		"onnx": true,
-		"tensorrt": true
-	}
+  "type": "app",
+  "version": "2.0.0",
+  "name": "Train RT-DETRv2",
+  "entrypoint": "python3 -m uvicorn main:train.app --host 0.0.0.0 --port 8000 --ws websockets --app-dir supervisely_integration/train",
+  "port": 8000,
+  "categories": [
+    "neural network",
+    "images",
+    "object detection",
+    "detection & tracking",
+    "train",
+    "framework:RT-DETRv2"
+  ],
+  "icon": "https://github.com/user-attachments/assets/7dc4334b-5f50-4866-bc6a-1d36226bb093",
+  "icon_cover": true,
+  "poster": "https://github.com/user-attachments/assets/b4554de5-3d2c-4b4f-aba9-95864cb05289",
+  "description": "Train RT-DETRv2 model on your data",
+  "docker_image": "supervisely/rt-detrv2:1.0.23",
+  "instance_version": "6.13.1",
+  "task_location": "workspace_tasks",
+  "need_gpu": true,
+  "gpu": "required",
+  "community_agent": false,
+  "context_menu": {
+    "target": ["images_project"],
+    "context_root": "Neural Networks"
+  },
+  "license": {
+    "type": "Apache-2.0"
+  },
+  "framework": {
+    "name": "RT-DETRv2",
+    "conference": "CVPR 2024",
+    "released": 2024,
+    "tasks": {
+      "object_detection": {
+        "metric": 54.3,
+        "models": 5
+      }
+    },
+    "real_time": true,
+    "onnx": true,
+    "tensorrt": true
+  }
 }
