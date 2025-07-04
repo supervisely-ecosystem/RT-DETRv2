@@ -22,6 +22,7 @@ api = sly.Api.from_env()
 # 2. Run with docker run       #
 ################################
 # Run the following command in the terminal:
+# Pretrained
 # docker run \
 #   --shm-size=1g \
 #   --runtime=nvidia \
@@ -30,8 +31,20 @@ api = sly.Api.from_env()
 #   -v ".:/app" \
 #   -w /app \
 #   -p 8000:8000 \
-#   supervisely/rt-detrv2:dev \
+#   supervisely/rt-detrv2:1.0.25 \
 #   deploy
+
+# Custom
+# docker run \
+#     --shm-size=1g \
+#     --runtime=nvidia \
+#     --env PYTHONPATH=/app \
+#     -v "${PWD}:/app" \
+#     -w /app \
+#     -p 8000:8000 \
+#     supervisely/rt-detrv2:dev \
+#     deploy \
+#     --model "/app/47705_RT-DETRv2/checkpoints/best.pth"
 
 
 ################################
@@ -61,3 +74,13 @@ if os.path.exists(img_preview_path):
 img = sly.image.read(img_path)
 ann.draw_pretty(img)
 sly.image.write(img_preview_path, img)
+
+
+docker run \
+    --runtime=nvidia \
+    -v "./47705_RT-DETRv2:/model" \
+    -p 8000:8000 \
+    supervisely/rt-detrv2:dev \
+    deploy \
+    --model "/model/checkpoints/best.pth" \
+    --device "cuda:0"

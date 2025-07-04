@@ -40,9 +40,10 @@ RUN mkdir -p ~/.cache/supervisely/checkpoints && \
     curl -L -o ~/.cache/supervisely/checkpoints/rtdetrv2_r50vd_6x_coco_ema.pth https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetrv2_r50vd_6x_coco_ema.pth && \
     curl -L -o ~/.cache/supervisely/checkpoints/rtdetrv2_r101vd_6x_coco_from_paddle.pth https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetrv2_r101vd_6x_coco_from_paddle.pth
 
-RUN pip install --no-cache-dir supervisely[training]==6.73.393
-RUN pip install --no-cache-dir supervisely[model-benchmark]==6.73.393
+# RUN pip install --no-cache-dir supervisely[training]==6.73.393
+# RUN pip install --no-cache-dir supervisely[model-benchmark]==6.73.393
+RUN pip install --no-cache-dir git+https://github.com/supervisely/supervisely.git@update-deploy-from-args
 
-LABEL python_sdk_version=6.73.393
+LABEL python_sdk_version=dev
 
 ENTRYPOINT ["/bin/bash", "-c", "set -euo pipefail; if [ $# -eq 0 ]; then exec python3 -m supervisely_integration.serve.main deploy; elif [[ \"$1\" == \"deploy\" || \"$1\" == \"serve\" || \"$1\" == \"predict\" ]]; then exec python3 -m supervisely_integration.serve.main \"$@\"; else exec \"$@\"; fi", "entrypoint"]
