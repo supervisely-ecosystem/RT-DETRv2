@@ -45,4 +45,4 @@ RUN pip install --no-cache-dir supervisely[model-benchmark]==6.73.393
 
 LABEL python_sdk_version=6.73.393
 
-ENTRYPOINT ["/bin/bash", "-c", "set -euo pipefail; if [ \"$#\" -eq 0 ]; then exec python3 -m supervisely_integration.serve.main deploy; elif [ \"$1\" = \"deploy\" ] || [ \"$1\" = \"serve\" ]; then exec python3 -m supervisely_integration.serve.main \"$@\"; else exec \"$@\"; fi"]
+ENTRYPOINT ["/bin/bash", "-c", "set -euo pipefail; if [ $# -eq 0 ]; then exec python3 -m supervisely_integration.serve.main deploy; elif [[ \"$1\" == \"deploy\" || \"$1\" == \"serve\" || \"$1\" == \"predict\" ]]; then exec python3 -m supervisely_integration.serve.main \"$@\"; else exec \"$@\"; fi", "entrypoint"]
