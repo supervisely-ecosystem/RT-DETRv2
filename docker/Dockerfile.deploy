@@ -1,0 +1,10 @@
+FROM supervisely/rt-detrv2:1.0.25
+
+RUN pip install --no-cache-dir git+https://github.com/supervisely/supervisely.git@update-deploy-from-args
+
+WORKDIR /app
+COPY . /app
+
+ENV PYTHONPATH=/app
+
+ENTRYPOINT ["python3", "-m", "supervisely_integration.serve.main"]
