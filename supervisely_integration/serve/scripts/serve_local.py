@@ -31,7 +31,7 @@ api = sly.Api.from_env()
 #   -v ".:/app" \
 #   -w /app \
 #   -p 8000:8000 \
-#   supervisely/rt-detrv2:1.0.25 \
+#   supervisely/rt-detrv2:dev-deploy \
 #   deploy
 
 # Custom
@@ -42,7 +42,7 @@ api = sly.Api.from_env()
 #     -v "${PWD}:/app" \
 #     -w /app \
 #     -p 8000:8000 \
-#     supervisely/rt-detrv2:dev \
+#     supervisely/rt-detrv2:dev-deploy \
 #     deploy \
 #     --model "/app/47705_RT-DETRv2/checkpoints/best.pth"
 
@@ -74,13 +74,3 @@ if os.path.exists(img_preview_path):
 img = sly.image.read(img_path)
 ann.draw_pretty(img)
 sly.image.write(img_preview_path, img)
-
-
-docker run \
-    --runtime=nvidia \
-    -v "./47705_RT-DETRv2:/model" \
-    -p 8000:8000 \
-    supervisely/rt-detrv2:dev \
-    deploy \
-    --model "/model/checkpoints/best.pth" \
-    --device "cuda:0"
