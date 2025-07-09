@@ -2,26 +2,14 @@
 
 **Table of Contents (only for this readme):**
 
-- [Demo: Inference \& Deployment](#demo-inference--deployment)
-  - [Once Click Model Predictions](#once-click-model-predictions)
-  - [Serve Model in Supervisely Platform](#serve-model-in-supervisely-platform)
-  - [Inference via API](#inference-via-api)
-  - [Using Model Outside of Supervisely Platform](#using-model-outside-of-supervisely-platform)
-    - [Get predictions in your code](#get-predictions-in-your-code)
-      - [1. Clone repository](#1-clone-repository)
-      - [2. Set up environment](#2-set-up-environment)
-      - [3. Download checkpoint](#3-download-checkpoint)
-      - [4. Predict](#4-predict)
-    - [Deploy model as a server on your machine](#deploy-model-as-a-server-on-your-machine)
-      - [1. Clone repository](#1-clone-repository-1)
-      - [2. Set up environment](#2-set-up-environment-1)
-      - [3. Download checkpoint](#3-download-checkpoint-1)
-      - [4. Deploy](#4-deploy)
-      - [5. Predict](#5-predict)
-        - [Predict via API](#predict-via-api)
-        - [Predict with CLI](#predict-with-cli)
-    - [Deploy in a Docker Container](#deploy-in-a-docker-container)
-  - [Using Your Model as a Standalone PyTorch Model](#using-your-model-as-a-standalone-pytorch-model)
+- [Apply Model to your Project](#apply-model-to-your-project)
+- [Serve Model in Supervisely Platform](#serve-model-in-supervisely-platform)
+- [Inference via API](#inference-via-api)
+- [Using Model Outside of Supervisely Platform](#using-model-outside-of-supervisely-platform)
+  - [Get predictions in your code](#get-predictions-in-your-code)
+  - [Deploy model as a server on your machine](#deploy-model-as-a-server-on-your-machine)
+  - [Deploy in a Docker Container](#deploy-in-a-docker-container)
+- [Using Your Model as a Standalone PyTorch Model](#using-your-model-as-a-standalone-pytorch-model)
 
 > You can use your model in very different ways depending on your needs. For more information, please, refer to our full [Inference & Deployment](https://docs.supervisely.com/neural-networks/overview-1) documentation.
 
