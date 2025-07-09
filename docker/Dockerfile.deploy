@@ -1,6 +1,4 @@
-FROM supervisely/rt-detrv2:1.0.25
-
-RUN pip install --no-cache-dir git+https://github.com/supervisely/supervisely.git@update-deploy-from-args
+FROM supervisely/rt-detrv2:1.0.26
 
 WORKDIR /app
 COPY . /app
