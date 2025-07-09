@@ -90,7 +90,7 @@ docker pull supervisely/rt-detrv2:1.0.26-deploy
 
 See our [Dockerfile](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/docker/Dockerfile) for more details.
 
-Docker image already includes the source code. Clone the repository inside the container:
+Docker image already includes the source code.
 
 ### 2. Download checkpoint and model files from Supervisely Platform
 
