@@ -26,25 +26,24 @@ api = sly.Api.from_env()
 # docker run \
 #   --shm-size=1g \
 #   --runtime=nvidia \
-#   --env-file ~/supervisely.env \
 #   --env PYTHONPATH=/app \
-#   -v ".:/app" \
-#   -w /app \
 #   -p 8000:8000 \
 #   supervisely/rt-detrv2:dev-deploy \
 #   deploy
+#   --model "RT-DETRv2-S"
 
 # Custom
 # docker run \
-#     --shm-size=1g \
-#     --runtime=nvidia \
-#     --env PYTHONPATH=/app \
-#     -v "${PWD}:/app" \
-#     -w /app \
-#     -p 8000:8000 \
-#     supervisely/rt-detrv2:dev-deploy \
-#     deploy \
-#     --model "/app/47705_RT-DETRv2/checkpoints/best.pth"
+#   --shm-size=1g \
+#   --runtime=nvidia \
+#   --env-file ~/supervisely.env \
+#   --env PYTHONPATH=/app \
+#   -v "./47688_RT-DETRv2:/model" \
+#   -p 8000:8000 \
+#   supervisely/rt-detrv2:dev-deploy \
+#   deploy \
+#   --model "/model/checkpoints/best.pth" \
+#   --device "cuda:0"
 
 
 ################################

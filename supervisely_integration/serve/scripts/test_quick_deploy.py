@@ -9,7 +9,7 @@ if sly.is_development():
     # load_dotenv("supervisely.env")
     load_dotenv(os.path.expanduser("~/supervisely.env"))
 
-model_n = 2
+model_n = 1
 
 # 1. Pretrained model
 if model_n == 1:
@@ -28,7 +28,7 @@ elif model_n == 2:
 # 3. Remote Custom Checkpoint (Team Files)
 elif model_n == 3:
     model = RTDETRv2(
-        model="/experiments/9_Animals (Bitmap)/47705_RT-DETRv2/checkpoints/best.pth",
+        model="/experiments/9_Animals (Bitmap)/47688_RT-DETRv2/checkpoints/best.pth",
         device="cuda:0",
     )
 

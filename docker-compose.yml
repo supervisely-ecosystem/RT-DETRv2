@@ -14,5 +14,4 @@ services:
       - "8000:8000"
     expose:
       - "8000"
-    entrypoint: ["python3", "supervisely_integration/serve/main.py"]
     command: ["deploy"]
