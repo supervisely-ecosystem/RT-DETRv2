@@ -1,0 +1,28 @@
+__include__: [
+  '../configs/rtdetrv2/rtdetrv2_r50vd_6x_coco.yml',
+]
+
+num_classes: 3
+print_freq: 10
+remap_mscoco_category: False
+
+train_dataloader:
+  dataset:
+    type: SSLDataset
+    img_folder: data/insulator-defect-detection/sly_project/train/img
+    ann_file: data/insulator-defect-detection/coco_ann/train/annotations/coco_instances.json
+    # unlabeled_img_folder: data/insulator-defect-detection/sly_project/train/img
+    sample_mode: True
+    labeled_sample_size: 125
+    unlabeled_sample_size: 250
+  total_batch_size: 10
+  num_workers: 10
+  collate_fn:
+    type: SSLBatchImageCollateFuncion
+
+val_dataloader:
+  dataset:
+    img_folder: data/insulator-defect-detection/sly_project/val/img
+    ann_file: data/insulator-defect-detection/coco_ann/val/annotations/coco_instances.json
+  total_batch_size: 10
+  num_workers: 10

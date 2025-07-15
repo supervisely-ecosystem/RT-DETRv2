@@ -11,6 +11,8 @@ from ..misc import dist_utils, profiler_utils
 
 from ._solver import BaseSolver
 from .det_engine import train_one_epoch, evaluate
+from .ssl_engine import train_one_epoch as ssl_train_one_epoch
+from ..data.dataset.ssl_dataset import SSLDataset
 
 from supervisely.nn.training import train_logger
 
@@ -38,8 +40,13 @@ class DetSolver(BaseSolver):
             if dist_utils.is_dist_available_and_initialized():
                 self.train_dataloader.sampler.set_epoch(epoch)
             
+            if isinstance(self.cfg.train_dataloader.dataset, SSLDataset):
+                train_one_epoch_fn = ssl_train_one_epoch
+            else:
+                train_one_epoch_fn = train_one_epoch
+
             train_logger.epoch_started(total_steps=len(self.train_dataloader))
-            train_stats = train_one_epoch(
+            train_stats = train_one_epoch_fn(
                 self.model, 
                 self.criterion, 
                 self.train_dataloader, 
