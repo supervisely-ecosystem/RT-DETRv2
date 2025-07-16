@@ -42,5 +42,10 @@
     "real_time": true,
     "onnx": true,
     "tensorrt": true
+  },
+  "files": {
+    "models": "supervisely_integration/models_v2.json",
+    "inference_settings": "supervisely_integration/serve/inference_settings.yaml",
+    "hyperparams": "supervisely_integration/train/hyperparameters.yaml"
   }
 }
