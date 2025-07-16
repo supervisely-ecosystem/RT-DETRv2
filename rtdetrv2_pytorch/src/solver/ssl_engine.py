@@ -62,6 +62,25 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             optimizer.zero_grad()
 
         else:
+            # outputs = model(samples, targets=targets)
+            # loss_dict = criterion(outputs, targets, **metas)
+
+            # masked_samples = masking(unlabeled_samples)
+            # with torch.no_grad():
+                # pseudo_labels = model_teacher(unlabeled_samples)
+            # pseudo_labels = filter_by_confidence(pseudo_labels, threshold=0.8)
+            # if len(pseudo_labels):
+                # apply_quality_weights
+                # outputs_pseudo = model(masked_samples, targets=pseudo_labels)
+                # loss_dict_pseudo = ssl_criterion(outputs_pseudo, pseudo_labels)
+                # loss_dict_pseudo = loss_dict_pseudo * LAMBDA_WEIGHT
+                # loss_dict.update(loss_dict_pseudo)
+            
+            # loss : torch.Tensor = sum(loss_dict.values())
+            # update steps
+            # ...
+
+
             outputs = model(samples, targets=targets)
             loss_dict = criterion(outputs, targets, **metas)
             

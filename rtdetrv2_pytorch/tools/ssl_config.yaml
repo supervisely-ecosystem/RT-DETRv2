@@ -6,6 +6,16 @@ num_classes: 3
 print_freq: 10
 remap_mscoco_category: False
 
+use_amp: True
+use_ema: True 
+ema:
+  type: ModelEMA
+  decay: 0.95
+  warmups: 1000
+
+epoches: 80
+clip_max_norm: 5.0
+
 train_dataloader:
   dataset:
     type: SSLDataset
