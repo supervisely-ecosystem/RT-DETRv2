@@ -42,6 +42,8 @@ class DetSolver(BaseSolver):
             
             if isinstance(self.cfg.train_dataloader.dataset, SSLDataset):
                 train_one_epoch_fn = ssl_train_one_epoch
+                from ..data.transforms.masking import Masking
+                masking = Masking()
             else:
                 train_one_epoch_fn = train_one_epoch
 
@@ -58,7 +60,8 @@ class DetSolver(BaseSolver):
                 ema=self.ema, 
                 scaler=self.scaler, 
                 lr_warmup_scheduler=self.lr_warmup_scheduler,
-                writer=self.writer
+                writer=self.writer,
+                masking=masking
             )
 
             if self.lr_warmup_scheduler is None or self.lr_warmup_scheduler.finished():

@@ -17,6 +17,7 @@ from torch.cuda.amp.grad_scaler import GradScaler
 from ..optim import ModelEMA, Warmup
 from ..data import CocoEvaluator
 from ..misc import MetricLogger, SmoothedValue, dist_utils
+from ..data.transforms.masking import Masking
 
 from supervisely.nn.training import train_logger
 
@@ -37,13 +38,18 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     scaler :GradScaler = kwargs.get('scaler', None)
     lr_warmup_scheduler :Warmup = kwargs.get('lr_warmup_scheduler', None)
 
+    masking :Masking = kwargs.get('masking', None)
+
     for i, (samples, targets, unlabeled_samples) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
         samples = samples.to(device)
+
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
         global_step = epoch * len(data_loader) + i
         metas = dict(epoch=epoch, step=i, global_step=global_step)
 
         if scaler is not None:
+            # TODO: add AMP support
+            raise NotImplementedError("Mixed precision training is not supported now.")
             with torch.autocast(device_type=str(device), cache_enabled=True):
                 outputs = model(samples, targets=targets)
             
@@ -62,23 +68,34 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             optimizer.zero_grad()
 
         else:
-            # outputs = model(samples, targets=targets)
-            # loss_dict = criterion(outputs, targets, **metas)
-
-            # masked_samples = masking(unlabeled_samples)
             # with torch.no_grad():
-                # pseudo_labels = model_teacher(unlabeled_samples)
-            # pseudo_labels = filter_by_confidence(pseudo_labels, threshold=0.8)
-            # if len(pseudo_labels):
-                # apply_quality_weights
-                # outputs_pseudo = model(masked_samples, targets=pseudo_labels)
-                # loss_dict_pseudo = ssl_criterion(outputs_pseudo, pseudo_labels)
-                # loss_dict_pseudo = loss_dict_pseudo * LAMBDA_WEIGHT
-                # loss_dict.update(loss_dict_pseudo)
+                # teacher_pseudo_labels = model_teacher(unlabeled_samples)
+
+            # 1. L_S loss
+            # outputs = model(samples, targets=targets)
+            # loss_dict_L_S = criterion(outputs, targets, **metas)
+
+            # 2. L_T loss
+            # ulabeled_samples_augmented = augs(unlabeled_samples)
+            # outputs_student = model(ulabeled_samples_augmented, targets=teacher_pseudo_labels)
+            # loss_dict_L_T = criterion2(outputs_student, teacher_pseudo_labels)
+
+            # 3. L_M loss
+            # masked_samples = masking(unlabeled_samples)
+            # teacher_pseudo_labels_masking = filter_by_confidence(teacher_pseudo_labels, threshold=0.8)
+            # apply_quality_weights
+            # outputs_masked = model(masked_samples, targets=teacher_pseudo_labels_masking)
+            # loss_dict_L_M = criterion3(outputs_masked, teacher_pseudo_labels_masking)
+
+            # apply loss weights
+            # loss_dict = {**loss_dict_L_S * 1.0,
+            #              **loss_dict_L_T * LAMBDA_T,
+            #              **loss_dict_L_M * LABDA_M}
             
             # loss : torch.Tensor = sum(loss_dict.values())
             # update steps
             # ...
+            # ema.update()
 
 
             outputs = model(samples, targets=targets)

@@ -65,6 +65,9 @@ def color_jitter(color_jitter, mean, std, data, s=.25, p=.2):
             seq = nn.Sequential(
                 kornia.augmentation.ColorJitter(
                     brightness=s, contrast=s, saturation=s, hue=s))
+        raise NotImplementedError(
+            "Check the data input mean/std, before it denormed and renormed."
+        )
         data = denorm(data, mean, std)
         data = seq(data)
         data = renorm(data, mean, std)
@@ -90,7 +93,7 @@ def gaussian_blur(blur, data):
     return data
 
 class Masking(nn.Module):
-    def __init__(self, block_size, ratio, color_jitter_s, color_jitter_p, blur, mean, std):
+    def __init__(self, block_size=32, ratio=0.5, color_jitter_s=0.2, color_jitter_p=0.2, blur=True, mean=[0.,0.,0.], std=[1.,1.,1.]):
         super(Masking, self).__init__()
 
         self.block_size = block_size

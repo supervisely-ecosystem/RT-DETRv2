@@ -16,6 +16,13 @@ ema:
 epoches: 80
 clip_max_norm: 5.0
 
+# masking:
+#   type: Masking
+#   mask_ratio: 0.5
+#   mask_size: 14
+#   mask_stride: 14
+#   mask_padding: 0
+
 train_dataloader:
   dataset:
     type: SSLDataset
