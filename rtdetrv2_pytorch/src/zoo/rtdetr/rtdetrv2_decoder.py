@@ -551,12 +551,12 @@ class RTDETRTransformerv2(nn.Module):
         return topk_memory, topk_logits, topk_coords
 
 
-    def forward(self, feats, targets=None):
+    def forward(self, feats, targets=None, with_cdn=True):
         # input projection and embedding
         memory, spatial_shapes = self._get_encoder_input(feats)
         
         # prepare denoising training
-        if self.training and self.num_denoising > 0:
+        if self.training and self.num_denoising > 0 and with_cdn:
             denoising_logits, denoising_bbox_unact, attn_mask, dn_meta = \
                 get_contrastive_denoising_training_group(targets, \
                     self.num_classes, 

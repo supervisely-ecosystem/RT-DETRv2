@@ -54,23 +54,21 @@ def renorm(img, mean, std):
 
 def color_jitter(color_jitter, mean, std, data, s=.25, p=.2):
     # s is the strength of colorjitter
-    if color_jitter > p:
-        mean = torch.as_tensor(mean, device=data.device)
-        mean = repeat(mean, 'C -> B C 1 1', B=data.shape[0], C=3)
-        std = torch.as_tensor(std, device=data.device)
-        std = repeat(std, 'C -> B C 1 1', B=data.shape[0], C=3)
+    if color_jitter < p:
+        # mean = torch.as_tensor(mean, device=data.device)
+        # mean = repeat(mean, 'C -> B C 1 1', B=data.shape[0], C=3)
+        # std = torch.as_tensor(std, device=data.device)
+        # std = repeat(std, 'C -> B C 1 1', B=data.shape[0], C=3)
         if isinstance(s, dict):
             seq = nn.Sequential(kornia.augmentation.ColorJitter(**s))
         else:
             seq = nn.Sequential(
                 kornia.augmentation.ColorJitter(
                     brightness=s, contrast=s, saturation=s, hue=s))
-        raise NotImplementedError(
-            "Check the data input mean/std, before it denormed and renormed."
-        )
-        data = denorm(data, mean, std)
+
+        # data = denorm(data, mean, std)
         data = seq(data)
-        data = renorm(data, mean, std)
+        # data = renorm(data, mean, std)
     return data
 
 
@@ -93,31 +91,39 @@ def gaussian_blur(blur, data):
     return data
 
 class Masking(nn.Module):
-    def __init__(self, block_size=32, ratio=0.5, color_jitter_s=0.2, color_jitter_p=0.2, blur=True, mean=[0.,0.,0.], std=[1.,1.,1.]):
+    def __init__(self, block_size=32, ratio=0.5, color_jitter_s=0.2, color_jitter_p=0.7, blur=True, mean=[0., 0., 0.], std=[1., 1., 1.]):
         super(Masking, self).__init__()
 
         self.block_size = block_size
         self.ratio = ratio
+        self.color_jitter_s = color_jitter_s
+        self.color_jitter_p = color_jitter_p
+        self.blur = blur
+        self.mean = mean
+        self.std = std
+        self._apply_augmentation = (
+            (color_jitter_p > 0 and color_jitter_s > 0) or blur
+        )
 
-        self.augmentation_params = None
-        if (color_jitter_p > 0 and color_jitter_s > 0) or blur:
+        if self._apply_augmentation:
             print('[Masking] Use color augmentation.')
-            self.augmentation_params = {
-                'color_jitter': random.uniform(0, 1),
-                'color_jitter_s': color_jitter_s,
-                'color_jitter_p': color_jitter_p,
-                'blur': random.uniform(0, 1) if blur else 0,
-                'mean': mean,
-                'std': std
-            }
+
 
     @torch.no_grad()
     def forward(self, img: Tensor):
         img = img.clone()
         B, _, H, W = img.shape
 
-        if self.augmentation_params is not None:
-            img = strong_transform(self.augmentation_params, data=img.clone())
+        if self._apply_augmentation:
+            augmentation_params = {
+                'color_jitter': random.uniform(0, 1),
+                'color_jitter_s': self.color_jitter_s,
+                'color_jitter_p': self.color_jitter_p,
+                'blur': random.uniform(0, 1) if self.blur else 0,
+                'mean': self.mean,
+                'std': self.std
+            }
+            img = strong_transform(augmentation_params, data=img.clone())
 
         mshape = B, 1, round(H / self.block_size), round(W / self.block_size)
         input_mask = torch.rand(mshape, device=img.device)
@@ -126,3 +132,15 @@ class Masking(nn.Module):
         masked_img = img * input_mask
 
         return masked_img
+
+
+def apply_strong_transform(img: Tensor, color_jitter_s=0.2, color_jitter_p=0.7, blur=True, mean=[0., 0., 0.], std=[1., 1., 1.]):
+    augmentation_params = {
+        'color_jitter': random.uniform(0, 1),
+        'color_jitter_s': color_jitter_s,
+        'color_jitter_p': color_jitter_p,
+        'blur': random.uniform(0, 1) if blur else 0,
+        'mean': mean,
+        'std': std
+    }
+    return strong_transform(augmentation_params, data=img.clone())

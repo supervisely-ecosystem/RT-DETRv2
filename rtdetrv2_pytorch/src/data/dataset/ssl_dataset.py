@@ -27,7 +27,7 @@ class SSLDataset(CocoDetection):
             seed = kwargs.get('seed', 42)
             
             # Split the dataset indices
-            total_size = len(self)
+            total_size = super().__len__()
             assert self.labeled_sample_size + self.unlabeled_sample_size <= total_size, \
                 f"Requested samples ({self.labeled_sample_size} + {self.unlabeled_sample_size}) exceed dataset size ({total_size})"
             
@@ -56,6 +56,9 @@ class SSLDataset(CocoDetection):
                   "The dataset will work in non semi-supervised mode.")
             self.labeled_indices = list(range(len(self)))
             self.unlabeled_indices = []
+        
+        if len(self.unlabeled_indices) == 0:
+            print("Warning: No unlabeled data used. The dataset will work in normal mode.")
     
     def __len__(self):
         return len(self.labeled_indices)
@@ -118,4 +121,7 @@ class SSLBatchImageCollateFunction(BaseCollateFunction):
             if 'masks' in targets[0]:
                 raise NotImplementedError('Mask scaling in SSL setting not implemented')
         
-        return images_labeled, targets, images_unlabeled
+        if images_unlabeled is not None:
+            return images_labeled, targets, images_unlabeled
+        else:
+            return images_labeled, targets

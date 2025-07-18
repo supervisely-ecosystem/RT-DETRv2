@@ -8,7 +8,7 @@ print_freq: 10
 checkpoint_freq: 10
 save_optimizer: false
 save_ema: true
-output_dir: output/ssl
+output_dir: output/normal
 
 remap_mscoco_category: True
 RTDETRPostProcessor:
@@ -18,7 +18,7 @@ use_amp: True
 use_ema: True 
 ema:
   type: ModelEMA
-  decay: 0.95
+  decay: 0.999
   warmups: 500
 
 epoches: 200
@@ -33,11 +33,6 @@ lr_warmup_scheduler:
   type: LinearWarmup
   warmup_duration: 500  # steps
 
-# masking:
-#   type: Masking
-#   block_size: 32
-#   ratio: 0.5
-
 train_dataloader:
   dataset:
     type: SSLDataset
@@ -46,7 +41,7 @@ train_dataloader:
     # unlabeled_img_folder: data/insulator-defect-detection/sly_project/train/img
     sample_mode: True
     labeled_sample_size: 125
-    unlabeled_sample_size: 250
+    unlabeled_sample_size: 0
     transforms:
       policy:
         name: stop_epoch

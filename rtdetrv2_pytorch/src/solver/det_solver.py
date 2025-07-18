@@ -40,11 +40,13 @@ class DetSolver(BaseSolver):
             if dist_utils.is_dist_available_and_initialized():
                 self.train_dataloader.sampler.set_epoch(epoch)
             
-            if isinstance(self.cfg.train_dataloader.dataset, SSLDataset):
+            dataset = self.train_dataloader.dataset
+            if isinstance(dataset, SSLDataset) and len(dataset.unlabeled_indices) > 0:
                 train_one_epoch_fn = ssl_train_one_epoch
                 from ..data.transforms.masking import Masking
                 masking = Masking()
             else:
+                masking = None
                 train_one_epoch_fn = train_one_epoch
 
             train_logger.epoch_started(total_steps=len(self.train_dataloader))
@@ -61,7 +63,8 @@ class DetSolver(BaseSolver):
                 scaler=self.scaler, 
                 lr_warmup_scheduler=self.lr_warmup_scheduler,
                 writer=self.writer,
-                masking=masking
+                masking=masking,
+                cfg=self.cfg,
             )
 
             if self.lr_warmup_scheduler is None or self.lr_warmup_scheduler.finished():

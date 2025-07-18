@@ -29,10 +29,10 @@ class RTDETR(nn.Module):
         self.decoder = decoder
         self.encoder = encoder
         
-    def forward(self, x, targets=None):
+    def forward(self, x, targets=None, with_cdn=True):
         x = self.backbone(x)
         x = self.encoder(x)        
-        x = self.decoder(x, targets)
+        x = self.decoder(x, targets, with_cdn=with_cdn)
 
         return x
     

@@ -27,7 +27,7 @@ def _remove_include(config_path: str):
 
 
 if __name__ == "__main__":
-    config_path = "rtdetrv2_pytorch/tools/ssl_config.yaml"
+    config_path = "rtdetrv2_pytorch/tools/normal_config.yaml"
     checkpoint = "https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetrv2_r50vd_6x_coco_ema.pth"
     cfg = YAMLConfig(
         config_path,

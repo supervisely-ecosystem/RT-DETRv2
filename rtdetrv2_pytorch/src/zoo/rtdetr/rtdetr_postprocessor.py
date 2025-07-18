@@ -44,6 +44,33 @@ class RTDETRPostProcessor(nn.Module):
     def extra_repr(self) -> str:
         return f'use_focal_loss={self.use_focal_loss}, num_classes={self.num_classes}, num_top_queries={self.num_top_queries}'
     
+    def postprocess(self, outputs):
+        logits, boxes = outputs['pred_logits'], outputs['pred_boxes']
+
+        if self.use_focal_loss:
+            scores = F.sigmoid(logits)
+            scores, index = torch.topk(scores.flatten(1), self.num_top_queries, dim=-1)
+            # TODO for older tensorrt
+            # labels = index % self.num_classes
+            labels = mod(index, self.num_classes)
+            index = index // self.num_classes
+            boxes = boxes.gather(dim=1, index=index.unsqueeze(-1).repeat(1, 1, boxes.shape[-1]))
+            
+        else:
+            scores = F.softmax(logits)[:, :, :-1]
+            scores, labels = scores.max(dim=-1)
+            if scores.shape[1] > self.num_top_queries:
+                scores, index = torch.topk(scores, self.num_top_queries, dim=-1)
+                labels = torch.gather(labels, dim=1, index=index)
+                boxes = torch.gather(boxes, dim=1, index=index.unsqueeze(-1).tile(1, 1, boxes.shape[-1]))
+        
+        results = []
+        for lab, box, sco in zip(labels, boxes, scores):
+            result = dict(boxes=box, labels=lab, scores=sco)
+            results.append(result)
+        
+        return results
+    
     # def forward(self, outputs, orig_target_sizes):
     def forward(self, outputs, orig_target_sizes: torch.Tensor):
         logits, boxes = outputs['pred_logits'], outputs['pred_boxes']

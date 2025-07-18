@@ -64,8 +64,9 @@ class ModelEMA(object):
         if 'updates' in state:
             self.updates = state['updates']
 
-    def forwad(self, ):
-        raise RuntimeError('ema...')
+    @torch.no_grad()
+    def forward(self, x):
+        return self.module(x)
 
     def extra_repr(self) -> str:
         return f'decay={self.decay}, warmups={self.warmups}'

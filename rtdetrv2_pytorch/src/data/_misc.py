@@ -39,6 +39,8 @@ def convert_to_tv_tensor(tensor: Tensor, key: str, box_format='xyxy', spatial_si
     Args:
         tensor (Tensor): input tensor
         key (str): transform to key
+        box_format (str): format of bounding boxes, default is 'xyxy'
+        spatial_size (Tuple[int, int]): spatial size (H, W) of the image
 
     Return:
         Dict[str, TV_Tensor]
