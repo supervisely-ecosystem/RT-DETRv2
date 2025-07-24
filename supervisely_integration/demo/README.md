@@ -25,7 +25,7 @@ pip install -r rtdetrv2_pytorch/requirements.txt
 We provide a pre-built docker image with all dependencies installed [DockerHub](https://hub.docker.com/r/supervisely/rt-detrv2/tags). The image includes installed packages for ONNXRuntime and TensorRT inference.
 
 ```bash
-docker pull supervisely/rt-detrv2:1.0.26-deploy
+docker pull supervisely/rt-detrv2:1.0.27-deploy
 ```
 
 See our [Dockerfile](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/docker/Dockerfile) for more details.
