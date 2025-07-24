@@ -101,7 +101,7 @@ def prepare_config(train_ann_path: str, val_ann_path: str):
 
     custom_config = train.hyperparameters
     custom_config["__include__"] = [config]
-    custom_config["remap_mscoco_category"] = True
+    custom_config["remap_mscoco_category"] = train.num_classes <= 80
     custom_config["num_classes"] = train.num_classes
     custom_config["print_freq"] = 50
 
