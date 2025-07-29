@@ -13,5 +13,5 @@ model = RTDETRv2(
     use_gui=True,
     use_serving_gui_template=True,
 )
-model._inactivity_timeout = 10
+model._inactivity_timeout = 1000
 model.serve()
