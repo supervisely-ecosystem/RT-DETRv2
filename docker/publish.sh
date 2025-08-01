@@ -1,2 +1,2 @@
-docker build -t supervisely/rt-detrv2:1.0.29 . && \
-docker push supervisely/rt-detrv2:1.0.29
+docker build -t supervisely/rt-detrv2:1.0.30 . && \
+docker push supervisely/rt-detrv2:1.0.30

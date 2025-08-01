@@ -20,12 +20,12 @@
   "gpu": "preferred",
   "session_tags": ["deployed_nn"],
   "community_agent": false,
-  "docker_image": "supervisely/rt-detrv2:1.0.29",
+  "docker_image": "supervisely/rt-detrv2:1.0.30",
   "task_location": "application_sessions",
   "license": {
     "type": "Apache-2.0"
   },
-  "instance_version": "6.14.0",
+  "instance_version": "6.14.4",
   "files": {
     "models": "supervisely_integration/models_v2.json",
     "inference_settings": "supervisely_integration/serve/inference_settings.yaml",

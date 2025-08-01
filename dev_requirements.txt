@@ -1,7 +1,7 @@
 # git+https://github.com/supervisely/supervisely.git@some-test-branch
 
-supervisely[training]==6.73.408
-supervisely[model-benchmark]==6.73.408
+supervisely[training]==6.73.411
+supervisely[model-benchmark]==6.73.411
 setuptools==69.5.1
 scikit-learn
 plotly==5.22.0
