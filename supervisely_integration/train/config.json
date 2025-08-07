@@ -31,17 +31,12 @@
   },
   "framework": {
     "name": "RT-DETRv2",
+    "tags": ["Real-Time"],
+    "export": ["ONNX", "TensorRT"],
     "conference": "CVPR 2024",
-    "released": 2024,
-    "tasks": {
-      "object_detection": {
-        "metric": 54.3,
-        "models": 5
-      }
-    },
-    "real_time": true,
-    "onnx": true,
-    "tensorrt": true
+    "released": "2024",
+    "description": "Real-Time DEtection TRansformer (RT-DETR), the first real-time end-to-end object detector that eliminates the need for post-processing (NMS) used in traditional YOLO models. It achieves new state-of-the-art performance in real-time object detection.",
+    "github": "https://github.com/lyuwenyu/RT-DETR"
   },
   "files": {
     "models": "supervisely_integration/models_v2.json",
