@@ -1,5 +1,3 @@
-git+https://github.com/supervisely/supervisely.git@predict-app
-
-# to generate experiment report plots
 tbparse
 kaleido==0.2.1
+git+https://github.com/supervisely/supervisely.git@predict-app
