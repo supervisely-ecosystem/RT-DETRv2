@@ -67,8 +67,8 @@ class DetSolver(BaseSolver):
                 cfg=self.cfg,
             )
 
-            if self.lr_warmup_scheduler is None or self.lr_warmup_scheduler.finished():
-                self.lr_scheduler.step()
+            # if self.lr_warmup_scheduler is None or self.lr_warmup_scheduler.finished():
+            self.lr_scheduler.step()
             
             self.last_epoch += 1
 

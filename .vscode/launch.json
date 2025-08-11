@@ -46,7 +46,7 @@
 			],
 			"justMyCode": false,
 			"env": {
-				"PYTHONPATH": "${workspaceFolder}:${PYTHONPATH}",
+				"PYTHONPATH": "/root/supervisely:${workspaceFolder}:${PYTHONPATH}",
 				"LOG_LEVEL": "DEBUG",
 				"DEBUG_APP_DIR": "app_data",
 				"DEBUG_WITH_SLY_NET": "1",

@@ -80,9 +80,9 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         # ...
         # ema.update()
 
-        from rtdetrv2_pytorch.tools.utils import draw_tensor_grid
-        draw_tensor_grid(samples[:4]).save("output/samples.png")
-        draw_tensor_grid(unlabeled_samples[:4]).save("output/unlabeled_samples.png")
+        # from rtdetrv2_pytorch.tools.utils import draw_tensor_grid
+        # draw_tensor_grid(samples[:4]).save("output/samples.png")
+        # draw_tensor_grid(unlabeled_samples[:4]).save("output/unlabeled_samples.png")
 
         loss_dict = {}
 
@@ -93,7 +93,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             teacher_outputs = ema.forward(unlabeled_samples)
             teacher_targets = postprocessor.postprocess(teacher_outputs)
             # TODO: handle filtering
-            teacher_targets_filtered = filter_by_confidence(teacher_targets, threshold=0.01)
+            teacher_targets = filter_by_confidence(teacher_targets, threshold=0.5)
         del teacher_outputs
 
         # 1. L_S loss
@@ -109,10 +109,10 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         # 2. L_T loss
         with torch.autocast(device_type="cuda"):
             unlabeled_samples_augmented = apply_strong_transform(unlabeled_samples)
-            draw_tensor_grid(unlabeled_samples_augmented[:4]).save("output/unlabeled_samples_augmented.png")
+            # draw_tensor_grid(unlabeled_samples_augmented[:4]).save("output/unlabeled_samples_augmented.png")
             outputs_student = model(unlabeled_samples_augmented, with_cdn=False)
             loss_dict_L_T = criterion(outputs_student, teacher_targets, **metas)
-            loss_T = sum(loss_dict_L_T.values()) * 1.0
+            loss_T = sum(loss_dict_L_T.values()) * 0.2
             loss_dict["L_T"] = loss_T.item()
         scaler.scale(loss_T).backward()
         del unlabeled_samples_augmented, outputs_student, loss_dict_L_T, loss_T
@@ -121,11 +121,11 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         # 3. L_M loss
         with torch.autocast(device_type="cuda"):
             masked_samples = masking(unlabeled_samples)
-            draw_tensor_grid(masked_samples[:4]).save("output/masked_samples.png")
+            # draw_tensor_grid(masked_samples[:4]).save("output/masked_samples.png")
             outputs_student_M = model(masked_samples, with_cdn=False)
             # TODO: apply_quality_weights
             loss_dict_L_M = criterion(outputs_student_M, teacher_targets, **metas)
-            loss_M = sum(loss_dict_L_M.values()) * 1.0
+            loss_M = sum(loss_dict_L_M.values()) * 0.2
             loss_dict["L_M"] = loss_M.item()
         scaler.scale(loss_M).backward()
         del masked_samples, outputs_student_M, loss_dict_L_M, loss_M
