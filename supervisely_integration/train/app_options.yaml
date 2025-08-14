@@ -60,3 +60,8 @@ export_tensorrt_supported: true
 demo:
   branch: "main"
   path: "supervisely_integration/demo"
+
+# ==================== Acknowledgment ======================
+original_repository:
+  name: "RT-DETR"
+  url: "https://github.com/lyuwenyu/RT-DETR"
