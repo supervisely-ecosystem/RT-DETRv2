@@ -1,4 +1,4 @@
-FROM supervisely/rt-detrv2:1.0.31
+FROM supervisely/rt-detrv2:1.0.32
 
 WORKDIR /app
 COPY . /app
