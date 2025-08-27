@@ -15,23 +15,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libexiv2-dev \
     python3-dev
 
-RUN apt-get update && apt-get install -y --no-install-recommends tensorrt
-
 RUN ln -s /usr/bin/python3 /usr/bin/python \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir \
-    setuptools==69.5.1 \
-    torch==2.0.1 \
-    torchvision==0.15.2 \
-    onnx==1.14.0 \
-    onnxruntime-gpu==1.15.1 \
-    pycocotools \
-    PyYAML \
-    tensorboard \
-    imgaug==0.4.0 \
-    decord
+RUN pip install --no-cache-dir torch==2.7.1 torchvision==0.22.1 --index-url https://download.pytorch.org/whl/cu128
+RUN pip install --no-cache-dir onnx==1.16.1 onnxruntime-gpu==1.19.2
+
+RUN pip install --no-cache-dir setuptools==69.5.1 tensorboard imgaug==0.4.0 decord
 
 RUN mkdir -p ~/.cache/supervisely/checkpoints && \
     curl -L -o ~/.cache/supervisely/checkpoints/rtdetrv2_r18vd_120e_coco_rerun_48.1.pth https://github.com/lyuwenyu/storage/releases/download/v0.2/rtdetrv2_r18vd_120e_coco_rerun_48.1.pth && \
