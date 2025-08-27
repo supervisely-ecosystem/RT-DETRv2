@@ -4,14 +4,11 @@ supervisely[training]==6.73.424
 supervisely[model-benchmark]==6.73.424
 setuptools==69.5.1
 
-scikit-learn
+torch==2.7.1
+torchvision==0.22.1
+onnx==1.16.1
+onnxruntime-gpu==1.19.2
 tensorboard
-pycocotools
-scipy
-imgaug
-PyYAML
+
+imgaug==0.4.0
 plotly==5.22.0
-torch==2.0.1
-torchvision==0.15.2
-onnx==1.14.0
-onnxruntime==1.15.1
