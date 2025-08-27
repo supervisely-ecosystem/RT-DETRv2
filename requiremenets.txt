@@ -1,0 +1,1 @@
+git+https://github.com/supervisely/supervisely.git@nn-figures-flag

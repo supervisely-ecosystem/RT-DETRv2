@@ -16,24 +16,25 @@ team_id = sly.env.team_id()
 workspace_id = sly.env.workspace_id()
 
 experiment_info = {
-	"experiment_name": "49487_Animals (Rectangle) (Old)_RT-DETRv2-S",
+	"experiment_name": "49800 Animals (Rectangle) RT-DETRv2-M",
 	"framework_name": "RT-DETRv2",
-	"model_name": "RT-DETRv2-S",
-	"base_checkpoint": "rtdetrv2_r18vd_120e_coco_rerun_48.1.pth",
-	"base_checkpoint_link": "https://github.com/lyuwenyu/storage/releases/download/v0.2/rtdetrv2_r18vd_120e_coco_rerun_48.1.pth",
+	"model_name": "RT-DETRv2-M",
+	"base_checkpoint": "rtdetrv2_r50vd_m_7x_coco_ema.pth",
+	"base_checkpoint_link": "https://github.com/lyuwenyu/storage/releases/download/v0.1/rtdetrv2_r50vd_m_7x_coco_ema.pth",
 	"task_type": "object detection",
-	"project_id": 30,
+	"project_id": 1322,
 	"project_version": {
-		"id": 222,
-		"version": 4
+		"id": 322,
+		"version": 13
 	},
-	"task_id": 49487,
+	"task_id": 49800,
 	"model_files": {
 		"config": "model_config.yml"
 	},
 	"checkpoints": [
 		"checkpoints/best.pth",
 		"checkpoints/checkpoint0005.pth",
+		"checkpoints/checkpoint0010.pth",
 		"checkpoints/last.pth"
 	],
 	"best_checkpoint": "best.pth",
@@ -41,23 +42,23 @@ experiment_info = {
 	"app_state": "app_state.json",
 	"model_meta": "model_meta.json",
 	"hyperparameters": "hyperparameters.yaml",
-	"artifacts_dir": "/experiments/30_Animals (Rectangle) (Old)/49487_RT-DETRv2/",
-	"datetime": "2025-08-11 15:42:16",
+	"artifacts_dir": "/experiments/1322_Animals (Rectangle)/49800_RT-DETRv2/",
+	"datetime": "2025-08-14 08:53:47",
 	"evaluation_report_id": None,
 	"evaluation_report_link": None,
 	"evaluation_metrics": {},
 	"primary_metric": None,
 	"logs": {
 		"type": "tensorboard",
-		"link": "/experiments/30_Animals (Rectangle) (Old)/49487_RT-DETRv2/logs/"
+		"link": "/experiments/1322_Animals (Rectangle)/49800_RT-DETRv2/logs/"
 	},
 	"device": "NVIDIA GeForce RTX 4090",
-	"training_duration": 9.387736642998789,
-	"train_collection_id": 530,
-	"val_collection_id": 531,
+	"training_duration": 32.86879684301675,
+	"train_collection_id": 574,
+	"val_collection_id": 575,
 	"train_val_split": "train_val_split.json",
-	"train_size": 12,
-	"val_size": 12
+	"train_size": 27,
+	"val_size": 27
 }
 
 model_meta = {
@@ -68,7 +69,7 @@ model_meta = {
 			"shape": "rectangle",
 			"color": "#A80B10",
 			"geometry_config": {},
-			"id": 78,
+			"id": 32406,
 			"hotkey": ""
 		},
 		{
@@ -77,7 +78,7 @@ model_meta = {
 			"shape": "rectangle",
 			"color": "#B8E986",
 			"geometry_config": {},
-			"id": 79,
+			"id": 32407,
 			"hotkey": ""
 		},
 		{
@@ -86,7 +87,7 @@ model_meta = {
 			"shape": "rectangle",
 			"color": "#9F21DE",
 			"geometry_config": {},
-			"id": 80,
+			"id": 32408,
 			"hotkey": ""
 		},
 		{
@@ -95,7 +96,7 @@ model_meta = {
 			"shape": "rectangle",
 			"color": "#1EA49B",
 			"geometry_config": {},
-			"id": 81,
+			"id": 32409,
 			"hotkey": ""
 		},
 		{
@@ -104,7 +105,7 @@ model_meta = {
 			"shape": "rectangle",
 			"color": "#F8E71C",
 			"geometry_config": {},
-			"id": 82,
+			"id": 32410,
 			"hotkey": ""
 		}
 	],
@@ -118,7 +119,7 @@ model_meta = {
 				"adult",
 				"senior"
 			],
-			"id": 62,
+			"id": 4781,
 			"hotkey": "",
 			"applicable_type": "all",
 			"classes": [],
@@ -128,7 +129,7 @@ model_meta = {
 			"name": "animal age group_1",
 			"value_type": "any_string",
 			"color": "#8A0F59",
-			"id": 63,
+			"id": 4782,
 			"hotkey": "",
 			"applicable_type": "all",
 			"classes": [],
@@ -138,7 +139,7 @@ model_meta = {
 			"name": "animal count",
 			"value_type": "any_number",
 			"color": "#E3BE1C",
-			"id": 64,
+			"id": 4783,
 			"hotkey": "",
 			"applicable_type": "all",
 			"classes": [],
@@ -148,7 +149,7 @@ model_meta = {
 			"name": "cat",
 			"value_type": "none",
 			"color": "#A80B10",
-			"id": 65,
+			"id": 4784,
 			"hotkey": "",
 			"applicable_type": "all",
 			"classes": [],
@@ -158,7 +159,7 @@ model_meta = {
 			"name": "dog",
 			"value_type": "none",
 			"color": "#B8E986",
-			"id": 66,
+			"id": 4785,
 			"hotkey": "",
 			"applicable_type": "all",
 			"classes": [],
@@ -168,7 +169,7 @@ model_meta = {
 			"name": "horse",
 			"value_type": "none",
 			"color": "#9F21DE",
-			"id": 67,
+			"id": 4786,
 			"hotkey": "",
 			"applicable_type": "all",
 			"classes": [],
@@ -178,7 +179,7 @@ model_meta = {
 			"name": "imgtag",
 			"value_type": "none",
 			"color": "#FF03D6",
-			"id": 68,
+			"id": 4787,
 			"hotkey": "",
 			"applicable_type": "imagesOnly",
 			"classes": [],
@@ -188,7 +189,7 @@ model_meta = {
 			"name": "sheep",
 			"value_type": "none",
 			"color": "#1EA49B",
-			"id": 69,
+			"id": 4788,
 			"hotkey": "",
 			"applicable_type": "all",
 			"classes": [],
@@ -198,7 +199,7 @@ model_meta = {
 			"name": "squirrel",
 			"value_type": "none",
 			"color": "#F8E71C",
-			"id": 70,
+			"id": 4789,
 			"hotkey": "",
 			"applicable_type": "all",
 			"classes": [],
@@ -218,11 +219,11 @@ model_meta = {
 model_meta = sly.ProjectMeta.from_json(model_meta)
 
 hyperparameters_yaml = """
-epoches: 80
-batch_size: 8
+epoches: 10
+batch_size: 2
 eval_spatial_size: [640, 640]  # height, width
 
-checkpoint_freq: 40
+checkpoint_freq: 5
 save_optimizer: false
 save_ema: false
 
@@ -232,7 +233,7 @@ optimizer:
   betas: [0.9, 0.999]
   weight_decay: 0.0001
 
-clip_max_norm: 0.1
+clip_max_norm: 10.0
 
 lr_scheduler:
   type: MultiStepLR  # CosineAnnealingLR | OneCycleLR
