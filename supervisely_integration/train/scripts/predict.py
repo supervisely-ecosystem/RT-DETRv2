@@ -24,8 +24,21 @@ workspace_id = sly.env.workspace_id()
 # )
 
 # Connect to model
-session_id = 50692
+session_id = 50756
 model_api = api.nn.connect(session_id)
 
-predictions = model_api.predict(input=["supervisely_integration/demo/img/coco_sample.jpg"])
+# Data
+
+# path
+# image_path = "supervisely_integration/demo/img/coco_sample.jpg"
+# predictions = model_api.predict(input=image_path)
+
+# image id
+image_id = 1425234
+predictions = model_api.predict(image_id=image_id, upload_mode="append")
+
+# video id
+# video_id = 110593
+# predictions = model_api.predict(video_id=video_id, upload_mode="append")
+
 print(predictions)
