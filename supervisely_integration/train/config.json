@@ -12,12 +12,12 @@
     "train",
     "framework:RT-DETRv2"
   ],
-  "icon": "https://github.com/user-attachments/assets/7dc4334b-5f50-4866-bc6a-1d36226bb093",
+  "icon": "https://github.com/user-attachments/assets/a6f3c726-f6c1-45d6-ba19-290bd161272a",
   "icon_cover": true,
   "poster": "https://github.com/user-attachments/assets/b4554de5-3d2c-4b4f-aba9-95864cb05289",
   "description": "Train RT-DETRv2 model on your data",
-  "docker_image": "supervisely/rt-detrv2:1.0.26",
-  "instance_version": "6.13.8",
+  "docker_image": "supervisely/rt-detrv2:1.0.32",
+  "instance_version": "6.15.0",
   "task_location": "workspace_tasks",
   "need_gpu": true,
   "gpu": "required",
@@ -31,17 +31,12 @@
   },
   "framework": {
     "name": "RT-DETRv2",
+    "tags": ["Real-Time"],
+    "export": ["ONNX", "TensorRT"],
     "conference": "CVPR 2024",
-    "released": 2024,
-    "tasks": {
-      "object_detection": {
-        "metric": 54.3,
-        "models": 5
-      }
-    },
-    "real_time": true,
-    "onnx": true,
-    "tensorrt": true
+    "released": "2024",
+    "description": "Real-time object detection model based on DETR, eliminating the need for NMS in post-processing.",
+    "github": "https://github.com/lyuwenyu/RT-DETR"
   },
   "files": {
     "models": "supervisely_integration/models_v2.json",

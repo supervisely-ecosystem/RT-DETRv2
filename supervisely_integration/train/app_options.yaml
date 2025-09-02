@@ -25,7 +25,7 @@ train_val_splits_selector:
 # How to display training results in the GUI:
 #   if true    – generate experiment page with training results
 #   if false   – show only a link to the output folder instead of the report
-generate_report: false
+generate_report: true
 
 # Add selector for selecting cuda device
 device_selector: false
@@ -60,3 +60,8 @@ export_tensorrt_supported: true
 demo:
   branch: "main"
   path: "supervisely_integration/demo"
+
+# ==================== Acknowledgment ======================
+original_repository:
+  name: "RT-DETR"
+  url: "https://github.com/lyuwenyu/RT-DETR"
