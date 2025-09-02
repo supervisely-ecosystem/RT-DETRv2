@@ -20,8 +20,11 @@ train = TrainApp(
     f"supervisely_integration/models_v2.json",
     f"{base_path}/hyperparameters.yaml",
     f"{base_path}/app_options.yaml",
-    inference_class=RTDETRv2,
 )
+
+inference_settings = "supervisely_integration/serve/inference_settings.yaml"
+train.register_inference_class(RTDETRv2, inference_settings)
+
 
 @train.start
 def start_training():
@@ -52,6 +55,7 @@ def start_training():
         "best_checkpoint": "best.pth",
     }
     return experiment_info
+
 
 @train.export_onnx
 def to_onnx(experiment_info: dict):
@@ -135,5 +139,6 @@ def remove_include(config_path: str):
             yaml.dump(config, f)
             yaml.dump(config, f)
 
-if train.quick_training:
+
+if train.auto_start:
     train.start_in_thread()
