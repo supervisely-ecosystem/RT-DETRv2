@@ -9,6 +9,7 @@ from boxmot.utils import ROOT, WEIGHTS, TRACKER_CONFIGS
 from boxmot import ByteTrack, BotSort
 import supervisely as sly
 import matplotlib.colors as mcolors
+from supervisely.video_annotation.video_figure import LabelingStatus
 from dotenv import load_dotenv
 
 from video import video_to_frames_ffmpeg, frames_to_video_ffmpeg
@@ -88,7 +89,8 @@ def create_video_annotation(
                 obj_cls = cat2obj[cat]
                 video_object = sly.VideoObject(obj_cls)
                 video_objects[track_id] = video_object
-            frame_figures.append(sly.VideoFigure(video_object, rect, i))
+            frame_figure = sly.VideoFigure(video_object, rect, i, status=LabelingStatus.AUTO_LABELED)
+            frame_figures.append(frame_figure)
         frames.append(sly.Frame(i, frame_figures))
 
     objects = list(video_objects.values())

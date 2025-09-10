@@ -1,8 +1,9 @@
 import os
 
 from dotenv import load_dotenv
-
 import supervisely as sly
+from supervisely.nn.tracker.utils import predictions_to_video_annotation
+from supervisely.io.json import dump_json_file
 
 if sly.is_development():
     load_dotenv("local.env")
@@ -24,7 +25,7 @@ workspace_id = sly.env.workspace_id()
 # )
 
 # Connect to model
-session_id = 50756
+session_id = 51267 # 50964
 model_api = api.nn.connect(session_id)
 
 # Data
@@ -34,11 +35,23 @@ model_api = api.nn.connect(session_id)
 # predictions = model_api.predict(input=image_path)
 
 # image id
-image_id = 1425234
-predictions = model_api.predict(image_id=image_id, upload_mode="append")
+# project_id = 3530
+# dataset_id = 16776
+# image_id = 1475824
+# predictions = model_api.predict(image_id=image_id, upload_mode="replace")
+# print(predictions)
 
 # video id
-# video_id = 110593
-# predictions = model_api.predict(video_id=video_id, upload_mode="append")
+project_id = 3598
+dataset_id = 16914
+video_id = 1498079
 
-print(predictions)
+# predictions = model_api.predict(video_id=video_id, upload_mode="replace", tracking=True)
+# print(predictions)
+
+session = model_api.predict_detached(video_id=video_id, upload_mode="replace", tracking=True)
+predictions = list(session)
+video_ann = predictions_to_video_annotation(predictions)
+print(video_ann)
+
+# dump_json_file(video_ann.to_json(), "video_ann.json", indent=4)
