@@ -89,7 +89,7 @@ def create_video_annotation(
                 obj_cls = cat2obj[cat]
                 video_object = sly.VideoObject(obj_cls)
                 video_objects[track_id] = video_object
-            frame_figure = sly.VideoFigure(video_object, rect, i, status=LabelingStatus.AUTO_LABELED)
+            frame_figure = sly.VideoFigure(video_object, rect, i, status=LabelingStatus.AUTO)
             frame_figures.append(frame_figure)
         frames.append(sly.Frame(i, frame_figures))
 
