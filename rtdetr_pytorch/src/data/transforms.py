@@ -33,7 +33,6 @@ RandomCrop = register(T.RandomCrop)
 Normalize = register(T.Normalize)
 
 
-
 @register
 class Compose(T.Compose):
     def __init__(self, ops) -> None:
@@ -134,9 +133,11 @@ class ConvertBox(T.Transform):
             in_fmt = inpt.format.value.lower()
             inpt = torchvision.ops.box_convert(inpt, in_fmt=in_fmt, out_fmt=self.out_fmt)
             inpt = datapoints.BoundingBox(inpt, format=self.data_fmt[self.out_fmt], spatial_size=spatial_size)
-        
+
         if self.normalize:
             inpt = inpt / torch.tensor(inpt.spatial_size[::-1]).tile(2)[None]
 
         return inpt
 
+    def transform(self, inpt: Any, params: Dict[str, Any]) -> Any:
+        return self._transform(inpt, params)

@@ -9,10 +9,15 @@ import yaml
 import supervisely as sly
 from rtdetrv2_pytorch.src.core import YAMLConfig
 from rtdetrv2_pytorch.src.solver import DetSolver
-from supervisely.nn import ModelSource, RuntimeType
+from supervisely.nn import ModelSource
 from supervisely.nn.training.train_app import TrainApp
 from supervisely_integration.export import export_onnx, export_tensorrt
 from supervisely_integration.serve.rtdetrv2 import RTDETRv2
+
+from dotenv import load_dotenv
+
+if sly.is_development():
+    load_dotenv("local.env")
 
 base_path = "supervisely_integration/train"
 train = TrainApp(
@@ -116,7 +121,9 @@ def prepare_config(train_ann_path: str, val_ann_path: str):
 
     if "batch_size" in custom_config:
         batch_size = custom_config["batch_size"]
-        num_workers = min(batch_size, 8, cpu_count())
+        num_workers = custom_config["num_workers"]
+        if num_workers == "auto":
+            num_workers = min(batch_size, 8, cpu_count())
         custom_config["train_dataloader"]["total_batch_size"] = batch_size
         custom_config["val_dataloader"]["total_batch_size"] = batch_size * 2
         custom_config["train_dataloader"]["num_workers"] = num_workers
