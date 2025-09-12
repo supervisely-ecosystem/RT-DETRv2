@@ -120,7 +120,9 @@ def prepare_config(train_ann_path: str, val_ann_path: str):
 
     if "batch_size" in custom_config:
         batch_size = custom_config["batch_size"]
-        num_workers = min(batch_size, 8, cpu_count())
+        num_workers = custom_config["num_workers"]
+        if num_workers == "auto":
+            num_workers = min(batch_size, 8, cpu_count())
         custom_config["train_dataloader"]["total_batch_size"] = batch_size
         custom_config["val_dataloader"]["total_batch_size"] = batch_size * 2
         custom_config["train_dataloader"]["num_workers"] = num_workers

@@ -26,11 +26,11 @@ workspace_id = sly.env.workspace_id()
 # )
 
 # Connect to model
-session_id = 51344 # 50964
+session_id = 51429 # 50964
 model_api = api.nn.connect(session_id)
 
 image_path = False
-image_id = False
+image_id = True
 video_id = True
 
 # Data

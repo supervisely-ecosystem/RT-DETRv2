@@ -1,5 +1,6 @@
 epoches: 50
 batch_size: 16
+num_workers: auto
 eval_spatial_size: [640, 640]  # height, width
 
 checkpoint_freq: 5
