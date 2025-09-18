@@ -181,13 +181,8 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
     def export_onnx(self, deploy_params: dict) -> str:
         model_files = deploy_params["model_files"]
         model_source = deploy_params["model_source"]
-
         checkpoint_path = model_files["checkpoint"]
-        if model_source == ModelSource.PRETRAINED:
-            config_path = f'{CONFIG_DIR}/{get_file_name_with_ext(model_files["config"])}'
-        else:
-            config_path = model_files["config"]
-
+        config_path = self._get_config_path(model_files, model_source)
         output_dir = self.model_dir
         checkpoint_path = export_onnx(checkpoint_path, config_path, output_dir)
         return checkpoint_path
@@ -195,13 +190,8 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
     def export_tensorrt(self, deploy_params: dict) -> str:
         model_files = deploy_params["model_files"]
         model_source = deploy_params["model_source"]
-        
         checkpoint_path = model_files["checkpoint"]
-        if model_source == ModelSource.PRETRAINED:
-            config_path = f'{CONFIG_DIR}/{get_file_name_with_ext(model_files["config"])}'
-        else:
-            config_path = model_files["config"]
-        
+        config_path = self._get_config_path(model_files, model_source)
         output_dir = self.model_dir
         checkpoint_path = export_onnx(checkpoint_path, config_path, output_dir)
         checkpoint_path = export_tensorrt(checkpoint_path, output_dir, fp16=True)
@@ -211,13 +201,13 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
     # Utils -------------------- #
     def _prepare_custom_model(self, model_files: dict):
         checkpoint_path = model_files["checkpoint"]
-        config_path = model_files["config"]
+        config_path = self._get_config_path(model_files, ModelSource.CUSTOM)
         self._remove_include(config_path)
         return checkpoint_path, config_path
 
     def _prepare_pretrained_model(self, model_files: dict, model_info: dict):
         checkpoint_path = model_files["checkpoint"]
-        config_path = f'{CONFIG_DIR}/{get_file_name_with_ext(model_files["config"])}'
+        config_path = self._get_config_path(model_files, ModelSource.PRETRAINED)
         self.classes = list(mscoco_category2name.values())
         obj_classes = [sly.ObjClass(name, sly.Rectangle) for name in self.classes]
         conf_tag = sly.TagMeta("confidence", sly.TagValueType.ANY_NUMBER)
@@ -230,6 +220,12 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
             model_source=ModelSource.PRETRAINED,
         )
         return checkpoint_path, config_path
+
+    def _get_config_path(self, model_files: dict, model_source: str):
+        if model_source == ModelSource.PRETRAINED:
+            return f'{CONFIG_DIR}/{get_file_name_with_ext(model_files["config"])}'
+        else:
+            return model_files["config"]
 
     def _remove_include(self, config_path: str):
         # del "__include__" and rewrite the config
