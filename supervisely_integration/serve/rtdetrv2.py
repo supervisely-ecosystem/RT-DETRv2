@@ -183,8 +183,7 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
         model_source = deploy_params["model_source"]
         checkpoint_path = model_files["checkpoint"]
         config_path = self._get_config_path(model_files, model_source)
-        output_dir = self.model_dir
-        checkpoint_path = export_onnx(checkpoint_path, config_path, output_dir)
+        checkpoint_path = export_onnx(checkpoint_path, config_path, self.model_dir)
         return checkpoint_path
 
     def export_tensorrt(self, deploy_params: dict) -> str:
@@ -192,9 +191,8 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
         model_source = deploy_params["model_source"]
         checkpoint_path = model_files["checkpoint"]
         config_path = self._get_config_path(model_files, model_source)
-        output_dir = self.model_dir
-        checkpoint_path = export_onnx(checkpoint_path, config_path, output_dir)
-        checkpoint_path = export_tensorrt(checkpoint_path, output_dir, fp16=True)
+        checkpoint_path = export_onnx(checkpoint_path, config_path, self.model_dir)
+        checkpoint_path = export_tensorrt(checkpoint_path, self.model_dir, fp16=True)
         return checkpoint_path
     # -------------------------- #
 
