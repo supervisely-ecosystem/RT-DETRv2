@@ -180,8 +180,6 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
     # Converters --------------- #
     def export_onnx(self, deploy_params: dict) -> str:
         checkpoint_path = deploy_params["model_files"]["checkpoint"]
-        self._remove_existing_checkpoints(checkpoint_path, "onnx")
-
         model_files = deploy_params["model_files"]
         model_source = deploy_params["model_source"]
         if model_source == ModelSource.PRETRAINED:
@@ -195,10 +193,6 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
 
     def export_tensorrt(self, deploy_params: dict) -> str:
         checkpoint_path = deploy_params["model_files"]["checkpoint"]
-
-        self._remove_existing_checkpoints(checkpoint_path, "onnx")
-        self._remove_existing_checkpoints(checkpoint_path, "engine")
-
         model_files = deploy_params["model_files"]
         model_source = deploy_params["model_source"]
         if model_source == ModelSource.PRETRAINED:
@@ -234,19 +228,6 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
             model_source=ModelSource.PRETRAINED,
         )
         return checkpoint_path, config_path
-
-    def _remove_existing_checkpoints(self, checkpoint_path: str, format: str):
-        if format == "onnx":
-            onnx_path = checkpoint_path.replace(".pth", ".onnx")
-            if os.path.exists(onnx_path):
-                sly.fs.silent_remove(onnx_path)
-        elif format == "engine":
-            onnx_path = checkpoint_path.replace(".pth", ".onnx")
-            engine_path = checkpoint_path.replace(".pth", ".engine")
-            if os.path.exists(onnx_path):
-                sly.fs.silent_remove(onnx_path)
-            if os.path.exists(engine_path):
-                sly.fs.silent_remove(engine_path)
 
     def _remove_include(self, config_path: str):
         # del "__include__" and rewrite the config
