@@ -179,9 +179,10 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
 
     # Converters --------------- #
     def export_onnx(self, deploy_params: dict) -> str:
-        checkpoint_path = deploy_params["model_files"]["checkpoint"]
         model_files = deploy_params["model_files"]
         model_source = deploy_params["model_source"]
+
+        checkpoint_path = model_files["checkpoint"]
         if model_source == ModelSource.PRETRAINED:
             config_path = f'{CONFIG_DIR}/{get_file_name_with_ext(model_files["config"])}'
         else:
@@ -192,9 +193,10 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
         return checkpoint_path
 
     def export_tensorrt(self, deploy_params: dict) -> str:
-        checkpoint_path = deploy_params["model_files"]["checkpoint"]
         model_files = deploy_params["model_files"]
         model_source = deploy_params["model_source"]
+        
+        checkpoint_path = model_files["checkpoint"]
         if model_source == ModelSource.PRETRAINED:
             config_path = f'{CONFIG_DIR}/{get_file_name_with_ext(model_files["config"])}'
         else:
