@@ -55,7 +55,8 @@ RUN pip install --no-cache-dir tensorrt-cu12==10.9.0.34
 RUN pip install --no-cache-dir setuptools==69.5.1 tensorboard imgaug==0.4.0 decord
 
 
-RUN pip install --no-cache-dir supervisely[training]==6.73.424
-RUN pip install --no-cache-dir supervisely[model-benchmark]==6.73.424
+RUN pip install --no-cache-dir supervisely[training]==6.73.441
+RUN pip install --no-cache-dir supervisely[tracking]==6.73.441
+RUN pip install --no-cache-dir supervisely[model-benchmark]==6.73.441
 
-LABEL python_sdk_version=6.73.424
+LABEL python_sdk_version=6.73.441
