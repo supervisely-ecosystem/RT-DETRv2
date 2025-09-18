@@ -180,33 +180,34 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
     # Converters --------------- #
     def export_onnx(self, deploy_params: dict) -> str:
         checkpoint_path = deploy_params["model_files"]["checkpoint"]
+        self._remove_existing_checkpoints(checkpoint_path, "onnx")
+
         model_files = deploy_params["model_files"]
         model_source = deploy_params["model_source"]
-
         if model_source == ModelSource.PRETRAINED:
             config_path = f'{CONFIG_DIR}/{get_file_name_with_ext(model_files["config"])}'
         else:
             config_path = model_files["config"]
 
         output_dir = self.model_dir
-        self._remove_existing_checkpoints(checkpoint_path, "onnx")
         checkpoint_path = export_onnx(checkpoint_path, config_path, output_dir)
         return checkpoint_path
 
     def export_tensorrt(self, deploy_params: dict) -> str:
         checkpoint_path = deploy_params["model_files"]["checkpoint"]
+
+        self._remove_existing_checkpoints(checkpoint_path, "onnx")
+        self._remove_existing_checkpoints(checkpoint_path, "engine")
+
         model_files = deploy_params["model_files"]
         model_source = deploy_params["model_source"]
-
         if model_source == ModelSource.PRETRAINED:
             config_path = f'{CONFIG_DIR}/{get_file_name_with_ext(model_files["config"])}'
         else:
             config_path = model_files["config"]
         
         output_dir = self.model_dir
-        self._remove_existing_checkpoints(checkpoint_path, "onnx")
         checkpoint_path = export_onnx(checkpoint_path, config_path, output_dir)
-        self._remove_existing_checkpoints(checkpoint_path, "engine")
         checkpoint_path = export_tensorrt(checkpoint_path, output_dir, fp16=True)
         return checkpoint_path
     # -------------------------- #
