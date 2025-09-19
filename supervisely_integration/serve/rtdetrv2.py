@@ -27,76 +27,19 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
     APP_OPTIONS = f"{SERVE_PATH}/app_options.yaml"
     INFERENCE_SETTINGS = f"{SERVE_PATH}/inference_settings.yaml"
 
-    def load_model(
-        self, model_files: dict, model_info: dict, model_source: str, device: str, runtime: str
-    ):
-        checkpoint_path = model_files["checkpoint"]
+    def load_model(self, model_files: dict, model_info: dict, model_source: str, device: str, runtime: str):
         if model_source == ModelSource.CUSTOM:
-            config_path = model_files["config"]
-            self._remove_include(config_path)
+            checkpoint_path, config_path = self._prepare_custom_model(model_files)
         else:
-            config_path = f'{CONFIG_DIR}/{get_file_name_with_ext(model_files["config"])}'
-            self.classes = list(mscoco_category2name.values())
-            obj_classes = [sly.ObjClass(name, sly.Rectangle) for name in self.classes]
-            conf_tag = sly.TagMeta("confidence", sly.TagValueType.ANY_NUMBER)
-            self._model_meta = sly.ProjectMeta(obj_classes=obj_classes, tag_metas=[conf_tag])
-            self.checkpoint_info = CheckpointInfo(
-                checkpoint_name=os.path.basename(checkpoint_path),
-                model_name=model_info["meta"]["model_name"],
-                architecture=self.FRAMEWORK_NAME,
-                checkpoint_url=model_info["meta"]["model_files"]["checkpoint"],
-                model_source=model_source,
-            )
+            checkpoint_path, config_path = self._prepare_pretrained_model(model_files, model_info)
 
-        h, w = 640, 640
-        self.img_size = [w, h]
-        self.transforms = T.Compose(
-            [
-                T.Resize((h, w)),
-                T.ToTensor(),
-            ]
-        )
-
+        self._load_transforms()
         if runtime == RuntimeType.PYTORCH:
-            self.cfg = YAMLConfig(config_path, resume=checkpoint_path)
-            checkpoint = torch.load(checkpoint_path, map_location="cpu")
-            state = checkpoint["ema"]["module"] if "ema" in checkpoint else checkpoint["model"]
-            self.model = self.cfg.model
-            self.model.load_state_dict(state)
-            self.model.deploy().to(device)
-            self.postprocessor = self.cfg.postprocessor.deploy().to(device)
-        elif runtime in [RuntimeType.ONNXRUNTIME, RuntimeType.TENSORRT]:
-            # when runtime is ONNX and weights is .pth
-            # or deployed from api with onnx / engine checkpoint
-            # if deplyed from api with .engine checkpoint, then we don't need to export onnx
-            if not get_file_ext(checkpoint_path) == ".engine":
-                onnx_model_path = export_onnx(checkpoint_path, config_path, self.model_dir)
-            if runtime == RuntimeType.ONNXRUNTIME:
-                import onnxruntime
-
-                providers = (
-                    ["CUDAExecutionProvider"] if device != "cpu" else ["CPUExecutionProvider"]
-                )
-                if device != "cpu":
-                    assert (
-                        onnxruntime.get_device() == "GPU"
-                    ), "ONNXRuntime is not configured to use GPU"
-                self.onnx_session = onnxruntime.InferenceSession(
-                    onnx_model_path, providers=providers
-                )
-            elif runtime == RuntimeType.TENSORRT:
-                from rtdetrv2_pytorch.references.deploy.rtdetrv2_tensorrt import (
-                    TRTInference,
-                )
-
-                assert device != "cpu", "TensorRT is not supported on CPU"
-                # if deployed from api with .engine checkpoint, then we don't need to export engine
-                if not get_file_ext(checkpoint_path) == ".engine":
-                    engine_path = export_tensorrt(onnx_model_path, self.model_dir, fp16=True)
-                else:
-                    engine_path = checkpoint_path
-                self.engine = TRTInference(engine_path, device)
-                self.max_batch_size = 1
+            self._load_pytorch(checkpoint_path, config_path, device)
+        if runtime == RuntimeType.ONNXRUNTIME:
+            self._load_onnx(checkpoint_path, device)
+        elif runtime == RuntimeType.TENSORRT:
+            self._load_tensorrt(checkpoint_path, device)
 
     def predict_benchmark(self, images_np: List[np.ndarray], settings: dict = None):
         if self.runtime == RuntimeType.PYTORCH:
@@ -106,6 +49,36 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
         elif self.runtime == RuntimeType.TENSORRT:
             return self._predict_tensorrt(images_np, settings)
 
+    # Loaders -------------- #
+    def _load_transforms(self):
+        h, w = 640, 640
+        self.img_size = [w, h]
+        self.transforms = T.Compose([T.Resize((h, w)), T.ToTensor()])
+        
+    def _load_pytorch(self, checkpoint_path: str, config_path: str, device: str):
+        self.cfg = YAMLConfig(config_path, resume=checkpoint_path)
+        checkpoint = torch.load(checkpoint_path, map_location="cpu")
+        state = checkpoint["ema"]["module"] if "ema" in checkpoint else checkpoint["model"]
+        self.model = self.cfg.model
+        self.model.load_state_dict(state)
+        self.model.deploy().to(device)
+        self.postprocessor = self.cfg.postprocessor.deploy().to(device)
+
+    def _load_onnx(self, checkpoint_path: str, device: str):
+        import onnxruntime
+        providers = ["CUDAExecutionProvider"] if device != "cpu" else ["CPUExecutionProvider"]
+        if device != "cpu":
+            assert onnxruntime.get_device() == "GPU", "ONNXRuntime is not configured to use GPU"
+        self.onnx_session = onnxruntime.InferenceSession(checkpoint_path, providers=providers)
+        
+    def _load_tensorrt(self, checkpoint_path: str, device: str):
+        from rtdetrv2_pytorch.references.deploy.rtdetrv2_tensorrt import TRTInference
+        assert device != "cpu", "TensorRT is not supported on CPU"
+        self.engine = TRTInference(checkpoint_path, device)
+        self.max_batch_size = 1
+    # ---------------------- #
+
+    # Predictions -------------- #
     @torch.no_grad()
     def _predict_pytorch(
         self, images_np: List[np.ndarray], settings: dict = None
@@ -202,6 +175,55 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
         thres = settings["confidence_threshold"]
         predictions = [self._format_prediction(*args, thres) for args in zip(labels, boxes, scores)]
         return predictions
+    # -------------------------- #
+
+    # Converters --------------- #
+    def export_onnx(self, deploy_params: dict) -> str:
+        model_files = deploy_params["model_files"]
+        model_source = deploy_params["model_source"]
+        checkpoint_path = model_files["checkpoint"]
+        config_path = self._get_config_path(model_files, model_source)
+        checkpoint_path = export_onnx(checkpoint_path, config_path, self.model_dir)
+        return checkpoint_path
+
+    def export_tensorrt(self, deploy_params: dict) -> str:
+        model_files = deploy_params["model_files"]
+        model_source = deploy_params["model_source"]
+        checkpoint_path = model_files["checkpoint"]
+        config_path = self._get_config_path(model_files, model_source)
+        checkpoint_path = export_onnx(checkpoint_path, config_path, self.model_dir)
+        checkpoint_path = export_tensorrt(checkpoint_path, self.model_dir, fp16=True)
+        return checkpoint_path
+    # -------------------------- #
+
+    # Utils -------------------- #
+    def _prepare_custom_model(self, model_files: dict):
+        checkpoint_path = model_files["checkpoint"]
+        config_path = self._get_config_path(model_files, ModelSource.CUSTOM)
+        self._remove_include(config_path)
+        return checkpoint_path, config_path
+
+    def _prepare_pretrained_model(self, model_files: dict, model_info: dict):
+        checkpoint_path = model_files["checkpoint"]
+        config_path = self._get_config_path(model_files, ModelSource.PRETRAINED)
+        self.classes = list(mscoco_category2name.values())
+        obj_classes = [sly.ObjClass(name, sly.Rectangle) for name in self.classes]
+        conf_tag = sly.TagMeta("confidence", sly.TagValueType.ANY_NUMBER)
+        self._model_meta = sly.ProjectMeta(obj_classes=obj_classes, tag_metas=[conf_tag])
+        self.checkpoint_info = CheckpointInfo(
+            checkpoint_name=os.path.basename(checkpoint_path),
+            model_name=model_info["meta"]["model_name"],
+            architecture=self.FRAMEWORK_NAME,
+            checkpoint_url=model_info["meta"]["model_files"]["checkpoint"],
+            model_source=ModelSource.PRETRAINED,
+        )
+        return checkpoint_path, config_path
+
+    def _get_config_path(self, model_files: dict, model_source: str):
+        if model_source == ModelSource.PRETRAINED:
+            return f'{CONFIG_DIR}/{get_file_name_with_ext(model_files["config"])}'
+        else:
+            return model_files["config"]
 
     def _remove_include(self, config_path: str):
         # del "__include__" and rewrite the config
@@ -211,3 +233,4 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
             config.pop("__include__")
             with open(config_path, "w") as f:
                 yaml.dump(config, f)
+    # -------------------------- #
