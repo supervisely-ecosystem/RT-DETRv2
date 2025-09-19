@@ -3,6 +3,7 @@
 supervisely[training]==6.73.443
 supervisely[tracking]==6.73.443
 supervisely[model-benchmark]==6.73.443
+
 setuptools==69.5.1
 
 torch==2.7.1

@@ -27,7 +27,8 @@ train = TrainApp(
     f"{base_path}/app_options.yaml",
 )
 
-train.register_inference_class(RTDETRv2)
+inference_settings = "supervisely_integration/serve/inference_settings.yaml"
+train.register_inference_class(RTDETRv2, inference_settings)
 
 
 @train.start
@@ -142,3 +143,7 @@ def remove_include(config_path: str):
         with open(config_path, "w") as f:
             yaml.dump(config, f)
             yaml.dump(config, f)
+
+
+if train.auto_start:
+    train.start_in_thread()
