@@ -22,7 +22,7 @@ _(We add this selector right into the page)_
 
 ![Selecting a project GIF (tmp)](https://developer.supervisely.com/~gitbook/image?url=https%3A%2F%2Fuser-images.githubusercontent.com%2F79905215%2F222367677-cdee343d-a841-4868-9106-10d3f44d9e76.gif&width=768&dpr=4&quality=100&sign=424c1477&sv=2)
 
-> You can also get predictions with **Applying Apps**, such as [Apply NN to Images](../../../../supervisely-ecosystem/nn-image-labeling/project-dataset) or [Apply NN to Video](../../../../supervisely-ecosystem/apply-nn-to-videos-project). Read more in documentation [Apply Model in Platform](https://docs.supervisely.com/neural-networks/overview-1/supervisely-serving-apps#apply-model-in-platform).
+> You can also get predictions with **Applying Apps**, such as [Apply NN to Images](../../../../../supervisely-ecosystem/nn-image-labeling/project-dataset) or [Apply NN to Video](../../../../supervisely-ecosystem/apply-nn-to-videos-project). Read more in documentation [Apply Model in Platform](https://docs.supervisely.com/neural-networks/overview-1/supervisely-serving-apps#apply-model-in-platform).
 
 ## Serve Model in Supervisely Platform
 
