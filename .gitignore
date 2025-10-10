@@ -185,3 +185,4 @@ supervisely
 app_data
 experiment_report/
 supervisely.env
+tmp_project/
