@@ -7,6 +7,7 @@
   "categories": [
     "neural network",
     "images",
+    "videos",
     "object detection",
     "detection & tracking",
     "serve",
@@ -18,7 +19,10 @@
   "description": "Deploy RT-DETRv2 as a REST API service",
   "need_gpu": false,
   "gpu": "preferred",
-  "session_tags": ["deployed_nn"],
+  "session_tags": [
+    "deployed_nn",
+    "sly_video_tracking_by_detection"
+  ],
   "community_agent": false,
   "docker_image": "supervisely/rt-detrv2:1.0.38",
   "cuda_version": 12.8,
