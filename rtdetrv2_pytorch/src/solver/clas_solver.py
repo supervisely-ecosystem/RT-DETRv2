@@ -47,7 +47,7 @@ class ClasSolver(BaseSolver):
             if output_dir:
                 checkpoint_paths = [output_dir / 'checkpoint.pth']
                 # extra checkpoint before LR drop and every 100 epochs
-                if (epoch + 1) % args.checkpoint_freq == 0:
+                if args.checkpoint_freq > 0 and (epoch + 1) % args.checkpoint_freq == 0:
                     checkpoint_paths.append(output_dir / f'checkpoint{epoch:04}.pth')
                 for checkpoint_path in checkpoint_paths:
                     dist_utils.save_on_master(self.state_dict(epoch), checkpoint_path)
