@@ -127,12 +127,6 @@ def prepare_config(train_ann_path: str, val_ann_path: str):
         custom_config["val_dataloader"]["total_batch_size"] = batch_size * 2
         custom_config["train_dataloader"]["num_workers"] = num_workers
         custom_config["val_dataloader"]["num_workers"] = num_workers
-        # if num_workers > 0:
-        #     custom_config["train_dataloader"]["persistent_workers"] = True
-        #     custom_config["train_dataloader"]["prefetch_factor"] = 2
-        #     custom_config["val_dataloader"]["persistent_workers"] = True
-        #     custom_config["val_dataloader"]["prefetch_factor"] = 2
-
     custom_config_path = f"{rtdetrv2_config_dir}/custom_config.yml"
     with open(custom_config_path, "w") as f:
         yaml.dump(custom_config, f)
