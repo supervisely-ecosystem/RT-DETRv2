@@ -40,6 +40,7 @@ def start_training():
         custom_config_path,
         tuning=checkpoint,
     )
+    _set_input_size_dataloaders(cfg.yaml_cfg, list(cfg.yaml_cfg["eval_spatial_size"]))
     output_dir = cfg.output_dir
     os.makedirs(output_dir, exist_ok=True)
     # dump resolved config
@@ -126,6 +127,11 @@ def prepare_config(train_ann_path: str, val_ann_path: str):
         custom_config["val_dataloader"]["total_batch_size"] = batch_size * 2
         custom_config["train_dataloader"]["num_workers"] = num_workers
         custom_config["val_dataloader"]["num_workers"] = num_workers
+        if num_workers > 0:
+            custom_config["train_dataloader"]["persistent_workers"] = True
+            custom_config["train_dataloader"]["prefetch_factor"] = 2
+            custom_config["val_dataloader"]["persistent_workers"] = True
+            custom_config["val_dataloader"]["prefetch_factor"] = 2
 
     custom_config_path = f"{rtdetrv2_config_dir}/custom_config.yml"
     with open(custom_config_path, "w") as f:
@@ -144,6 +150,14 @@ def remove_include(config_path: str):
             yaml.dump(config, f)
             yaml.dump(config, f)
 
+
+def _set_input_size_dataloaders(custom_config: dict, size: list):
+    for dataloader in ["train_dataloader", "val_dataloader"]:
+        ops = custom_config[dataloader]["dataset"]["transforms"]["ops"]
+        for i, op in enumerate(ops):
+            if op["type"] == "Resize":
+                ops[i]["size"] = list(size)
+                break
 
 if train.auto_start:
     train.start_in_thread()
