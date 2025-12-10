@@ -24,13 +24,13 @@
     "sly_video_tracking_by_detection"
   ],
   "community_agent": false,
-  "docker_image": "supervisely/rt-detrv2:1.0.38",
+  "docker_image": "supervisely/rt-detrv2:1.0.39",
   "cuda_version": 12.8,
   "task_location": "application_sessions",
   "license": {
     "type": "Apache-2.0"
   },
-  "instance_version": "6.15.5",
+  "instance_version": "6.15.35",
   "files": {
     "models": "supervisely_integration/models_v2.json",
     "inference_settings": "supervisely_integration/serve/inference_settings.yaml",

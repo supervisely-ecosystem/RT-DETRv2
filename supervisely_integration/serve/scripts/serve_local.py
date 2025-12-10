@@ -28,7 +28,7 @@ api = sly.Api.from_env()
 #   --runtime=nvidia \
 #   --env PYTHONPATH=/app \
 #   -p 8000:8000 \
-#   supervisely/rt-detrv2:1.0.38-deploy \
+#   supervisely/rt-detrv2:1.0.39-deploy \
 #   deploy
 #   --model "RT-DETRv2-S"
 
@@ -40,7 +40,7 @@ api = sly.Api.from_env()
 #   --env PYTHONPATH=/app \
 #   -v "./47688_RT-DETRv2:/model" \
 #   -p 8000:8000 \
-#   supervisely/rt-detrv2:1.0.38-deploy \
+#   supervisely/rt-detrv2:1.0.39-deploy \
 #   deploy \
 #   --model "/model/checkpoints/best.pth" \
 #   --device "cuda:0"
