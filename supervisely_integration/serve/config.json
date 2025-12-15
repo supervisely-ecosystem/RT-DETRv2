@@ -1,39 +1,39 @@
 {
-  "type": "app",
-  "version": "2.0.0",
-  "name": "Serve RT-DETRv2",
-  "entrypoint": "python3 -m uvicorn main:model.app --host 0.0.0.0 --port 8000 --ws websockets --app-dir supervisely_integration/serve",
-  "port": 8000,
-  "categories": [
-    "neural network",
-    "images",
-    "videos",
-    "object detection",
-    "detection & tracking",
-    "serve",
-    "framework:RT-DETRv2"
-  ],
-  "icon": "https://github.com/user-attachments/assets/304c71dc-86f2-49f1-a633-3f0315bdcfad",
-  "icon_cover": true,
-  "poster": "https://github.com/user-attachments/assets/af2c8f9c-8de7-4c78-9b4a-13a2627993be",
-  "description": "Deploy RT-DETRv2 as a REST API service",
-  "need_gpu": false,
-  "gpu": "preferred",
-  "session_tags": [
-    "deployed_nn",
-    "sly_video_tracking_by_detection"
-  ],
-  "community_agent": false,
-  "docker_image": "supervisely/rt-detrv2:1.0.39",
-  "cuda_version": 12.8,
-  "task_location": "application_sessions",
-  "license": {
-    "type": "Apache-2.0"
-  },
-  "instance_version": "6.15.35",
-  "files": {
-    "models": "supervisely_integration/models_v2.json",
-    "inference_settings": "supervisely_integration/serve/inference_settings.yaml",
-    "hyperparams": "supervisely_integration/train/hyperparameters.yaml"
-  }
+    "type": "app",
+    "version": "2.0.0",
+    "name": "Serve RT-DETRv2",
+    "entrypoint": "python3 -m uvicorn main:model.app --host 0.0.0.0 --port 8000 --ws websockets --app-dir supervisely_integration/serve",
+    "port": 8000,
+    "categories": [
+        "neural network",
+        "images",
+        "videos",
+        "object detection",
+        "detection & tracking",
+        "serve",
+        "framework:RT-DETRv2"
+    ],
+    "icon": "https://github.com/user-attachments/assets/304c71dc-86f2-49f1-a633-3f0315bdcfad",
+    "icon_cover": true,
+    "poster": "https://github.com/user-attachments/assets/af2c8f9c-8de7-4c78-9b4a-13a2627993be",
+    "description": "Deploy RT-DETRv2 as a REST API service",
+    "need_gpu": false,
+    "gpu": "preferred",
+    "session_tags": [
+        "deployed_nn",
+        "sly_video_tracking_by_detection"
+    ],
+    "community_agent": false,
+    "docker_image": "supervisely/rt-detrv2:1.0.40",
+    "cuda_version": 12.8,
+    "task_location": "application_sessions",
+    "license": {
+        "type": "Apache-2.0"
+    },
+    "instance_version": "6.15.35",
+    "files": {
+        "models": "supervisely_integration/models_v2.json",
+        "inference_settings": "supervisely_integration/serve/inference_settings.yaml",
+        "hyperparams": "supervisely_integration/train/hyperparameters.yaml"
+    }
 }
