@@ -1,0 +1,8 @@
+FROM supervisely/rt-detrv2:1.0.39
+
+WORKDIR /app
+COPY . /app
+
+ENV PYTHONPATH=/app
+
+ENTRYPOINT ["python3", "-m", "supervisely_integration.serve.main"]

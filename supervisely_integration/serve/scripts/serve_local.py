@@ -22,16 +22,28 @@ api = sly.Api.from_env()
 # 2. Run with docker run       #
 ################################
 # Run the following command in the terminal:
+# Pretrained
+# docker run \
+#   --shm-size=1g \
+#   --runtime=nvidia \
+#   --env PYTHONPATH=/app \
+#   -p 8000:8000 \
+#   supervisely/rt-detrv2:1.0.39-deploy \
+#   deploy
+#   --model "RT-DETRv2-S"
+
+# Custom
 # docker run \
 #   --shm-size=1g \
 #   --runtime=nvidia \
 #   --env-file ~/supervisely.env \
 #   --env PYTHONPATH=/app \
-#   -v ".:/app" \
-#   -w /app \
+#   -v "./47688_RT-DETRv2:/model" \
 #   -p 8000:8000 \
-#   supervisely/rt-detrv2:1.0.19 \
-#   python3 supervisely_integration/serve/main.py deploy
+#   supervisely/rt-detrv2:1.0.39-deploy \
+#   deploy \
+#   --model "/model/checkpoints/best.pth" \
+#   --device "cuda:0"
 
 
 ################################

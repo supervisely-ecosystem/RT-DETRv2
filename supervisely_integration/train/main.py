@@ -9,10 +9,15 @@ import yaml
 import supervisely as sly
 from rtdetrv2_pytorch.src.core import YAMLConfig
 from rtdetrv2_pytorch.src.solver import DetSolver
-from supervisely.nn import ModelSource, RuntimeType
+from supervisely.nn import ModelSource
 from supervisely.nn.training.train_app import TrainApp
 from supervisely_integration.export import export_onnx, export_tensorrt
 from supervisely_integration.serve.rtdetrv2 import RTDETRv2
+
+from dotenv import load_dotenv
+
+if sly.is_development():
+    load_dotenv("local.env")
 
 base_path = "supervisely_integration/train"
 train = TrainApp(
@@ -22,7 +27,8 @@ train = TrainApp(
     f"{base_path}/app_options.yaml",
 )
 
-train.register_inference_class(RTDETRv2)
+inference_settings = "supervisely_integration/serve/inference_settings.yaml"
+train.register_inference_class(RTDETRv2, inference_settings)
 
 
 @train.start
@@ -34,6 +40,7 @@ def start_training():
         custom_config_path,
         tuning=checkpoint,
     )
+    _set_input_size_dataloaders(cfg.yaml_cfg, list(cfg.yaml_cfg["eval_spatial_size"]))
     output_dir = cfg.output_dir
     os.makedirs(output_dir, exist_ok=True)
     # dump resolved config
@@ -101,7 +108,7 @@ def prepare_config(train_ann_path: str, val_ann_path: str):
 
     custom_config = train.hyperparameters
     custom_config["__include__"] = [config]
-    custom_config["remap_mscoco_category"] = False
+    custom_config["remap_mscoco_category"] = False # train.num_classes <= 80
     custom_config["num_classes"] = train.num_classes
     custom_config["print_freq"] = 50
 
@@ -120,7 +127,6 @@ def prepare_config(train_ann_path: str, val_ann_path: str):
         custom_config["val_dataloader"]["total_batch_size"] = batch_size * 2
         custom_config["train_dataloader"]["num_workers"] = num_workers
         custom_config["val_dataloader"]["num_workers"] = num_workers
-
     custom_config_path = f"{rtdetrv2_config_dir}/custom_config.yml"
     with open(custom_config_path, "w") as f:
         yaml.dump(custom_config, f)
@@ -136,3 +142,16 @@ def remove_include(config_path: str):
         config.pop("__include__")
         with open(config_path, "w") as f:
             yaml.dump(config, f)
+            yaml.dump(config, f)
+
+
+def _set_input_size_dataloaders(custom_config: dict, size: list):
+    for dataloader in ["train_dataloader", "val_dataloader"]:
+        ops = custom_config[dataloader]["dataset"]["transforms"]["ops"]
+        for i, op in enumerate(ops):
+            if op["type"] == "Resize":
+                ops[i]["size"] = list(size)
+                break
+
+if train.auto_start:
+    train.start_in_thread()

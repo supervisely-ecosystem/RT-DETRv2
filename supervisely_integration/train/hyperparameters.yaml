@@ -1,8 +1,8 @@
 epoches: 50
 batch_size: 16
-eval_spatial_size: [640, 640]  # height, width
+eval_spatial_size: [640, 640]  # height, width | Must be divisible by 32
 
-checkpoint_freq: 5
+checkpoint_freq: 5 # set 0 to keep only best and last checkpoints
 save_optimizer: false
 save_ema: false
 
