@@ -276,7 +276,7 @@ docker run \
   -v ".:/app" \
   -w /app \
   -p 8000:8000 \
-  supervisely/rt-detrv2:1.0.39-deploy \
+  supervisely/rt-detrv2:1.0.43-deploy \
   deploy \
   --model "models/392_RT-DETRv2/checkpoints/best.pth"
 ```
@@ -291,7 +291,7 @@ docker run \
   -v ".:/app" \
   -w /app \
   -p 8000:8000 \
-  supervisely/rt-detrv2:1.0.39-deploy \
+  supervisely/rt-detrv2:1.0.43-deploy \
   predict "./image.jpg" \
   --model "models/392_RT-DETRv2/checkpoints/best.pth" \
   --device cuda \
