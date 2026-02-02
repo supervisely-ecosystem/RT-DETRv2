@@ -192,7 +192,7 @@ Inference in Docker Container is similar to local inference, except that it runs
 For **Docker Container**, you need to pull the pre-built docker image from DockerHub.
 
 ```bash
-docker pull supervisely/rt-detrv2-gpu-cloud:1.0.3
+docker pull supervisely/rt-detrv2:1.0.44-deploy
 ```
 **Docker Container** deployment command:
 
@@ -206,7 +206,7 @@ docker run \
   -v ".:/app" \
   -w /app \
   -p 8000:8000 \
-  supervisely/rt-detrv2-gpu-cloud:1.0.3 \
+  supervisely/rt-detrv2:1.0.44-deploy \
   --model "/experiments/553_42201_Animals/2315_RT-DETRv2/checkpoints/best.pth"
 ```
 
