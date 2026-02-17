@@ -1,3 +1,8 @@
 pretrained_models: true
 custom_models: true
+external_models: true
+external_model_options:
+  config: true
+  classes: true
+  task_types: ["object detection"]
 supported_runtimes: ["pytorch", "onnxruntime", "tensorrt"]
