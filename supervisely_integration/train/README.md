@@ -9,7 +9,6 @@
   <a href="#how-to-run">How To Run</a> •
   <a href="#obtain-saved-checkpoints">Obtain saved checkpoints</a> •
   <a href="#how-to-use-your-checkpoints-outside-supervisely-platform">How to use checkpoints outside Supervisely Platform</a> •
-  <a href="#how-to-use-external-checkpoints-inside-supervisely-platform">How to use external checkpoints inside Supervisely Platform</a> •
   <a href="#acknowledgment">Acknowledgment</a>
 </p>
 
@@ -134,34 +133,6 @@ We provide several demo scripts to run inference with your checkpoint:
 - [demo_pytorch.py](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_pytorch.py) - simple PyTorch inference
 - [demo_onnx.py](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_onnx.py) - ONNXRuntime inference
 - [demo_tensorrt.py](https://github.com/supervisely-ecosystem/RT-DETRv2/blob/main/supervisely_integration/demo/demo_tensorrt.py) - TensorRT inference
-
-# How to use external checkpoints inside Supervisely Platform
-
-External checkpoints are checkpoints that were trained outside of Supervisely Platform.
-
-![external-models](https://github.com/user-attachments/assets/e5572f12-38fb-4459-ae04-4361ac1435db)
-
-1. Select External Models Tab
-2. Provide necessary model files: checkpoint, model config and `.json` file with classes mapping. Files must be uploaded to Supervisely Team Files, external links are not supported.
-
-Example of classes mapping file:
-
-```json
-{
-  "0": "car",
-  "1": "bus",
-  "2": "truck",
-  "3": "motorcycle",
-  "4": "bicycle",
-  "5": "person",
-  "6": "traffic light",
-  "7": "traffic sign",
-  "8": "train"
-}
-```
-
-3. Select device and press the `Serve` button, then wait for the model to deploy.
-4. You can now use the model for inference and see model info.
 
 # Acknowledgment
 
