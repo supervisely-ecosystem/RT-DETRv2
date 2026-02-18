@@ -12,7 +12,7 @@ from torchvision.transforms import ToTensor
 import supervisely as sly
 from rtdetrv2_pytorch.src.core import YAMLConfig
 from rtdetrv2_pytorch.src.data.dataset.coco_dataset import mscoco_category2name
-from supervisely.io.fs import get_file_ext, get_file_name_with_ext
+from supervisely.io.fs import get_file_name_with_ext
 from supervisely.nn.inference import CheckpointInfo, ModelSource, RuntimeType, Timer
 from supervisely.nn.prediction_dto import PredictionBBox
 from supervisely_integration.export import export_onnx, export_tensorrt
@@ -28,10 +28,12 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
     INFERENCE_SETTINGS = f"{SERVE_PATH}/inference_settings.yaml"
 
     def load_model(self, model_files: dict, model_info: dict, model_source: str, device: str, runtime: str):
-        if model_source == ModelSource.CUSTOM:
+        if model_source == ModelSource.PRETRAINED:
+            checkpoint_path, config_path = self._prepare_pretrained_model(model_files, model_info)
+        elif model_source == ModelSource.CUSTOM or model_source == ModelSource.EXTERNAL:
             checkpoint_path, config_path = self._prepare_custom_model(model_files)
         else:
-            checkpoint_path, config_path = self._prepare_pretrained_model(model_files, model_info)
+            raise ValueError(f"Invalid model source: {model_source}")
 
         self._load_transforms()
         if runtime == RuntimeType.PYTORCH:
