@@ -2,12 +2,14 @@ name: Update Models Manual
 on:
   workflow_dispatch:
     inputs:
-      models_path:
-        type: string
-        required: true
       framework:
+        description: "Framework of the models to update (e.g., YOLO)"
         type: string
-        required: true
+        required: false
+      models_path:
+        description: "Path to the file models.json (e.g., supervisely_integration/models.json for YOLO)"
+        type: string
+        required: false
 
 jobs:
   update-models:
