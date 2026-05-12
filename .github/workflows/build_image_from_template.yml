@@ -28,10 +28,11 @@ on:
 
 jobs:
   build-image:
-    uses: supervisely-ecosystem/workflows/.github/workflows/build_image_from_template.yml@master
+    uses: supervisely-ecosystem/workflows/.github/workflows/build_image_from_template.yml@hdi
     with:
       tag_version: "${{ inputs.tag_version }}"
       tag_ref_name: "${{ inputs.tag_ref_name }}"
+      workflows_ref: "hdi"
       config_file: "supervisely_integration/train/config.json"
       runtime_base_image: "base-py-cuda-hardened"
       cve_checks: ${{ inputs.enable_cve_checks }}
