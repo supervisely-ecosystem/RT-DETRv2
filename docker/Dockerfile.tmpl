@@ -1,0 +1,136 @@
+ARG tag_ref_name
+ARG REQUIREMENTS_FILE=dev_requirements.txt
+ARG RUNTIME_BASE_IMAGE=base-py-cuda-hardened
+ARG EXTRA_BUILDER_LIBS=""
+
+FROM nvidia/cuda:12.8.0-runtime-ubuntu22.04 AS cuda
+
+FROM python:3.12-slim-bookworm AS requirements-builder
+
+ENV LANG=C.UTF-8 \
+  PYTHONDONTWRITEBYTECODE=1 \
+  PYTHONUNBUFFERED=1 \
+  PIP_DISABLE_PIP_VERSION_CHECK=1 \
+  PIP_NO_CACHE_DIR=1 \
+  PIP_PREFER_BINARY=1 \
+  TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1
+
+ARG REQUIREMENTS_FILE
+ARG EXTRA_BUILDER_LIBS
+RUN set -eux; \
+  apt-get update; \
+  apt-get install -y --no-install-recommends \
+    build-essential \
+    ca-certificates \
+    git \
+    libgeos-dev \
+    pkg-config \
+    ${EXTRA_BUILDER_LIBS}; \
+  rm -rf /var/lib/apt/lists/*
+
+COPY ${REQUIREMENTS_FILE} /tmp/requirements.txt
+
+RUN set -eux; \
+  python -m venv /opt/venv; \
+  /opt/venv/bin/python -m ensurepip --upgrade; \
+  /opt/venv/bin/python -m pip install --no-cache-dir --upgrade pip wheel setuptools; \
+  if [ -s /tmp/requirements.txt ]; then \
+    /opt/venv/bin/python -m pip wheel --no-cache-dir -r /tmp/requirements.txt -w /tmp/wheels; \
+  else \
+    mkdir -p /tmp/wheels; \
+  fi
+
+FROM python:3.12-slim-bookworm AS runtime
+
+ENV LANG=C.UTF-8 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1
+
+ARG tag_ref_name
+ARG REQUIREMENTS_FILE
+ARG CACHEBUST=""
+
+COPY ${REQUIREMENTS_FILE} /tmp/requirements.txt
+
+RUN --mount=from=requirements-builder,source=/tmp/wheels,target=/tmp/wheels,ro \
+  set -eux; \
+  ln -sf /usr/local/bin/python3 /usr/local/bin/python; \
+  ln -sf /usr/local/bin/python3 /usr/bin/python; \
+  apt-get update; \
+  apt-get install -y --no-install-recommends \
+    ffmpeg \
+    libgeos-c1v5 \
+    libgl1 \
+    libglib2.0-0 \
+    libmagic1 \
+    libsm6 \
+    libx11-6 \
+    libxcb1 \
+    libxext6 \
+    libxrender1; \
+  python -m venv /opt/venv; \
+  if [ -s /tmp/requirements.txt ]; then \
+    /opt/venv/bin/python -m ensurepip --upgrade; \
+    set -- /tmp/wheels/*.whl; \
+    if [ -e "$1" ]; then \
+      /opt/venv/bin/python -m pip install --no-cache-dir --no-compile --no-index /tmp/wheels/*.whl; \
+      /opt/venv/bin/python -c "import torch; print(torch.__version__, torch.version.cuda)"; \
+      rm -rf \
+        /opt/venv/lib/python*/site-packages/pip* \
+        /opt/venv/lib/python*/site-packages/setuptools* \
+        /opt/venv/lib/python*/site-packages/wheel* \
+        /opt/venv/lib/python*/site-packages/pkg_resources* \
+        /opt/venv/lib/python*/site-packages/_distutils_hack* \
+        /opt/venv/lib/python*/site-packages/_distutils* \
+        /opt/venv/lib/python*/site-packages/distutils-precedence.pth \
+        /opt/venv/bin/pip \
+        /opt/venv/bin/pip3 \
+        /opt/venv/bin/pip3.* \
+        /opt/venv/bin/easy_install \
+        /opt/venv/bin/easy_install-* \
+        /opt/venv/bin/wheel; \
+    fi; \
+  fi; \
+  rm -rf \
+    /var/lib/apt/lists/* \
+    /usr/bin/apt \
+    /usr/bin/apt-get \
+    /usr/bin/apt-cache \
+    /usr/bin/apt-mark \
+    /usr/bin/apt-key \
+    /usr/bin/dpkg \
+    /usr/bin/dpkg-deb \
+    /usr/bin/dpkg-query \
+    /usr/bin/dpkg-divert \
+    /usr/bin/git \
+    /usr/bin/curl \
+    /usr/bin/wget \
+    /usr/local/lib/python*/site-packages/pip* \
+    /usr/local/lib/python*/site-packages/setuptools* \
+    /usr/local/lib/python*/site-packages/wheel* \
+    /usr/local/lib/python*/site-packages/pkg_resources* \
+    /usr/local/lib/python*/site-packages/_distutils* \
+    /usr/local/lib/python*/site-packages/distutils-precedence.pth; \
+  find /opt/venv -type d -name '__pycache__' -prune -exec rm -rf {} +; \
+  find /opt/venv -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete; \
+  find /opt/venv/lib/python*/site-packages -type d \( -name 'tests' -o -name 'test' \) -prune -exec rm -rf {} +; \
+  rm -rf /tmp/requirements.txt
+
+ENV PATH="/opt/venv/bin:$PATH"
+
+COPY --from=cuda /usr/local/cuda-12.8/targets/x86_64-linux/lib/libcudart.so* /usr/lib/
+COPY --from=cuda /usr/local/cuda-12.8/targets/x86_64-linux/lib/libcublas.so* /usr/lib/
+COPY --from=cuda /usr/local/cuda-12.8/targets/x86_64-linux/lib/libcublasLt.so* /usr/lib/
+COPY --from=cuda /usr/local/cuda-12.8/targets/x86_64-linux/lib/libcufft.so* /usr/lib/
+COPY --from=cuda /usr/local/cuda-12.8/targets/x86_64-linux/lib/libcurand.so* /usr/lib/
+COPY --from=cuda /usr/local/cuda-12.8/targets/x86_64-linux/lib/libcusolver.so* /usr/lib/
+COPY --from=cuda /usr/local/cuda-12.8/targets/x86_64-linux/lib/libcusparse.so* /usr/lib/
+COPY --from=cuda /usr/local/cuda-12.8/targets/x86_64-linux/lib/libnvrtc.so* /usr/lib/
+COPY --from=cuda /usr/local/cuda-12.8/targets/x86_64-linux/lib/libnvJitLink.so* /usr/lib/
+
+ENV LD_LIBRARY_PATH="/usr/lib:/usr/local/lib" \
+    NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+LABEL python_sdk_version="${tag_ref_name}"

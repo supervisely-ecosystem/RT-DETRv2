@@ -12,7 +12,7 @@ jobs:
     uses: supervisely-ecosystem/workflows/.github/workflows/build_image_from_template.yml@master
     with:
       config_file: "supervisely_integration/train/config.json"
-      runtime_base_image: "base-py-cuda-hardened"
+      dockerfile_template_path: "docker/Dockerfile.tmpl"
       cve_checks: true
 
   Supervisely-Release:

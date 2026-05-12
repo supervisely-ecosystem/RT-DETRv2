@@ -34,7 +34,7 @@ jobs:
       tag_ref_name: "${{ inputs.tag_ref_name }}"
       workflows_ref: "hdi"
       config_file: "supervisely_integration/train/config.json"
-      runtime_base_image: "base-py-cuda-hardened"
+      dockerfile_template_path: "docker/Dockerfile.tmpl"
       cve_checks: ${{ inputs.enable_cve_checks }}
       skip_tag_check: ${{ inputs.skip_tag_check }}
       no_cache_requirements: ${{ inputs.no_cache_requirements }}
