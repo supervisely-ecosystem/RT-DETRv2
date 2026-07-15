@@ -262,7 +262,7 @@ class CSPResNet(nn.Module):
             if isinstance(pretrained, bool) or 'http' in pretrained:
                 state = torch.hub.load_state_dict_from_url(donwload_url[name], map_location='cpu')
             else:
-                state = torch.load(pretrained, map_location='cpu')
+                state = torch.load(pretrained, map_location='cpu', weights_only=False)
             self.load_state_dict(state)
             print(f'Load CSPResNet_{name} state_dict')
 

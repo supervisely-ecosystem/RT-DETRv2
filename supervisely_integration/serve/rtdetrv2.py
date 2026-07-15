@@ -59,7 +59,7 @@ class RTDETRv2(sly.nn.inference.ObjectDetection):
         
     def _load_pytorch(self, checkpoint_path: str, config_path: str, device: str):
         self.cfg = YAMLConfig(config_path, resume=checkpoint_path)
-        checkpoint = torch.load(checkpoint_path, map_location="cpu")
+        checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
         state = checkpoint["ema"]["module"] if "ema" in checkpoint else checkpoint["model"]
         self.model = self.cfg.model
         self.model.load_state_dict(state)

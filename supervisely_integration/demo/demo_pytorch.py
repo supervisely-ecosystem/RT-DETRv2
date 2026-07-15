@@ -35,7 +35,7 @@ if __name__ == "__main__":
 
     # load model
     cfg = YAMLConfig(config_path, resume=checkpoint_path)
-    checkpoint = torch.load(checkpoint_path, map_location="cpu")
+    checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
     state = checkpoint["ema"]["module"] if "ema" in checkpoint else checkpoint["model"]
     model = cfg.model
     model.load_state_dict(state)

@@ -141,7 +141,7 @@ class BaseSolver(object):
         if path.startswith('http'):
             state = torch.hub.load_state_dict_from_url(path, map_location='cpu')
         else:
-            state = torch.load(path, map_location='cpu')
+            state = torch.load(path, map_location='cpu', weights_only=False)
 
         self.load_state_dict(state)
 
@@ -152,7 +152,7 @@ class BaseSolver(object):
         if path.startswith('http'):
             state = torch.hub.load_state_dict_from_url(path, map_location='cpu')
         else:
-            state = torch.load(path, map_location='cpu')
+            state = torch.load(path, map_location='cpu', weights_only=False)
 
         module = dist_utils.de_parallel(self.model)
         
