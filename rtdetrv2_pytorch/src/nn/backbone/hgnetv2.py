@@ -376,7 +376,7 @@ class HGNetv2(nn.Module):
             if isinstance(pretrained, bool) or 'http' in pretrained:
                 state = torch.hub.load_state_dict_from_url(download_url, map_location='cpu')
             else:
-                state = torch.load(pretrained, map_location='cpu')
+                state = torch.load(pretrained, map_location='cpu', weights_only=False)
             self.load_state_dict(state)
             print(f'Load HGNetv2_{name} state_dict')
         
