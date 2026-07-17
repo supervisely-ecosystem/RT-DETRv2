@@ -140,6 +140,19 @@ def evaluate(model: torch.nn.Module, criterion: torch.nn.Module, postprocessor, 
         #     target_sizes = torch.stack([t["size"] for t in targets], dim=0)
         #     results = postprocessor['segm'](results, outputs, orig_target_sizes, target_sizes)
 
+        # predictions carry 0-based label indices, while GT annotations use dataset
+        # category ids (1-based for COCO-style json); remap unless the postprocessor
+        # already did it (remap_mscoco_category=True)
+        label2category = getattr(data_loader.dataset, 'label2category', None)
+        if label2category is not None and not getattr(postprocessor, 'remap_mscoco_category', False):
+            for result in results:
+                labels = result['labels']
+                result['labels'] = torch.tensor(
+                    [label2category[int(x)] for x in labels.flatten()],
+                    dtype=labels.dtype,
+                    device=labels.device,
+                ).reshape(labels.shape)
+
         res = {target['image_id'].item(): output for target, output in zip(targets, results)}
         if coco_evaluator is not None:
             coco_evaluator.update(res)
