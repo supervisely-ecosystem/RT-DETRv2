@@ -18,7 +18,7 @@
     "description": "Train RT-DETRv2 model on your data",
     "docker_image": "supervisely/rt-detrv2:1.0.46",
     "cuda_version": 12.8,
-    "instance_version": "6.15.40",
+    "instance_version": "6.17.8",
     "task_location": "workspace_tasks",
     "need_gpu": true,
     "gpu": "required",
