@@ -1,8 +1,8 @@
 # git+https://github.com/supervisely/supervisely.git@some-test-branch
 
-supervisely[training]==6.74.14
-supervisely[tracking]==6.74.14
-supervisely[model-benchmark]==6.74.14
+supervisely[training]==6.74.16
+supervisely[tracking]==6.74.16
+supervisely[model-benchmark]==6.74.16
 
 setuptools==69.5.1
 
