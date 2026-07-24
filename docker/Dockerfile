@@ -56,8 +56,10 @@ RUN pip install --no-cache-dir tensorrt-cu12==10.9.0.34
 RUN pip install --no-cache-dir setuptools==69.5.1 tensorboard imgaug==0.4.0 decord
 
 
-RUN pip install --no-cache-dir supervisely[training]==6.74.16
-RUN pip install --no-cache-dir supervisely[tracking]==6.74.16
-RUN pip install --no-cache-dir supervisely[model-benchmark]==6.74.16
+# SDK from a git commit — bump SDK_REF to the new commit to pull it (also busts the Docker cache).
+# RELEASE_VERSION is required for a git install: setup.py get_version() otherwise reads git tags /
+# GitHub API, which fail in pip's shallow clone.
+ARG SDK_REF=dca34f63
+RUN RELEASE_VERSION=6.74.16 pip install --no-cache-dir "supervisely[training,tracking,model-benchmark] @ git+https://github.com/supervisely/supervisely.git@${SDK_REF}"
 
 LABEL python_sdk_version="6.74.16"

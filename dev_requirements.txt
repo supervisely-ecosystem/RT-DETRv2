@@ -1,8 +1,6 @@
-# git+https://github.com/supervisely/supervisely.git@some-test-branch
-
-supervisely[training]==6.74.16
-supervisely[tracking]==6.74.16
-supervisely[model-benchmark]==6.74.16
+# Resume-upload feature (unreleased) — pin to the SDK branch until it is merged & released,
+# then switch back to a pinned version (supervisely[...]==<version>).
+supervisely[training,tracking,model-benchmark] @ git+https://github.com/supervisely/supervisely.git@feat/train-resume-upload-tests
 
 setuptools==69.5.1
 
