@@ -56,6 +56,8 @@ RUN pip install --no-cache-dir tensorrt-cu12==10.9.0.34
 RUN pip install --no-cache-dir setuptools==69.5.1 tensorboard imgaug==0.4.0 decord
 
 
-RUN pip install --no-cache-dir "supervisely[training,tracking,model-benchmark] @ git+https://github.com/supervisely/supervisely.git@feat/train-resume-upload-tests"
+# RELEASE_VERSION is required when installing the SDK from a git branch: setup.py get_version()
+# otherwise reads git tags / GitHub API, which fail in pip's shallow clone.
+RUN RELEASE_VERSION=6.74.16 pip install --no-cache-dir "supervisely[training,tracking,model-benchmark] @ git+https://github.com/supervisely/supervisely.git@feat/train-resume-upload-tests"
 
-LABEL python_sdk_version="feat/train-resume-upload-tests"
+LABEL python_sdk_version="6.74.16"
