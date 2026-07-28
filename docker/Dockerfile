@@ -59,7 +59,7 @@ RUN pip install --no-cache-dir setuptools==69.5.1 tensorboard imgaug==0.4.0 deco
 # TEMP: SDK from the resume-artifacts-upload branch. Revert to the pinned release before merge.
 # RELEASE_VERSION is required: setup.py get_version() otherwise queries git tags / the GitHub API,
 # which fails inside pip shallow clone. SDK_REF also busts the docker layer cache.
-ARG SDK_REF=3ffb7eee74636b57e8a05cd263ff57f74c80e0be
+ARG SDK_REF=320664e32b7aeece6413f0f7806d320eaae9a9dc
 RUN RELEASE_VERSION=6.74.16 pip install --no-cache-dir \
     "supervisely[training,tracking,model-benchmark] @ git+https://github.com/supervisely/supervisely.git@${SDK_REF}"
 
